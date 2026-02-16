@@ -1,0 +1,25 @@
+{
+    "env": {
+        "node": true,
+        "es2021": true,
+        "jest": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:node/recommended",
+        "plugin:prettier/recommended"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 2022
+    },
+    "rules": {
+        "no-console": "warn",
+        "node/no-unsupported-features/es-syntax": "off",
+        "no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_"
+            }
+        ]
+    }
+}
