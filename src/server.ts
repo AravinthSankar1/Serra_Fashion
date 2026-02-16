@@ -7,12 +7,12 @@ const startServer = async () => {
     await connectDB();
 
     // Example Event Listener Registration
-    eventBus.on(Events.USER_CREATED, (user) => {
+    (eventBus as any).on(Events.USER_CREATED, (user: any) => {
         console.log(`[EVENT] New user registered: ${user.email}`);
         // Send welcome email logic here
     });
 
-    eventBus.on(Events.PRODUCT_CREATED, (product) => {
+    (eventBus as any).on(Events.PRODUCT_CREATED, (product: any) => {
         console.log(`[EVENT] New product added: ${product.name}`);
     });
 
