@@ -79,7 +79,7 @@ export const sendEmailOtp = async (to: string, otp: string) => {
 
     try {
         await transporter.sendMail({
-            from: `"SÉRRA FASHION" <${config.email.from}>`,
+            from: config.email.from, // Use the pre-formatted string from config
             to,
             subject: `${otp} is your verification code`,
             html,
@@ -151,7 +151,7 @@ export const sendOrderConfirmation = async (to: string, order: any, type: 'email
 
         try {
             await transporter.sendMail({
-                from: `"SÉRRA FASHION" <${config.email.from}>`,
+                from: config.email.from,
                 to,
                 subject: `Order Confirmation #${order._id.slice(-6).toUpperCase()}`,
                 html
@@ -220,7 +220,7 @@ export const sendOrderStatusUpdate = async (to: string, order: any, newStatus: s
 
         try {
             await transporter.sendMail({
-                from: `"SÉRRA FASHION" <${config.email.from}>`,
+                from: config.email.from,
                 to,
                 subject: `Update on Order #${order._id.slice(-6).toUpperCase()}`,
                 html
@@ -276,7 +276,7 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
 
         try {
             await transporter.sendMail({
-                from: `"SÉRRA SYSTEM" <${config.email.from}>`,
+                from: config.email.from,
                 to: config.admin.email,
                 subject: `[ADMIN] New Order received`,
                 html
