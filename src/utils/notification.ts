@@ -10,9 +10,13 @@ const transporter = nodemailer.createTransport({
         user: config.email.auth.user,
         pass: config.email.auth.pass,
     },
-    logger: true, // Log nodemailer internal activity
-    debug: true,  // Log SMTP traffic
-});
+    family: 4, // Force IPv4
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+    logger: true,
+    debug: true,
+} as any);
 
 // Verify connection configuration
 transporter.verify((error, success) => {
