@@ -14,14 +14,14 @@ export enum Events {
 export class EventBus extends EventEmitter {
     private static instance: EventBus;
 
-    private constructor() {
+    constructor() {
         super();
         this.setupListeners();
     }
 
     private setupListeners() {
         // Order Created - Trigger Notifications
-        this.on(Events.ORDER_CREATED, async (order: any) => {
+        (this as any).on(Events.ORDER_CREATED, async (order: any) => {
             try {
                 const { notificationQueue } = await import('../queue/notification.queue');
                 await notificationQueue.add({ type: 'ORDER_CREATED', data: { orderId: order._id } });
@@ -31,7 +31,7 @@ export class EventBus extends EventEmitter {
         });
 
         // Order Status Update - Trigger Notifications
-        this.on(Events.ORDER_STATUS_UPDATED, async (data: any) => {
+        (this as any).on(Events.ORDER_STATUS_UPDATED, async (data: any) => {
             try {
                 const { notificationQueue } = await import('../queue/notification.queue');
                 await notificationQueue.add({

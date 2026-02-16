@@ -25,7 +25,7 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
     if (productData.images) productData.images = parseJson(productData.images);
 
     if (req.files && Array.isArray(req.files)) {
-        const uploadPromises = (req.files as Express.Multer.File[]).map(file =>
+        const uploadPromises = (req.files as any[]).map(file =>
             uploadToCloudinary(file, 'products')
         );
         const uploadedImages = await Promise.all(uploadPromises);
@@ -95,7 +95,7 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
 
     // Handle new file uploads
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-        const uploadPromises = (req.files as Express.Multer.File[]).map(file =>
+        const uploadPromises = (req.files as any[]).map(file =>
             uploadToCloudinary(file, 'products')
         );
         const uploadedImages = (await Promise.all(uploadPromises)) as { imageUrl: string; imagePublicId: string }[];

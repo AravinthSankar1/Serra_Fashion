@@ -13,6 +13,8 @@ export interface AuthRequest extends Request {
     body: any;
     params: any;
     query: any;
+    file?: any;
+    files?: any;
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {

@@ -125,7 +125,7 @@ export const verifyPaymentAndCreateOrder = asyncHandler(async (req: AuthRequest,
     // await clearCart(req.user!.sub);
 
     // 7. Emit events for notifications
-    eventBus.emit(Events.ORDER_CREATED, order);
+    (eventBus as any).emit(Events.ORDER_CREATED, order);
 
     res.status(201).json(ApiResponse.success(order, 'Order placed successfully'));
 });

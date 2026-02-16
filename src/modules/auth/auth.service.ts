@@ -168,7 +168,8 @@ export const socialLogin = async (data: {
             password: Math.random().toString(36).slice(-12) + 'S1@',
             profilePicture: { imageUrl: profilePicture || '' }
         });
-        eventBus.emit(Events.USER_CREATED, user);
+        // Emit Event
+        (eventBus as any).emit(Events.USER_CREATED, user);
     }
 
     const tokens = await generateAuthTokens(user, ipAddress);
@@ -207,7 +208,8 @@ export const sendOtp = async (contact: string, type: 'email' | 'whatsapp') => {
                 password: crypto.randomBytes(16).toString('hex') + 'S1@'
             });
         }
-        eventBus.emit(Events.USER_CREATED, user);
+        // Emit Event
+        (eventBus as any).emit(Events.USER_CREATED, user);
     }
 
     // Check rate limits (30s cooldown)

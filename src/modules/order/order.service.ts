@@ -55,7 +55,7 @@ export const createOrder = async (userId: string, orderData: Partial<IOrder>) =>
     await clearCart(userId);
 
     // Emit Order Created Event for Admin Dashboard / Notifications
-    eventBus.emit(Events.ORDER_CREATED, order);
+    (eventBus as any).emit(Events.ORDER_CREATED, order);
 
     // Send Notifications
     import('../../utils/notification').then(({ sendOrderNotification }) => {
@@ -120,7 +120,7 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus, no
 
     // Emit event for notifications
     if (order) {
-        eventBus.emit(Events.ORDER_STATUS_UPDATED, { orderId: order._id, newStatus: status });
+        (eventBus as any).emit(Events.ORDER_STATUS_UPDATED, { orderId: order._id, newStatus: status });
     }
 
     return order;
