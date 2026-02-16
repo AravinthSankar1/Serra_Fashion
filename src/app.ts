@@ -24,10 +24,10 @@ app.set('trust proxy', 1);
 // Security Middleware
 app.use(helmet());
 app.use(cors({
-    origin: [config.frontendUrl, 'https://serra-fashion-frontend.onrender.com'],
+    origin: true, // Reflect request origin (Permissive for debugging, but handles credentials)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 app.use(xss());
 app.use(mongoSanitize());
@@ -36,15 +36,14 @@ app.use(hpp());
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // Increased limit for testing
     message: 'Too many requests from this IP, please try again later',
 });
 app.use('/api', limiter);
 
 // Logger
-if (config.env !== 'test') {
-    app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
-}
+// Always use morgan in production to see requests in Render logs
+app.use(morgan('dev'));
 
 // Body parsers
 app.use(express.json());

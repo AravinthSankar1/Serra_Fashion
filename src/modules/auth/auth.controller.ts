@@ -75,6 +75,7 @@ export const socialLogin = asyncHandler(async (req: Request, res: Response) => {
 
 export const sendOtp = asyncHandler(async (req: Request, res: Response) => {
     const { contact, type } = req.body; // type: 'email' | 'whatsapp'
+    console.log(`[AUTH] OTP requested for ${contact} via ${type}`);
     if (!contact || !['email', 'whatsapp'].includes(type)) {
         throw { statusCode: 400, message: 'Invalid contact or type. Type must be email or whatsapp.' };
     }

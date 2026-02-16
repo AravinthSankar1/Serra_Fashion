@@ -20,7 +20,9 @@ export default function AdminOrders() {
         queryKey: ['admin-orders'],
         queryFn: async () => {
             const res = await api.get('/orders');
-            return res.data.data as Order[];
+            // If the response is paginated (object with orders array), use orders. Otherwise fallback.
+            const result = res.data.data;
+            return Array.isArray(result) ? result : (result.orders || []);
         },
         refetchInterval: 10000, // Poll every 10 seconds for real-time updates
     });
@@ -36,7 +38,7 @@ export default function AdminOrders() {
         }
     });
 
-    const filteredOrders = orders?.filter(order => {
+    const filteredOrders = orders?.filter((order: Order) => {
         const matchesSearch =
             order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
@@ -57,8 +59,8 @@ export default function AdminOrders() {
 
     // Summary Stats
     const totalOrders = orders?.length || 0;
-    const pendingOrders = orders?.filter(o => o.orderStatus === 'PENDING').length || 0;
-    const totalRevenue = orders?.filter(o => o.paymentStatus === 'PAID').reduce((acc, curr) => acc + curr.totalAmount, 0) || 0;
+    const pendingOrders = orders?.filter((o: Order) => o.orderStatus === 'PENDING').length || 0;
+    const totalRevenue = orders?.filter((o: Order) => o.paymentStatus === 'PAID').reduce((acc: number, curr: Order) => acc + curr.totalAmount, 0) || 0;
 
     const stats = [
         { label: 'Total Volume', value: totalOrders, icon: ShoppingBag, color: 'blue' },
@@ -157,7 +159,7 @@ export default function AdminOrders() {
                                         <td colSpan={6} className="px-8 py-10"><div className="h-8 bg-gray-50 rounded-2xl"></div></td>
                                     </tr>
                                 ))
-                            ) : filteredOrders?.map((order) => (
+                            ) : filteredOrders?.map((order: Order) => (
                                 <tr key={order._id} className="hover:bg-gray-50/30 transition-colors group">
                                     <td className="px-8 py-6">
                                         <div className="flex flex-col">
