@@ -63,8 +63,10 @@ const getEmailTemplate = (title: string, subtitle: string, content: string, ctaT
 // OTP Functions
 export const sendEmailOtp = async (to: string, otp: string) => {
     if (!config.email.auth.user || !config.email.auth.pass) {
-        console.warn('[EMAIL] Credentials not configured. OTP:', otp);
-        return true;
+        console.warn(`[EMAIL] SMTP credentials missing. OTP: ${otp}`);
+        // Only return true in development to avoid blocking flows. 
+        // In production/test, we want to know it failed.
+        return config.env === 'development';
     }
 
     const html = getEmailTemplate(
@@ -78,16 +80,21 @@ export const sendEmailOtp = async (to: string, otp: string) => {
     );
 
     try {
-        await transporter.sendMail({
-            from: config.email.from, // Use the pre-formatted string from config
+        const info = await transporter.sendMail({
+            from: config.email.from,
             to,
             subject: `${otp} is your verification code`,
             html,
         });
-        console.log(`[EMAIL] OTP sent to ${to}`);
+        console.log(`[EMAIL] Sent successfully: ${info.messageId}`);
         return true;
-    } catch (error) {
-        console.error('[EMAIL] Failed:', error);
+    } catch (error: any) {
+        console.error('[EMAIL] SMTP Error:', {
+            code: error.code,
+            command: error.command,
+            response: error.response,
+            message: error.message
+        });
         return false;
     }
 };
