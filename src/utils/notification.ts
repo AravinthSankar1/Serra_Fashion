@@ -10,6 +10,17 @@ const transporter = nodemailer.createTransport({
         user: config.email.auth.user,
         pass: config.email.auth.pass,
     },
+    logger: true, // Log nodemailer internal activity
+    debug: true,  // Log SMTP traffic
+});
+
+// Verify connection configuration
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('[EMAIL] SMTP Connection Error:', error);
+    } else {
+        console.log('[EMAIL] SMTP Server is ready to take messages');
+    }
 });
 
 /**
