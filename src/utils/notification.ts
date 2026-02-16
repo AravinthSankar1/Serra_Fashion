@@ -5,14 +5,19 @@ import { config } from '../config';
 const transporter = nodemailer.createTransport({
     host: config.email.host,
     port: config.email.port,
-    secure: config.email.port === 465,
+    secure: Number(config.email.port) === 465, // True for 465, false for 587
     auth: {
         user: config.email.auth.user,
         pass: config.email.auth.pass,
     },
+    tls: {
+        // Do not fail on invalid certs
+        rejectUnauthorized: false
+    },
+    pool: true, // Use connection pooling
     family: 4, // Force IPv4
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
     socketTimeout: 30000,
     logger: true,
     debug: true,
