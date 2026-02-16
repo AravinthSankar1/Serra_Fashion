@@ -73,10 +73,10 @@ export const config = {
         host: envVars.SMTP_HOST,
         port: parseInt(envVars.SMTP_PORT, 10),
         auth: {
-            user: envVars.SMTP_USER,
-            pass: envVars.SMTP_PASS,
+            user: envVars.SMTP_USER?.trim(),
+            pass: envVars.SMTP_PASS?.replace(/\s/g, ''), // Remove all spaces from App Password
         },
-        from: envVars.EMAIL_FROM || envVars.SMTP_USER,
+        from: (envVars.EMAIL_FROM || envVars.SMTP_USER)?.replace(/^["']|["']$/g, '').trim(),
     },
     whatsapp: {
         apiUrl: envVars.WHATSAPP_API_URL,
