@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCart, useAuth } from '../context';
 import api from '../api/client';
-import { ShieldCheck, Truck, CreditCard, ArrowRight, Loader2, CheckCircle2, Check, Plus, Download } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useRazorpay } from 'react-razorpay';
