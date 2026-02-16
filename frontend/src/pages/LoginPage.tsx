@@ -5,7 +5,7 @@ import api from '../api/client';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, ShieldCheck, Mail, Lock, MessageCircle } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, MessageCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
@@ -56,7 +56,7 @@ export default function LoginPage() {
             const res = await api.post('/auth/send-otp', { contact, type: otpChannel });
             return res.data;
         },
-        onSuccess: (data) => {
+        onSuccess: () => {
             toast.success('OTP sent successfully!');
             setOtpStep('verify');
         },

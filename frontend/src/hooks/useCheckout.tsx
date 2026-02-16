@@ -4,25 +4,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCart, useAuth } from '../context';
-import type { CartItem } from '../types';
 import api from '../api/client';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Navbar from '../components/ui/Navbar';
 import { ShieldCheck, Truck, CreditCard, ArrowRight, Loader2, CheckCircle2, Check, Plus, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useRazorpay } from 'react-razorpay';
-import PremiumLoader from '../components/ui/PremiumLoader';
-
-const COUNTRIES = [
-    { name: 'India', code: '+91', states: ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Gujarat', 'Uttar Pradesh', 'West Bengal'] },
-    { name: 'United States', code: '+1', states: ['California', 'New York', 'Texas', 'Florida', 'Illinois', 'Washington', 'Massachusetts'] },
-    { name: 'United Kingdom', code: '+44', states: ['England', 'Scotland', 'Wales', 'Northern Ireland'] },
-    { name: 'United Arab Emirates', code: '+971', states: ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman'] },
-    { name: 'Canada', code: '+1', states: ['Ontario', 'Quebec', 'British Columbia', 'Alberta'] },
-];
 
 const checkoutSchema = z.object({
     firstName: z.string().min(2, 'First name is required'),
@@ -64,7 +50,7 @@ export function useCheckout() {
     });
 
     const abortControllerRef = useRef<AbortController | null>(null);
-    const paymentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const paymentTimeoutRef = useRef<any>(null);
 
     const { register, handleSubmit, formState: { errors }, setValue, reset, watch } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
@@ -300,11 +286,6 @@ export function useCheckout() {
             rzp.on('payment.failed', function (response: any) {
                 cleanupPaymentState();
                 toast.error('Payment failed: ' + response.error.description);
-            });
-
-            rzp.on('payment.cancelled', function () {
-                cleanupPaymentState();
-                toast.info('Payment cancelled');
             });
 
             rzp.open();
