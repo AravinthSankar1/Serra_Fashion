@@ -16,6 +16,7 @@ router.get('/:idOrSlug', authenticateOptional, productController.getProduct);
 // Admin & Vendor only routes
 router.post('/', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.array('images'), productController.createProduct);
 router.put('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.array('images'), productController.updateProduct);
+router.patch('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.array('images'), productController.updateProduct);
 router.delete('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), productController.deleteProduct);
 
 export default router;

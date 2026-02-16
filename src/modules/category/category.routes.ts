@@ -13,6 +13,7 @@ router.get('/', getCategories);
 // Admin only routes
 router.post('/', authenticate, authorize([UserRole.ADMIN]), upload.single('image'), createCategory);
 router.put('/:id', authenticate, authorize([UserRole.ADMIN]), upload.single('image'), updateCategory);
+router.patch('/:id', authenticate, authorize([UserRole.ADMIN]), upload.single('image'), updateCategory);
 router.delete('/:id', authenticate, authorize([UserRole.ADMIN]), deleteCategory);
 
 export default router;

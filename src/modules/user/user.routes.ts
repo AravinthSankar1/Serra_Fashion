@@ -8,17 +8,22 @@ const router = Router();
 
 router.get('/me', authenticate, getProfile);
 router.put('/me', authenticate, upload.single('profile'), updateProfile);
+router.patch('/me', authenticate, upload.single('profile'), updateProfile);
 router.put('/shipping-address', authenticate, updateShippingAddress);
+router.patch('/shipping-address', authenticate, updateShippingAddress);
 router.put('/currency-preference', authenticate, updateCurrencyPreference);
+router.patch('/currency-preference', authenticate, updateCurrencyPreference);
 router.post('/wishlist/:productId', authenticate, handleToggleWishlist);
 router.get('/wishlist', authenticate, getUserWishlist);
 router.post('/address', authenticate, addAddress);
 router.delete('/address/:addressId', authenticate, removeAddress);
 router.put('/address/:addressId/default', authenticate, setDefaultAddress);
+router.patch('/address/:addressId/default', authenticate, setDefaultAddress);
 
 // Admin only
 router.get('/', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), getAllUsers);
 router.put('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), updateAnyUser);
+router.patch('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), updateAnyUser);
 router.delete('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), deleteUser);
 
 export default router;

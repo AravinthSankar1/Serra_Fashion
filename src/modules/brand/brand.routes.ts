@@ -13,6 +13,7 @@ router.get('/', getBrands);
 // Admin only routes
 router.post('/', authenticate, authorize([UserRole.ADMIN]), upload.single('logo'), createBrand);
 router.put('/:id', authenticate, authorize([UserRole.ADMIN]), upload.single('logo'), updateBrand);
+router.patch('/:id', authenticate, authorize([UserRole.ADMIN]), upload.single('logo'), updateBrand);
 router.delete('/:id', authenticate, authorize([UserRole.ADMIN]), deleteBrand);
 
 export default router;
