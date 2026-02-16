@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import { config } from '../config';
 
 // Typed Events Enum
 export enum Events {
@@ -12,7 +11,7 @@ export enum Events {
     PAYMENT_FAILED = 'payment.failed',
 }
 
-class EventBus extends EventEmitter {
+export class EventBus extends EventEmitter {
     private static instance: EventBus;
 
     private constructor() {
@@ -22,7 +21,7 @@ class EventBus extends EventEmitter {
 
     private setupListeners() {
         // Order Created - Trigger Notifications
-        this.on(Events.ORDER_CREATED, async (order) => {
+        this.on(Events.ORDER_CREATED, async (order: any) => {
             try {
                 const { notificationQueue } = await import('../queue/notification.queue');
                 await notificationQueue.add({ type: 'ORDER_CREATED', data: { orderId: order._id } });
@@ -32,7 +31,7 @@ class EventBus extends EventEmitter {
         });
 
         // Order Status Update - Trigger Notifications
-        this.on(Events.ORDER_STATUS_UPDATED, async (data) => {
+        this.on(Events.ORDER_STATUS_UPDATED, async (data: any) => {
             try {
                 const { notificationQueue } = await import('../queue/notification.queue');
                 await notificationQueue.add({

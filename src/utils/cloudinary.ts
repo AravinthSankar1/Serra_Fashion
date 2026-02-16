@@ -22,7 +22,7 @@ export const uploadToCloudinary = async (file: Express.Multer.File, folder: stri
                 });
             }
         );
-        uploadStream.end(file.buffer);
+        (uploadStream as any).end(file.buffer);
     });
 };
 

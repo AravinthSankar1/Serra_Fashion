@@ -9,7 +9,7 @@ const sizeGuideSchema = new Schema<ISizeGuide>(
             imageUrl: { type: String, required: true },
             imagePublicId: { type: String, required: true }
         },
-        category: { type: Schema.Types.ObjectId, ref: 'Category' }
+        category: { type: Schema.Types.ObjectId as any, ref: 'Category' }
     },
     { timestamps: true }
 );
