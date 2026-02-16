@@ -1,4 +1,4 @@
-import { EventEmitter } from 'node:events';
+import { EventEmitter } from 'events';
 import { config } from '../config';
 
 // Typed Events Enum
