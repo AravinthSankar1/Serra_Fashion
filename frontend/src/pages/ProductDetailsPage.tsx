@@ -260,7 +260,7 @@ export default function ProductDetailsPage() {
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest">
                                             <span className="text-gray-900">Select Size</span>
-                                            {product.sizeGuide && typeof product.sizeGuide !== 'string' && (
+                                            {product.sizeGuide && typeof product.sizeGuide === 'object' && product.sizeGuide._id && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsSizeGuideOpen(true)}
