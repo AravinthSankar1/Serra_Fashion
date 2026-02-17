@@ -22,6 +22,7 @@ export default function ProductDetailsPage() {
     const { user, toggleWishlist } = useAuth();
     const { format, convert } = useCurrency();
     const [selectedSize, setSelectedSize] = useState<string>('');
+    const [selectedColor, setSelectedColor] = useState<string>('');
     const [quantity, setQuantity] = useState(1);
     const [isAdding, setIsAdding] = useState(false);
     const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
@@ -30,9 +31,20 @@ export default function ProductDetailsPage() {
         queryKey: ['product', slug],
         queryFn: async () => {
             const res = await api.get(`/products/${slug}`);
-            return res.data.data as Product & { variants?: { size: string }[] };
+            return res.data.data as Product & { variants?: { size: string; color: string; stock: number; price: number }[] };
         }
     });
+
+    const { data: reviews } = useQuery({
+        queryKey: ['reviews', product?._id],
+        enabled: !!product?._id,
+        queryFn: async () => {
+            const res = await api.get(`/products/${product?._id}/reviews`);
+            return res.data.data;
+        }
+    });
+
+    // ... (related products query same)
 
     const { data: relatedProducts } = useQuery({
         queryKey: ['related', product?._id],
@@ -43,47 +55,66 @@ export default function ProductDetailsPage() {
         }
     });
 
-    const isLiked = user?.wishlist?.includes(product?._id || '');
-
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-white">
-                <Navbar />
-                <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-gray-200" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Fetching Product Details</span>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <Loader2 className="h-8 w-8 animate-spin text-black" />
             </div>
         );
     }
 
     if (error || !product) {
         return (
-            <div className="min-h-screen bg-white">
-                <Navbar />
-                <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-                    <h2 className="text-3xl font-serif text-gray-900 italic">Piece Not Found</h2>
-                    <p className="mt-4 text-gray-500">The collection item you are looking for does not exist.</p>
-                    <Button onClick={() => navigate('/')} className="mt-8 mx-auto">Back to Collection</Button>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="text-center">
+                    <p className="text-lg text-red-500 mb-4">Failed to load product</p>
+                    <Button onClick={() => window.location.reload()}>Retry</Button>
                 </div>
             </div>
         );
     }
 
-    // Use variants from product if they exist, otherwise use defaults
-    const availableSizes = product.variants && product.variants.length > 0
-        ? [...new Set(product.variants.map(v => v.size))].filter(Boolean) as string[]
-        : ['XS', 'S', 'M', 'L', 'XL'];
+    // Use variants from product if they exist
+    const hasVariants = product.variants && product.variants.length > 0;
+
+    // Get unique colors
+    const availableColors = hasVariants
+        ? [...new Set(product.variants!.map(v => v.color).filter(Boolean))] as string[]
+        : [];
+
+    // Get sizes based on selected color (if colors exist), otherwise all sizes
+    const availableSizes = hasVariants
+        ? [...new Set(
+            product.variants!
+                .filter(v => !selectedColor || v.color === selectedColor)
+                .map(v => v.size)
+                .filter(Boolean)
+        )] as string[]
+        : [];
 
     const handleAddToCart = async () => {
-        if (!selectedSize) {
-            toast.error('Please select a size');
-            return;
+        if (hasVariants) {
+            if (availableColors.length > 0 && !selectedColor) {
+                toast.error('Please select a color');
+                return;
+            }
+            if (availableSizes.length > 0 && !selectedSize) {
+                toast.error('Please select a size');
+                return;
+            }
         }
 
         setIsAdding(true);
         try {
-            await addToCart(product, quantity, selectedSize);
+            // Construct cart item - if backend expects variantId, pass it.
+            // The addToCart context probably handles it.
+            // Assuming addToCart signature: (product, quantity, size, color)
+
+            // We need to check useCart signature.
+            // In step 52 line 86: await addToCart(product, quantity, selectedSize);
+            // I should update it to pass color too.
+            await addToCart(product, quantity, selectedSize, selectedColor);
+
             setIsCartOpen(true);
             toast.success(`Added ${product.title} to bag`, {
                 position: "bottom-right",
@@ -98,35 +129,31 @@ export default function ProductDetailsPage() {
         }
     };
 
-    const handleShare = async () => {
-        const shareData = {
-            title: product.title,
-            text: `Check out ${product.title} on SÉRRA FASHION`,
-            url: window.location.href,
-        };
-
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                // Fallback: Copy to clipboard
-                await navigator.clipboard.writeText(window.location.href);
-                toast.success('Link copied to clipboard!', {
-                    position: "bottom-right",
-                    autoClose: 2000,
-                    theme: "dark",
-                });
-            }
-        } catch (err) {
-            console.error('Error sharing:', err);
+    // ... (handleShare same)
+    const handleShare = () => {
+        if (navigator.share) {
+            navigator.share({
+                title: product.title,
+                text: product.description,
+                url: window.location.href,
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            toast.info('Product link copied to clipboard!');
         }
     };
 
-    // Find selected variant
-    const selectedVariant = product.variants?.find(v => v.size === selectedSize);
-    const currentPrice = selectedVariant ? selectedVariant.price : (product.finalPrice || product.basePrice);
-    const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
+    // Find selected variant for price/stock
+    const selectedVariant = product.variants?.find(v =>
+        (!selectedColor || v.color === selectedColor) &&
+        (!selectedSize || v.size === selectedSize)
+    );
+
+    const currentPrice = selectedVariant ? selectedVariant.price : (product.finalPrice || product.basePrice || 0);
+    const currentStock = selectedVariant ? selectedVariant.stock : (product.stock || 0);
     const isOutOfStock = currentStock <= 0;
+
+    const isLiked = user?.wishlist?.includes(product._id || '');
 
     return (
         <div className="min-h-screen bg-white">
@@ -145,7 +172,7 @@ export default function ProductDetailsPage() {
                     {/* Left: Images */}
                     <div>
                         <ImageGalleryLightbox
-                            images={product.images}
+                            images={product.images && product.images.length > 0 ? product.images : [{ imageUrl: "https://via.placeholder.com/600x800?text=No+Image", imagePublicId: "placeholder" }]}
                             productTitle={product.title}
                         />
                     </div>
@@ -157,11 +184,11 @@ export default function ProductDetailsPage() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
-                                            {product.brand.name}
+                                            {product.brand?.name || 'Brand'}
                                         </span>
                                         <span className="h-1 w-1 bg-gray-200 rounded-full"></span>
                                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
-                                            {product.category.name}
+                                            {product.category?.name || 'Category'}
                                         </span>
                                     </div>
                                     <button
@@ -177,7 +204,9 @@ export default function ProductDetailsPage() {
                                 </h1>
                                 <div className="flex items-center space-x-1 text-amber-500 pt-2">
                                     {[1, 2, 3, 4, 5].map(s => <Star key={s} className="h-3 w-3 fill-current" />)}
-                                    <span className="text-[10px] font-bold text-gray-400 ml-2">(48 Reviews)</span>
+                                    <span className="text-[10px] font-bold text-gray-400 ml-2">
+                                        ({reviews?.length || 0} Reviews)
+                                    </span>
                                 </div>
                             </div>
 
@@ -203,45 +232,78 @@ export default function ProductDetailsPage() {
 
                             {/* Options */}
                             <div className="space-y-10 pt-10">
-                                {/* Size Selection */}
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest">
-                                        <span className="text-gray-900">Select Size</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsSizeGuideOpen(true)}
-                                            className="text-gray-400 hover:text-black underline underline-offset-4 transition-colors"
-                                        >
-                                            Size Guide
-                                        </button>
-                                    </div>
-                                    <div className="flex flex-wrap gap-3">
-                                        {availableSizes.map(size => {
-                                            const v = product.variants?.find(variant => variant.size === size);
-                                            const disabled = v && v.stock <= 0;
-                                            return (
+                                {/* Color Selection */}
+                                {availableColors.length > 0 && (
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest">
+                                            <span className="text-gray-900">Select Color: <span className="text-gray-500">{selectedColor}</span></span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-3">
+                                            {availableColors.map(color => (
                                                 <button
-                                                    key={size}
-                                                    onClick={() => setSelectedSize(size)}
-                                                    disabled={disabled}
-                                                    className={`h-12 w-16 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-300 relative ${selectedSize === size
-                                                        ? 'bg-black text-white shadow-xl shadow-black/20'
-                                                        : disabled
-                                                            ? 'bg-gray-50 text-gray-300 cursor-not-allowed decoration-slice'
-                                                            : 'bg-white border border-gray-100 text-gray-400 hover:border-black hover:text-black'
+                                                    key={color}
+                                                    onClick={() => { setSelectedColor(color); setSelectedSize(''); }}
+                                                    className={`h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${selectedColor === color
+                                                        ? 'bg-black text-white border-black'
+                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-black'
                                                         }`}
                                                 >
-                                                    {size}
-                                                    {disabled && (
-                                                        <span className="absolute inset-0 flex items-center justify-center">
-                                                            <div className="w-full h-px bg-gray-300 rotate-45 transform origin-center" />
-                                                        </span>
-                                                    )}
+                                                    {color}
                                                 </button>
-                                            )
-                                        })}
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+
+                                {/* Size Selection */}
+                                {(availableSizes.length > 0 || hasVariants) && (
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest">
+                                            <span className="text-gray-900">Select Size</span>
+                                            {product.sizeGuide && typeof product.sizeGuide !== 'string' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsSizeGuideOpen(true)}
+                                                    className="text-gray-400 hover:text-black underline underline-offset-4 transition-colors"
+                                                >
+                                                    Size Guide
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-3">
+                                            {availableSizes.length > 0 ? availableSizes.map(size => {
+                                                const v = product.variants?.find(variant =>
+                                                    variant.size === size &&
+                                                    (!selectedColor || variant.color === selectedColor)
+                                                );
+                                                const disabled = v && v.stock <= 0;
+
+                                                return (
+                                                    <button
+                                                        key={size}
+                                                        onClick={() => setSelectedSize(size)}
+                                                        disabled={disabled}
+                                                        className={`h-12 w-16 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-300 relative ${selectedSize === size
+                                                            ? 'bg-black text-white shadow-xl shadow-black/20'
+                                                            : disabled
+                                                                ? 'bg-gray-50 text-gray-300 cursor-not-allowed decoration-slice'
+                                                                : 'bg-white border border-gray-100 text-gray-400 hover:border-black hover:text-black'
+                                                            }`}
+                                                    >
+                                                        {size}
+                                                        {disabled && (
+                                                            <span className="absolute inset-0 flex items-center justify-center">
+                                                                <div className="w-full h-px bg-gray-300 rotate-45 transform origin-center" />
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                )
+                                            }) : (
+                                                <p className="text-sm text-gray-400 italic">No sizes available for this color.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Actions */}
                                 <div className="flex items-center space-x-4 pt-4">

@@ -134,6 +134,9 @@ export interface Order {
     orderStatus: OrderStatus;
     paymentMethod: string;
     paymentId?: string;
+    subtotal: number;
+    discount: number;
+    promoCode?: string;
     statusHistory: {
         status: string;
         timestamp: string;

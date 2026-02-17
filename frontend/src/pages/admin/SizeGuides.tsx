@@ -74,8 +74,8 @@ export default function AdminSizeGuides() {
                 imagePublicId: res.data.data.imagePublicId
             }));
             toast.success('Image uploaded');
-        } catch (error) {
-            toast.error('Upload failed');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Upload failed');
         } finally {
             setIsUploading(false);
         }

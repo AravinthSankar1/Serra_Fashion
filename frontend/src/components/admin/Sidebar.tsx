@@ -7,7 +7,8 @@ import {
     Users,
     Package,
     LogOut,
-    ChevronRight
+    ChevronRight,
+    Image as ImageIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils';
@@ -21,6 +22,7 @@ const navItems = [
     { title: 'Promos', icon: Tag, path: '/admin/promos' },
     { title: 'Size Guides', icon: Layers, path: '/admin/size-guides' },
     { title: 'Users', icon: Users, path: '/admin/users' },
+    { title: 'Banners', icon: ImageIcon, path: '/admin/banners' },
 ];
 
 export default function AdminSidebar() {
@@ -75,7 +77,7 @@ export default function AdminSidebar() {
                         )}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-gray-900 truncate">{user?.name}</p>
+                        <p className="text-xs font-bold text-gray-900 truncate">{user?.name || 'User'}</p>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">{user?.role}</p>
                     </div>
                 </div>

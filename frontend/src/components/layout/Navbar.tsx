@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, useCart } from '../../context';
-import { ShoppingBag, User as UserIcon, Search, Heart, Menu, X, LogOut, Settings } from 'lucide-react';
+import { ShoppingBag, User as UserIcon, Search, Heart, Menu, X, LogOut, Settings, Package } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CartDrawer from './CartDrawer';
@@ -46,6 +46,9 @@ export default function Navbar() {
                         <Link to="/collection" className="text-sm font-medium text-gray-700 hover:text-black">Collection</Link>
                         <Link to="/men" className="text-sm font-medium text-gray-700 hover:text-black">Men</Link>
                         <Link to="/women" className="text-sm font-medium text-gray-700 hover:text-black">Women</Link>
+                        {user && (
+                            <Link to="/orders" className="text-sm font-medium text-gray-700 hover:text-black">My Orders</Link>
+                        )}
                         {user?.role === 'admin' && (
                             <Link to="/admin" className="text-sm font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
                                 <Settings className="h-3.5 w-3.5" />
@@ -62,6 +65,12 @@ export default function Navbar() {
                         <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="p-2 text-gray-400 hover:text-black">
                             <Search className="h-5 w-5" />
                         </button>
+
+                        {user && (
+                            <Link to="/orders" className="hidden sm:block p-2 text-gray-400 hover:text-black" title="My Orders">
+                                <Package className="h-5 w-5" />
+                            </Link>
+                        )}
 
                         <Link to="/wishlist" className="hidden sm:block p-2 text-gray-400 hover:text-black relative">
                             <Heart className="h-5 w-5" />

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../api/client";
 
 const slides = [
     {
@@ -26,15 +28,36 @@ export default function HeroSlider() {
     const [current, setCurrent] = useState(0);
     const navigate = useNavigate();
 
+    const { data: banners, isLoading } = useQuery({
+        queryKey: ['banners'],
+        queryFn: async () => {
+            const res = await api.get('/banners');
+            return res.data.data;
+        }
+    });
+
+    const activeSlides = banners && banners.length > 0
+        ? banners.map((b: any) => ({
+            id: b._id,
+            image: b.image.imageUrl,
+            title: b.title,
+            description: b.description,
+            cta: b.cta,
+            link: b.link
+        }))
+        : slides;
+
     useEffect(() => {
         const timer = setInterval(() => {
-            setCurrent((prev) => (prev + 1) % slides.length);
+            setCurrent((prev) => (prev + 1) % activeSlides.length);
         }, 6000);
         return () => clearInterval(timer);
-    }, []);
+    }, [activeSlides.length]);
 
-    const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
-    const prevSlide = () => setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
+    const nextSlide = () => setCurrent((prev) => (prev + 1) % activeSlides.length);
+    const prevSlide = () => setCurrent((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
+
+    if (isLoading) return <div className="h-[80vh] w-full bg-gray-100 animate-pulse" />;
 
     return (
         <section className="relative h-[80vh] w-full overflow-hidden bg-gray-100">
@@ -48,8 +71,8 @@ export default function HeroSlider() {
                     className="absolute inset-0"
                 >
                     <img
-                        src={slides[current].image}
-                        alt={slides[current].title}
+                        src={activeSlides[current].image}
+                        alt={activeSlides[current].title}
                         className="w-full h-full object-cover animate-float"
                     />
                     <div className="absolute inset-0 bg-black/30" />
@@ -62,7 +85,7 @@ export default function HeroSlider() {
                                 transition={{ delay: 0.2 }}
                                 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 reveal-text"
                             >
-                                {slides[current].title}
+                                {activeSlides[current].title}
                             </motion.h1>
                             <motion.p
                                 initial={{ y: 20, opacity: 0 }}
@@ -70,16 +93,16 @@ export default function HeroSlider() {
                                 transition={{ delay: 0.4 }}
                                 className="text-xl text-white/90 mb-10"
                             >
-                                {slides[current].description}
+                                {activeSlides[current].description}
                             </motion.p>
                             <motion.button
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.6 }}
-                                onClick={() => navigate(slides[current].link)}
+                                onClick={() => navigate(activeSlides[current].link)}
                                 className="bg-white text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-black hover:text-white transition-all shadow-xl"
                             >
-                                {slides[current].cta}
+                                {activeSlides[current].cta}
                             </motion.button>
                         </div>
                     </div>
@@ -100,7 +123,7 @@ export default function HeroSlider() {
             </button>
 
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3">
-                {slides.map((_, i) => (
+                {activeSlides.map((_: any, i: number) => (
                     <button
                         key={i}
                         onClick={() => setCurrent(i)}

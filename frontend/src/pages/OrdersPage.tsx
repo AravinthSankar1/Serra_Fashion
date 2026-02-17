@@ -102,8 +102,14 @@ export default function OrdersPage() {
                                             <div className="space-y-3">
                                                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
                                                     <span>Subtotal</span>
-                                                    <span>{format(convert(order.totalAmount))}</span>
+                                                    <span>{format(convert(order.subtotal || order.totalAmount))}</span>
                                                 </div>
+                                                {order.discount > 0 && (
+                                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-red-500">
+                                                        <span>Discount {order.promoCode && `(${order.promoCode})`}</span>
+                                                        <span>-{format(convert(order.discount))}</span>
+                                                    </div>
+                                                )}
                                                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-emerald-500">
                                                     <span>Shipping</span>
                                                     <span>Complimentary</span>

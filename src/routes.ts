@@ -12,6 +12,7 @@ import promoRoutes from './modules/promo/promo.routes';
 import locationRoutes from './modules/location/location.routes';
 import currencyRoutes from './modules/currency/currency.routes';
 import sizeGuideRoutes from './modules/sizeGuide/sizeGuide.routes';
+import bannerRoutes from './modules/banner/banner.routes';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use('/promos', promoRoutes);
 router.use('/locations', locationRoutes);
 router.use('/currency', currencyRoutes);
 router.use('/size-guides', sizeGuideRoutes);
+router.use('/banners', bannerRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

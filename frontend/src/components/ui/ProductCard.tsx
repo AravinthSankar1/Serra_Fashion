@@ -81,7 +81,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 <div className="flex justify-between items-start gap-2">
                     <div className="flex-1 min-w-0">
                         <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 truncate">
-                            {product.category?.name || 'Curated'}
+                            {product.brand?.name || product.category?.name || 'Serra'}
                         </p>
                         <Link
                             to={`/product/${product.slug}`}

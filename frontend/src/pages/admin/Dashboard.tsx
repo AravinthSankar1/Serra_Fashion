@@ -62,7 +62,7 @@ export default function AdminDashboard() {
                             <span className="text-sm font-semibold uppercase tracking-wider">Admin Systems Online</span>
                         </div>
                         <h1 className="text-4xl md:text-5xl font-serif mb-4 leading-tight">
-                            Welcome back, <span className="italic">{user?.name?.split(' ')[0] || 'Admin'}</span>
+                            Welcome back, <span className="italic">{user?.name && user.name !== 'null' ? user.name.split(' ')[0] : 'Admin'}</span>
                         </h1>
                         <p className="text-gray-400 text-lg font-light leading-relaxed">
                             Your premium fashion management suite is fully synchronized. Monitor metrics and manage your inventory with precision.
