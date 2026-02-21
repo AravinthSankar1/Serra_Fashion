@@ -26,7 +26,10 @@ export const getDashboardStats = async (vendorId?: string | any) => {
         lowStockProducts,
         salesAnalytics,
         topSellingProducts,
-        recentUsers
+        recentUsers,
+        pendingProducts,
+        pendingBrands,
+        pendingCategories
     ] = await Promise.all([
         Product.countDocuments(vendorMatch),
         Category.countDocuments(vendorId ? { createdBy: vendorId } : {}),
@@ -108,7 +111,10 @@ export const getDashboardStats = async (vendorId?: string | any) => {
         ]),
         vendorId ?
             Promise.resolve([]) :
-            User.find().sort({ createdAt: -1 }).limit(5).select('name email profilePicture createdAt role')
+            User.find().sort({ createdAt: -1 }).limit(5).select('name email profilePicture createdAt role'),
+        Product.countDocuments({ ...vendorMatch, approvalStatus: 'PENDING' }),
+        Brand.countDocuments({ ...(vendorId ? { createdBy: vendorId } : {}), approvalStatus: 'PENDING' }),
+        Category.countDocuments({ ...(vendorId ? { createdBy: vendorId } : {}), approvalStatus: 'PENDING' })
     ]);
 
     const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
@@ -120,7 +126,10 @@ export const getDashboardStats = async (vendorId?: string | any) => {
             totalBrands,
             totalUsers,
             totalOrders: totalOrdersCount,
-            totalRevenue
+            totalRevenue,
+            pendingProducts,
+            pendingBrands,
+            pendingCategories
         },
         charts: {
             salesAnalytics,

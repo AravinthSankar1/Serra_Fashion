@@ -1,9 +1,12 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IBrand extends Document {
     name: string;
     logo?: { imageUrl: string; imagePublicId: string };
     isActive: boolean;
+    createdBy?: Types.ObjectId | string;
+    approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -20,7 +23,7 @@ const brandSchema = new Schema<IBrand>(
         approvalStatus: {
             type: String,
             enum: ['PENDING', 'APPROVED', 'REJECTED'],
-            default: 'APPROVED'
+            default: 'PENDING'
         },
         rejectionReason: String,
     },

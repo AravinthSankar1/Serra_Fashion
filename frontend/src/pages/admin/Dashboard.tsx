@@ -6,38 +6,59 @@ import { cn } from '../../utils';
 import { useAuth } from '../../context/AuthContext';
 
 interface Stats {
-    totalProducts: number;
-    totalCategories: number;
-    totalBrands: number;
-    totalUsers: number;
-    totalOrders: number;
-    totalRevenue: number;
-    recentOrders: any[];
-    lowStockProducts: any[];
-    salesAnalytics: { _id: string; revenue: number; count: number }[];
+    overview: {
+        totalProducts: number;
+        totalCategories: number;
+        totalBrands: number;
+        totalUsers: number;
+        totalOrders: number;
+        totalRevenue: number;
+        pendingProducts: number;
+        pendingBrands: number;
+        pendingCategories: number;
+    };
+    lists: {
+        recentOrders: any[];
+        lowStockProducts: any[];
+        topSellingProducts: any[];
+        recentUsers: any[];
+    };
+    charts: {
+        salesAnalytics: { _id: string; revenue: number; count: number }[];
+    };
 }
 
 export default function AdminDashboard() {
     const { user } = useAuth();
+    const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+
     const { data: stats, isLoading } = useQuery({
         queryKey: ['admin-stats'],
         queryFn: async () => {
             const res = await api.get('/admin/stats');
             return res.data.data as Stats;
         },
-        refetchInterval: 10000, // Refresh every 10 seconds for real-time feel
+        refetchInterval: 10000,
     });
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val);
     };
 
+    const overview = stats?.overview;
+
     const cards = [
-        { title: 'Total Revenue', value: formatCurrency(stats?.totalRevenue || 0), icon: TrendingUp, color: 'emerald' },
-        { title: 'Total Orders', value: stats?.totalOrders || 0, icon: ShoppingBag, color: 'blue' },
-        { title: 'Total Users', value: stats?.totalUsers || 0, icon: Users, color: 'purple' },
-        { title: 'Total Products', value: stats?.totalProducts || 0, icon: Layers, color: 'amber' },
-    ];
+        { title: 'Total Revenue', value: formatCurrency(overview?.totalRevenue || 0), icon: TrendingUp, color: 'emerald' },
+        { title: 'Total Orders', value: overview?.totalOrders || 0, icon: ShoppingBag, color: 'blue' },
+        { title: 'Total Users', value: overview?.totalUsers || 0, icon: Users, color: 'purple', hidden: !isAdmin },
+        { title: 'Total Products', value: overview?.totalProducts || 0, icon: Layers, color: 'amber' },
+    ].filter(card => !card.hidden);
+
+    const pendingStats = [
+        { title: 'Pending Products', count: overview?.pendingProducts || 0, link: '/admin/products?status=PENDING' },
+        { title: 'Pending Brands', count: overview?.pendingBrands || 0, link: '/admin/brands?status=PENDING' },
+        { title: 'Pending Categories', count: overview?.pendingCategories || 0, link: '/admin/categories?status=PENDING' },
+    ].filter(s => s.count > 0);
 
     if (isLoading) {
         return (
@@ -131,6 +152,45 @@ export default function AdminDashboard() {
                     </motion.div>
                 ))}
             </div>
+
+            {/* Pending Approvals Alert */}
+            {pendingStats.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-amber-50 border border-amber-100 p-8 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6"
+                >
+                    <div className="flex items-center space-x-6">
+                        <div className="h-16 w-16 bg-amber-200/50 rounded-2xl flex items-center justify-center">
+                            <Layers className="h-8 w-8 text-amber-700" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-serif font-bold text-amber-900">
+                                {isAdmin ? 'Pending Approvals Required' : 'Submission Status Update'}
+                            </h2>
+                            <p className="text-sm text-amber-700 font-medium">
+                                {isAdmin
+                                    ? 'New vendor submissions are awaiting your review and authorization.'
+                                    : 'Some of your recently submitted items are currently in the review process.'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        {pendingStats.map(stat => (
+                            <a
+                                key={stat.title}
+                                href={stat.link}
+                                className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-amber-100 flex items-center space-x-3 hover:bg-black hover:text-white transition-all group"
+                            >
+                                <span className="text-xs font-bold uppercase tracking-widest">{stat.title}</span>
+                                <span className="h-6 w-6 bg-amber-100 rounded-lg flex items-center justify-center text-[10px] font-black text-amber-700 group-hover:bg-white/20 group-hover:text-white">
+                                    {stat.count}
+                                </span>
+                            </a>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
 
             {/* Quick Actions / Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
