@@ -55,7 +55,7 @@ export default function WishlistPage() {
                         <div className="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Heart className="h-8 w-8 text-gray-300" />
                         </div>
-                        <h2 className="text-2xl font-serif text-gray-900 mb-2 italic">Your wishlist is empty</h2>
+                        <h2 className="text-2xl font-serif text-gray-900 mb-2">Your wishlist is empty</h2>
                         <p className="text-gray-400 mb-8 max-w-xs mx-auto">Save items you love to find them easily later.</p>
                         <Link to="/" className="inline-flex items-center space-x-2 bg-black text-white px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-800 transition-all group">
                             <span>Start Exploring</span>

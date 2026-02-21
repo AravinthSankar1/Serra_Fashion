@@ -2,26 +2,37 @@ import nodemailer from 'nodemailer';
 import axios from 'axios';
 import { config } from '../config';
 
-const transporter = nodemailer.createTransport({
-    host: config.email.host,
-    port: config.email.port,
-    secure: Number(config.email.port) === 465, // True for 465, false for 587
-    auth: {
-        user: config.email.auth.user,
-        pass: config.email.auth.pass,
-    },
-    tls: {
-        // Do not fail on invalid certs
-        rejectUnauthorized: false
-    },
-    pool: true, // Use connection pooling
-    family: 4, // Force IPv4
-    connectionTimeout: 20000,
-    greetingTimeout: 20000,
-    socketTimeout: 30000,
-    logger: true,
-    debug: true,
-} as any);
+const getTransporterConfig = () => {
+    const baseConfig: any = {
+        auth: {
+            user: config.email.auth.user,
+            pass: config.email.auth.pass,
+        },
+        tls: {
+            rejectUnauthorized: false
+        },
+        pool: true,
+        connectionTimeout: 20000,
+        logger: true,
+        debug: true,
+    };
+
+    if (config.email.host === 'smtp.gmail.com') {
+        return {
+            ...baseConfig,
+            service: 'gmail'
+        };
+    }
+
+    return {
+        ...baseConfig,
+        host: config.email.host,
+        port: config.email.port,
+        secure: Number(config.email.port) === 465,
+    };
+};
+
+const transporter = nodemailer.createTransport(getTransporterConfig());
 
 // Verify connection configuration
 transporter.verify((error, success) => {
@@ -80,13 +91,15 @@ const getEmailTemplate = (title: string, subtitle: string, content: string, ctaT
 </html>
 `;
 
-// OTP Functions
 export const sendEmailOtp = async (to: string, otp: string) => {
     if (!config.email.auth.user || !config.email.auth.pass) {
-        console.warn(`[EMAIL] SMTP credentials missing. OTP: ${otp}`);
-        // Only return true in development to avoid blocking flows. 
-        // In production/test, we want to know it failed.
-        return config.env === 'development';
+        console.warn(`[EMAIL] SMTP credentials missing. NODE_ENV: ${config.env}`);
+        // Return true in development to allow flow testing, but false in production to signal failure
+        if (config.env === 'development') {
+            console.log(`[DEV-MODE] OTP for ${to}: ${otp}`);
+            return true;
+        }
+        return false;
     }
 
     const html = getEmailTemplate(
@@ -101,7 +114,7 @@ export const sendEmailOtp = async (to: string, otp: string) => {
 
     try {
         const info = await transporter.sendMail({
-            from: config.email.from,
+            from: config.email.from || config.email.auth.user,
             to,
             subject: `${otp} is your verification code`,
             html,
@@ -109,11 +122,12 @@ export const sendEmailOtp = async (to: string, otp: string) => {
         console.log(`[EMAIL] Sent successfully: ${info.messageId}`);
         return true;
     } catch (error: any) {
-        console.error('[EMAIL] SMTP Error:', {
+        console.error('[EMAIL] SMTP Error Details:', {
             code: error.code,
             command: error.command,
             response: error.response,
-            message: error.message
+            message: error.message,
+            stack: error.stack
         });
         return false;
     }
@@ -335,6 +349,65 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
             return true;
         } catch (error: any) {
             console.error('[WHATSAPP] Admin alert failed:', error.response?.data);
+            return false;
+        }
+    }
+
+    return false;
+};
+
+// Vendor Submission Alert
+export const sendVendorSubmissionAlert = async (type: 'email' | 'whatsapp', itemType: string, itemName: string, vendorName: string) => {
+    const message = `[ADMIN] New Vendor Submission!\nVendor: ${vendorName}\nItem: ${itemName} (${itemType})`;
+
+    if (type === 'email' && config.admin.email) {
+        const html = getEmailTemplate(
+            'New Content for Approval',
+            'A vendor has submitted new content that requires your review.',
+            `<div class="order-card">
+                <p><strong>Vendor:</strong> ${vendorName}</p>
+                <p><strong>Item Name:</strong> ${itemName}</p>
+                <p><strong>Type:</strong> ${itemType.toUpperCase()}</p>
+                <p style="margin-top: 16px; font-size: 14px; color: #374151;">Please review this submission in your dashboard to ensure it meets SÉRRA's quality standards.</p>
+            </div>`,
+            'Review Submissions',
+            `${config.frontendUrl}/admin/products`
+        );
+
+        try {
+            await transporter.sendMail({
+                from: config.email.from,
+                to: config.admin.email,
+                subject: `[ADMIN] New ${itemType} Submission from ${vendorName}`,
+                html
+            });
+            console.log('[EMAIL] Admin submission alert sent');
+            return true;
+        } catch (error) {
+            console.error('[EMAIL] Admin submission alert failed:', error);
+            return false;
+        }
+    } else if (type === 'whatsapp' && config.admin.phone) {
+        try {
+            await axios.post(
+                `${config.whatsapp.apiUrl}/${config.whatsapp.phoneNumberId}/messages`,
+                {
+                    messaging_product: 'whatsapp',
+                    to: config.admin.phone,
+                    type: 'text',
+                    text: { body: message }
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${config.whatsapp.accessToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+            console.log('[WHATSAPP] Admin submission alert sent');
+            return true;
+        } catch (error: any) {
+            console.error('[WHATSAPP] Admin submission alert failed:', error.response?.data);
             return false;
         }
     }

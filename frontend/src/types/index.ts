@@ -43,6 +43,9 @@ export interface Brand {
     name: string;
     logo?: { imageUrl: string; imagePublicId: string };
     isActive: boolean;
+    createdBy?: string;
+    approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
 }
 
 export interface Category {
@@ -52,12 +55,17 @@ export interface Category {
     gender: 'MEN' | 'WOMEN' | 'UNISEX';
     image?: { imageUrl: string; imagePublicId: string };
     isActive: boolean;
+    createdBy?: string;
+    approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
 }
 
 export interface ProductVariant {
     _id?: string;
     size?: string;
     color?: string;
+    colorCode?: string;
+    variantImage?: { imageUrl: string; imagePublicId: string };
     sku: string;
     price: number;
     stock: number;
@@ -90,6 +98,9 @@ export interface Product {
     stock: number;
     variants?: ProductVariant[];
     sizeGuide?: SizeGuide | string;
+    vendor?: string | User;
+    approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
 }
 
 export interface CartItem {

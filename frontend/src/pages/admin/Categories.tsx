@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Filter, ChevronDown, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, ChevronDown, Check, CheckCircle, XCircle, Clock } from 'lucide-react';
 import api from '../../api/client';
 import { type Category } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,14 +7,41 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import PremiumLoader from '../../components/ui/PremiumLoader';
 
+import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
+
 export default function AdminCategories() {
+    const { isAdmin } = useAuth();
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeGenderFilter, setActiveGenderFilter] = useState<'ALL' | 'MEN' | 'WOMEN' | 'UNISEX'>('ALL');
+    const [approvalFilter, setApprovalFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
     const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+
+    const handleApprove = async (id: string) => {
+        try {
+            await api.patch(`/categories/${id}/approve`);
+            toast.success('Category approved.');
+            fetchCategories();
+        } catch (error) {
+            toast.error('Failed to approve category.');
+        }
+    };
+
+    const handleReject = async (id: string) => {
+        const reason = prompt('Please provide a reason for rejection:');
+        if (reason === null) return;
+        try {
+            await api.patch(`/categories/${id}/reject`, { reason });
+            toast.warning('Category rejected.');
+            fetchCategories();
+        } catch (error) {
+            toast.error('Failed to reject category.');
+        }
+    };
 
     // Form states
     const [name, setName] = useState('');
@@ -119,50 +146,67 @@ export default function AdminCategories() {
             {/* Table / List */}
             <div className="bg-white rounded-[32px] border border-gray-100 overflow-hidden shadow-sm">
                 <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search categories..."
-                            className="w-full bg-white border border-gray-200 rounded-full py-2.5 pl-11 pr-5 text-sm focus:ring-2 focus:ring-black/5 outline-none"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto scrollbar-hide">
+                        {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map((filter) => (
+                            <button
+                                key={filter}
+                                onClick={() => setApprovalFilter(filter as any)}
+                                className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${approvalFilter === filter
+                                        ? 'bg-black text-white shadow-md'
+                                        : 'text-gray-400 hover:text-black hover:bg-gray-50'
+                                    }`}
+                            >
+                                {filter}
+                            </button>
+                        ))}
                     </div>
-                    <div className="flex items-center space-x-2 relative">
-                        <button
-                            onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                            className={`flex items-center space-x-2 px-4 py-2.5 border rounded-full text-sm font-semibold transition-all ${isFilterDropdownOpen || activeGenderFilter !== 'ALL' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:border-black'}`}
-                        >
-                            <Filter className="h-4 w-4" />
-                            <span>{activeGenderFilter === 'ALL' ? 'Filter' : activeGenderFilter}</span>
-                            <ChevronDown className={`h-3 w-3 transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
 
-                        <AnimatePresence>
-                            {isFilterDropdownOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50"
-                                >
-                                    {['ALL', 'MEN', 'WOMEN', 'UNISEX'].map((g) => (
-                                        <button
-                                            key={g}
-                                            onClick={() => {
-                                                setActiveGenderFilter(g as any);
-                                                setIsFilterDropdownOpen(false);
-                                            }}
-                                            className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors"
-                                        >
-                                            <span className={activeGenderFilter === g ? 'text-black' : 'text-gray-400'}>{g}</span>
-                                            {activeGenderFilter === g && <Check className="h-3 w-3 text-black" />}
-                                        </button>
-                                    ))}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                    <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search categories..."
+                                className="w-full bg-white border border-gray-200 rounded-full py-2.5 pl-11 pr-5 text-sm focus:ring-2 focus:ring-black/5 outline-none"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex items-center space-x-2 relative">
+                            <button
+                                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                                className={`flex items-center space-x-2 px-4 py-2.5 border rounded-full text-sm font-semibold transition-all ${isFilterDropdownOpen || activeGenderFilter !== 'ALL' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:border-black'}`}
+                            >
+                                <Filter className="h-4 w-4" />
+                                <span>{activeGenderFilter === 'ALL' ? 'Filter' : activeGenderFilter}</span>
+                                <ChevronDown className={`h-3 w-3 transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isFilterDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50"
+                                    >
+                                        {['ALL', 'MEN', 'WOMEN', 'UNISEX'].map((g) => (
+                                            <button
+                                                key={g}
+                                                onClick={() => {
+                                                    setActiveGenderFilter(g as any);
+                                                    setIsFilterDropdownOpen(false);
+                                                }}
+                                                className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors"
+                                            >
+                                                <span className={activeGenderFilter === g ? 'text-black' : 'text-gray-400'}>{g}</span>
+                                                {activeGenderFilter === g && <Check className="h-3 w-3 text-black" />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
 
@@ -173,6 +217,7 @@ export default function AdminCategories() {
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Name</th>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Slug</th>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Gender</th>
+                                <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Approval</th>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
                             </tr>
@@ -195,7 +240,8 @@ export default function AdminCategories() {
                                     .filter(c => {
                                         const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
                                         const matchesGender = activeGenderFilter === 'ALL' || c.gender === activeGenderFilter;
-                                        return matchesSearch && matchesGender;
+                                        const matchesApproval = approvalFilter === 'ALL' || c.approvalStatus === approvalFilter;
+                                        return matchesSearch && matchesGender && matchesApproval;
                                     })
                                     .map((cat) => (
                                         <tr key={cat._id} className="hover:bg-gray-50/50 transition-colors">
@@ -221,6 +267,26 @@ export default function AdminCategories() {
                                                 </span>
                                             </td>
                                             <td className="px-8 py-5">
+                                                {cat.approvalStatus === 'APPROVED' && (
+                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-emerald-600 uppercase tracking-widest">
+                                                        <CheckCircle className="h-3 w-3" />
+                                                        <span>Approved</span>
+                                                    </span>
+                                                )}
+                                                {cat.approvalStatus === 'PENDING' && (
+                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-amber-600 uppercase tracking-widest">
+                                                        <Clock className="h-3 w-3" />
+                                                        <span>Request</span>
+                                                    </span>
+                                                )}
+                                                {cat.approvalStatus === 'REJECTED' && (
+                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-red-600 uppercase tracking-widest">
+                                                        <XCircle className="h-3 w-3" />
+                                                        <span>Rejected</span>
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-8 py-5">
                                                 <div className="flex items-center space-x-2">
                                                     <div className={`h-1.5 w-1.5 rounded-full ${cat.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}></div>
                                                     <span className={`text-xs font-semibold ${cat.isActive ? 'text-emerald-600' : 'text-gray-400'}`}>
@@ -228,7 +294,25 @@ export default function AdminCategories() {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-5 text-right space-x-2">
+                                            <td className="px-8 py-5 text-right space-x-2 whitespace-nowrap">
+                                                {isAdmin && cat.approvalStatus === 'PENDING' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleApprove(cat._id)}
+                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                            title="Approve"
+                                                        >
+                                                            <CheckCircle className="h-4 w-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleReject(cat._id)}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="Reject"
+                                                        >
+                                                            <XCircle className="h-4 w-4" />
+                                                        </button>
+                                                    </>
+                                                )}
                                                 <button
                                                     onClick={() => openModal(cat)}
                                                     className="p-2 text-gray-400 hover:text-black hover:bg-white hover:shadow-sm rounded-lg transition-all"
@@ -345,19 +429,31 @@ export default function AdminCategories() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-900">Active Status</p>
-                                        <p className="text-[10px] text-gray-400 font-medium">Visible to customers on frontend</p>
+                                {(!isAdmin && editingCategory && editingCategory.approvalStatus !== 'APPROVED') ? (
+                                    <div className="p-6 bg-amber-50 rounded-[24px] border border-amber-100 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-bold text-amber-900">Awaiting Review</p>
+                                            <p className="text-[10px] text-amber-700 font-medium tracking-wide uppercase">Visibility is restricted until admin approval.</p>
+                                        </div>
+                                        <div className="h-8 w-8 bg-amber-200/50 rounded-full flex items-center justify-center">
+                                            <Clock className="h-4 w-4 text-amber-700" />
+                                        </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsActive(!isActive)}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${isActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                                    >
-                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isActive ? 'right-1' : 'left-1'}`}></div>
-                                    </button>
-                                </div>
+                                ) : (
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900">Active Status</p>
+                                            <p className="text-[10px] text-gray-400 font-medium">Visible to customers on frontend</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsActive(!isActive)}
+                                            className={`w-12 h-6 rounded-full transition-all relative ${isActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isActive ? 'right-1' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+                                )}
 
                                 <Button type="submit" className="w-full h-14" isLoading={isSubmitting}>
                                     {editingCategory ? 'Save Changes' : 'Create Category'}

@@ -3,10 +3,13 @@ import { Category } from './category.model';
 import { ApiResponse } from '../../utils/response';
 import slugify from 'slugify';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../utils/cloudinary';
+import { AuthRequest } from '../../middlewares/auth.middleware';
+import { sendVendorSubmissionAlert } from '../../utils/notification';
 
-export const createCategory = async (req: Request, res: Response) => {
+export const createCategory = async (req: AuthRequest, res: Response) => {
     try {
         const { name, gender, isActive } = req.body;
+        const user = req.user;
         const slug = slugify(name, { lower: true, strict: true });
 
         let categoryImage = { imageUrl: '', imagePublicId: '' };
@@ -14,20 +17,65 @@ export const createCategory = async (req: Request, res: Response) => {
             categoryImage = (await uploadToCloudinary(req.file, 'categories')) as { imageUrl: string; imagePublicId: string };
         }
 
-        const category = await Category.create({
+        const categoryData: any = {
             name,
             slug,
             gender,
             isActive: isActive === 'false' ? false : true,
-            image: categoryImage
-        });
+            image: categoryImage,
+            createdBy: user?.sub
+        };
+
+        // Vendor Logic: Set PENDING
+        if (user?.role === 'vendor') {
+            categoryData.approvalStatus = 'PENDING';
+            categoryData.isActive = false;
+        } else {
+            categoryData.approvalStatus = 'APPROVED';
+        }
+
+        const category = await Category.create(categoryData);
+
+        // Notify Admin
+        if (user?.role === 'vendor') {
+            await sendVendorSubmissionAlert('email', 'category', category.name, user.name || 'Vendor');
+        }
+
         return res.status(201).json(ApiResponse.success(category, 'Category created successfully', 201));
     } catch (error: any) {
         return res.status(400).json(ApiResponse.error(error.message || 'Failed to create category'));
     }
 };
 
-export const getCategories = async (req: Request, res: Response) => {
+export const approveCategory = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const category = await Category.findByIdAndUpdate(id, {
+            approvalStatus: 'APPROVED',
+            isActive: true
+        }, { new: true });
+        return res.status(200).json(ApiResponse.success(category, 'Category approved'));
+    } catch (error: any) {
+        return res.status(400).json(ApiResponse.error(error.message));
+    }
+};
+
+export const rejectCategory = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const category = await Category.findByIdAndUpdate(id, {
+            approvalStatus: 'REJECTED',
+            isActive: false,
+            rejectionReason: reason
+        }, { new: true });
+        return res.status(200).json(ApiResponse.success(category, 'Category rejected'));
+    } catch (error: any) {
+        return res.status(400).json(ApiResponse.error(error.message));
+    }
+};
+
+export const getCategories = async (req: AuthRequest, res: Response) => {
     try {
         const categories = await Category.find().sort({ createdAt: -1 });
         return res.status(200).json(ApiResponse.success(categories));
@@ -36,7 +84,7 @@ export const getCategories = async (req: Request, res: Response) => {
     }
 };
 
-export const updateCategory = async (req: Request, res: Response) => {
+export const updateCategory = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
         const { name, gender, isActive } = req.body;
@@ -70,7 +118,7 @@ export const updateCategory = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteCategory = async (req: Request, res: Response) => {
+export const deleteCategory = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
         const category = await Category.findById(id);

@@ -174,7 +174,7 @@ export default function AdminOrders() {
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
-                                        <span className="inline-flex items-center px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold font-serif italic text-gray-900">
+                                        <span className="inline-flex items-center px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold font-serif text-gray-900">
                                             {order.items.length} {order.items.length === 1 ? 'Piece' : 'Pieces'}
                                         </span>
                                     </td>

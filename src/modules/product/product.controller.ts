@@ -5,6 +5,7 @@ import { ApiResponse } from '../../utils/response';
 import { AuthRequest } from '../../middlewares/auth.middleware';
 import { User } from '../user/user.model';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../utils/cloudinary';
+import { sendVendorSubmissionAlert } from '../../utils/notification';
 
 const parseJson = (val: any) => {
     if (typeof val === 'string') {
@@ -17,8 +18,9 @@ const parseJson = (val: any) => {
     return val;
 };
 
-export const createProduct = asyncHandler(async (req: Request, res: Response) => {
+export const createProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
     const productData = { ...req.body };
+    const user = req.user;
 
     // Parse JSON strings if they come from FormData
     if (productData.variants) productData.variants = parseJson(productData.variants);
@@ -31,8 +33,44 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
         const uploadedImages = await Promise.all(uploadPromises);
         productData.images = [...(productData.images || []), ...uploadedImages];
     }
+
+    // Vendor Logic: Set PENDING and record vendor ID
+    if (user?.role === 'vendor') {
+        productData.approvalStatus = 'PENDING';
+        productData.isPublished = false;
+        productData.vendor = user.sub;
+    } else {
+        productData.approvalStatus = 'APPROVED'; // Admins are auto-approved
+    }
+
     const product = await productService.createProduct(productData);
+
+    // Notify Admin if it's a vendor submission
+    if (user?.role === 'vendor') {
+        await sendVendorSubmissionAlert('email', 'product', product.title, user.name || 'Vendor');
+    }
+
     res.status(201).json(ApiResponse.success(product, 'Product created successfully'));
+});
+
+export const approveProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const product = await productService.updateProduct(id, {
+        approvalStatus: 'APPROVED',
+        isPublished: true
+    });
+    res.status(200).json(ApiResponse.success(product, 'Product approved and published'));
+});
+
+export const rejectProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const product = await productService.updateProduct(id, {
+        approvalStatus: 'REJECTED',
+        isPublished: false,
+        rejectionReason: reason
+    });
+    res.status(200).json(ApiResponse.success(product, 'Product rejected'));
 });
 
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
@@ -142,4 +180,11 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
 
     await productService.deleteProduct(req.params.id);
     res.status(200).json(ApiResponse.success(null, 'Product deleted successfully'));
+});
+export const uploadImage = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.file) {
+        throw { statusCode: 400, message: 'Please upload an image' };
+    }
+    const result = await uploadToCloudinary(req.file, 'products');
+    res.status(200).json(ApiResponse.success(result, 'Image uploaded successfully'));
 });

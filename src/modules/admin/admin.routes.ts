@@ -8,8 +8,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
-router.get('/stats', authenticate, authorize([UserRole.ADMIN]), getDashboardStats);
-router.get('/global-search', authenticate, authorize([UserRole.ADMIN]), globalSearch);
-router.post('/upload', authenticate, authorize([UserRole.ADMIN]), upload.single('image'), uploadFile);
+router.get('/stats', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), getDashboardStats);
+router.get('/global-search', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), globalSearch);
+router.post('/upload', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.single('image'), uploadFile);
 
 export default router;

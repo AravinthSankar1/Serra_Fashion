@@ -2,24 +2,76 @@ import { Request, Response } from 'express';
 import { Brand } from './brand.model';
 import { ApiResponse } from '../../utils/response';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../utils/cloudinary';
+import { AuthRequest } from '../../middlewares/auth.middleware';
+import { sendVendorSubmissionAlert } from '../../utils/notification';
 
-export const createBrand = async (req: Request, res: Response) => {
+export const createBrand = async (req: AuthRequest, res: Response) => {
     try {
         const { name, isActive } = req.body;
+        const user = req.user;
 
         let brandLogo = { imageUrl: '', imagePublicId: '' };
         if (req.file) {
             brandLogo = (await uploadToCloudinary(req.file, 'brands')) as { imageUrl: string; imagePublicId: string };
         }
 
-        const brand = await Brand.create({ name, logo: brandLogo, isActive: isActive === 'false' ? false : true });
+        const brandData: any = {
+            name,
+            logo: brandLogo,
+            isActive: isActive === 'false' ? false : true,
+            createdBy: user?.sub
+        };
+
+        // Vendor Logic: Set PENDING
+        if (user?.role === 'vendor') {
+            brandData.approvalStatus = 'PENDING';
+            brandData.isActive = false;
+        } else {
+            brandData.approvalStatus = 'APPROVED';
+        }
+
+        const brand = await Brand.create(brandData);
+
+        // Notify Admin
+        if (user?.role === 'vendor') {
+            await sendVendorSubmissionAlert('email', 'brand', brand.name, user.name || 'Vendor');
+        }
+
         return res.status(201).json(ApiResponse.success(brand, 'Brand created successfully', 201));
     } catch (error: any) {
         return res.status(400).json(ApiResponse.error(error.message));
     }
 };
 
-export const getBrands = async (req: Request, res: Response) => {
+export const approveBrand = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const brand = await Brand.findByIdAndUpdate(id, {
+            approvalStatus: 'APPROVED',
+            isActive: true
+        }, { new: true });
+        return res.status(200).json(ApiResponse.success(brand, 'Brand approved'));
+    } catch (error: any) {
+        return res.status(400).json(ApiResponse.error(error.message));
+    }
+};
+
+export const rejectBrand = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const brand = await Brand.findByIdAndUpdate(id, {
+            approvalStatus: 'REJECTED',
+            isActive: false,
+            rejectionReason: reason
+        }, { new: true });
+        return res.status(200).json(ApiResponse.success(brand, 'Brand rejected'));
+    } catch (error: any) {
+        return res.status(400).json(ApiResponse.error(error.message));
+    }
+};
+
+export const getBrands = async (req: AuthRequest, res: Response) => {
     try {
         const brands = await Brand.find().sort({ createdAt: -1 });
         return res.status(200).json(ApiResponse.success(brands));
@@ -28,7 +80,7 @@ export const getBrands = async (req: Request, res: Response) => {
     }
 };
 
-export const updateBrand = async (req: Request, res: Response) => {
+export const updateBrand = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
         const { name, isActive } = req.body;
@@ -56,7 +108,7 @@ export const updateBrand = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteBrand = async (req: Request, res: Response) => {
+export const deleteBrand = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
         const brand = await Brand.findById(id);

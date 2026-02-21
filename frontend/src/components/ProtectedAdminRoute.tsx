@@ -6,7 +6,7 @@ const ProtectedAdminRoute = () => {
 
     if (isLoading) return <div>Loading...</div>;
 
-    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin' && user.role !== 'vendor')) {
         return <Navigate to="/login" replace />;
     }
 

@@ -14,11 +14,12 @@ export default function Footer() {
                 {/* Brand & Mission */}
                 <div className="space-y-8">
                     <Link to="/" className="group inline-block">
-                        <h3 className="text-3xl font-serif font-bold tracking-tight text-black italic group-hover:opacity-70 transition-opacity">
-                            SÉRRA FASHION
-                        </h3>
+                        <div className="flex flex-col items-center leading-none">
+                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-3xl text-black group-hover:opacity-70 transition-opacity">SÉRRA</span>
+                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[10px] uppercase text-black group-hover:opacity-70 transition-opacity">FASHION</span>
+                        </div>
                     </Link>
-                    <p className="text-sm text-gray-500 leading-relaxed max-w-xs font-medium italic">
+                    <p className="text-sm text-gray-500 leading-relaxed max-w-xs font-medium">
                         "Curating timeless elegance for the modern individual. Every piece is a testament to premium craftsmanship and minimalist luxury."
                     </p>
                     <div className="flex items-center space-x-4">

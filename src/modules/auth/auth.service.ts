@@ -182,9 +182,14 @@ const generateOtp = (): string => {
 };
 
 export const sendOtp = async (contact: string, type: 'email' | 'whatsapp') => {
+    // Basic validation to prevent 500 errors from invalid email formats
+    if (type === 'email' && !contact.includes('@')) {
+        throw { statusCode: 400, message: 'Invalid email address' };
+    }
+
     let query: any = {};
-    if (type === 'email') query.email = contact;
-    else if (type === 'whatsapp') query.phoneNumber = contact;
+    if (type === 'email') query.email = contact.toLowerCase().trim();
+    else if (type === 'whatsapp') query.phoneNumber = contact.trim();
 
     let user = await User.findOne(query);
 

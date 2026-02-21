@@ -75,7 +75,10 @@ export default function RegisterPage() {
                 <div className="relative z-10 w-full p-24 flex flex-col justify-between text-white">
                     <div>
                         <Link to="/" className="inline-block">
-                            <h1 className="font-serif text-6xl tracking-tight">SÉRRA FASHION</h1>
+                            <div className="flex flex-col items-center leading-none">
+                                <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-6xl text-white">SÉRRA</h1>
+                                <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-xl uppercase text-white">FASHION</span>
+                            </div>
                         </Link>
                         <div className="mt-12 space-y-6">
                             <h2 className="text-3xl font-light">Join the community.</h2>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Globe } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Globe, CheckCircle, XCircle, Clock } from 'lucide-react';
 import PremiumLoader from '../../components/ui/PremiumLoader';
 import api from '../../api/client';
 import type { Brand } from '../../types';
@@ -7,12 +7,39 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 
+import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
+
 export default function AdminBrands() {
+    const { isAdmin } = useAuth();
     const [brands, setBrands] = useState<Brand[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [approvalFilter, setApprovalFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+
+    const handleApprove = async (id: string) => {
+        try {
+            await api.patch(`/brands/${id}/approve`);
+            toast.success('Brand approved.');
+            fetchBrands();
+        } catch (error) {
+            toast.error('Failed to approve brand.');
+        }
+    };
+
+    const handleReject = async (id: string) => {
+        const reason = prompt('Please provide a reason for rejection:');
+        if (reason === null) return;
+        try {
+            await api.patch(`/brands/${id}/reject`, { reason });
+            toast.warning('Brand rejected.');
+            fetchBrands();
+        } catch (error) {
+            toast.error('Failed to reject brand.');
+        }
+    };
 
     // Form states
     const [name, setName] = useState('');
@@ -112,6 +139,21 @@ export default function AdminBrands() {
 
             <div className="bg-white rounded-[32px] border border-gray-100 overflow-hidden shadow-sm">
                 <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50">
+                    <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto scrollbar-hide">
+                        {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map((filter) => (
+                            <button
+                                key={filter}
+                                onClick={() => setApprovalFilter(filter as any)}
+                                className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${approvalFilter === filter
+                                        ? 'bg-black text-white shadow-md'
+                                        : 'text-gray-400 hover:text-black hover:bg-gray-50'
+                                    }`}
+                            >
+                                {filter}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
@@ -130,6 +172,7 @@ export default function AdminBrands() {
                             <tr className="bg-gray-50/30">
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Brand</th>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Logo URL</th>
+                                <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Approval</th>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Integration</th>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
                             </tr>
@@ -152,6 +195,7 @@ export default function AdminBrands() {
                             ) : (
                                 brands
                                     .filter(b => b.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .filter(b => approvalFilter === 'ALL' || b.approvalStatus === approvalFilter)
                                     .map((brand) => (
                                         <tr key={brand._id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-8 py-5">
@@ -172,6 +216,26 @@ export default function AdminBrands() {
                                                 </span>
                                             </td>
                                             <td className="px-8 py-5">
+                                                {brand.approvalStatus === 'APPROVED' && (
+                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-emerald-600 uppercase tracking-widest">
+                                                        <CheckCircle className="h-3 w-3" />
+                                                        <span>Approved</span>
+                                                    </span>
+                                                )}
+                                                {brand.approvalStatus === 'PENDING' && (
+                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-amber-600 uppercase tracking-widest">
+                                                        <Clock className="h-3 w-3" />
+                                                        <span>Request</span>
+                                                    </span>
+                                                )}
+                                                {brand.approvalStatus === 'REJECTED' && (
+                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-red-600 uppercase tracking-widest">
+                                                        <XCircle className="h-3 w-3" />
+                                                        <span>Rejected</span>
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-8 py-5">
                                                 <div className="flex items-center space-x-2">
                                                     <div className={`h-1.5 w-1.5 rounded-full ${brand.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}></div>
                                                     <span className={`text-xs font-semibold ${brand.isActive ? 'text-emerald-600' : 'text-gray-400'}`}>
@@ -179,7 +243,25 @@ export default function AdminBrands() {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-5 text-right space-x-2">
+                                            <td className="px-8 py-5 text-right space-x-2 whitespace-nowrap">
+                                                {isAdmin && brand.approvalStatus === 'PENDING' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleApprove(brand._id)}
+                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                            title="Approve"
+                                                        >
+                                                            <CheckCircle className="h-4 w-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleReject(brand._id)}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="Reject"
+                                                        >
+                                                            <XCircle className="h-4 w-4" />
+                                                        </button>
+                                                    </>
+                                                )}
                                                 <button
                                                     onClick={() => openModal(brand)}
                                                     className="p-2 text-gray-400 hover:text-black hover:bg-white hover:shadow-sm rounded-lg transition-all"
@@ -277,19 +359,31 @@ export default function AdminBrands() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-900">Partnership Status</p>
-                                        <p className="text-[10px] text-gray-400 font-medium">Show brand products in shop</p>
+                                {(!isAdmin && editingBrand && editingBrand.approvalStatus !== 'APPROVED') ? (
+                                    <div className="p-6 bg-amber-50 rounded-[24px] border border-amber-100 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-bold text-amber-900">Awaiting Review</p>
+                                            <p className="text-[10px] text-amber-700 font-medium tracking-wide uppercase">Visibility is restricted until admin approval.</p>
+                                        </div>
+                                        <div className="h-8 w-8 bg-amber-200/50 rounded-full flex items-center justify-center">
+                                            <Clock className="h-4 w-4 text-amber-700" />
+                                        </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsActive(!isActive)}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${isActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                                    >
-                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isActive ? 'right-1' : 'left-1'}`}></div>
-                                    </button>
-                                </div>
+                                ) : (
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900">Partnership Status</p>
+                                            <p className="text-[10px] text-gray-400 font-medium">Show brand products in shop</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsActive(!isActive)}
+                                            className={`w-12 h-6 rounded-full transition-all relative ${isActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isActive ? 'right-1' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+                                )}
 
                                 <Button type="submit" className="w-full h-14" isLoading={isSubmitting}>
                                     {editingBrand ? 'Save Changes' : 'Create Brand'}

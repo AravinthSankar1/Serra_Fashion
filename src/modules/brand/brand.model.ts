@@ -16,6 +16,13 @@ const brandSchema = new Schema<IBrand>(
             imagePublicId: { type: String, default: '' },
         },
         isActive: { type: Boolean, default: true },
+        createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+        approvalStatus: {
+            type: String,
+            enum: ['PENDING', 'APPROVED', 'REJECTED'],
+            default: 'APPROVED'
+        },
+        rejectionReason: String,
     },
     { timestamps: true }
 );

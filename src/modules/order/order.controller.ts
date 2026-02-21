@@ -22,14 +22,19 @@ export const getOrderDetails = asyncHandler(async (req: AuthRequest, res: Respon
     res.status(200).json(ApiResponse.success(order));
 });
 
+import { UserRole } from '../user/user.interface';
+
 // Admin Controllers
 export const getAllOrders = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { page, limit, status, paymentStatus, userId } = req.query;
 
+    const vendorId = req.user!.role === UserRole.VENDOR ? req.user!.sub : undefined;
+
     const filters = {
         status,
         paymentStatus,
-        userId
+        userId,
+        vendorId
     };
 
     const result = await orderService.getAllOrders(filters, Number(page) || 1, Number(limit) || 20);
@@ -58,4 +63,9 @@ export const downloadInvoice = asyncHandler(async (req: AuthRequest, res: Respon
     res.setHeader('Content-Disposition', `attachment; filename=invoice-${order._id}.pdf`);
 
     generateInvoicePDF(order as any, res);
+});
+
+export const cancelOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const order = await orderService.cancelOrderForUser(req.params.id, req.user!.sub);
+    res.status(200).json(ApiResponse.success(order, 'Order cancelled successfully'));
 });

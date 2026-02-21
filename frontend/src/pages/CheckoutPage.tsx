@@ -618,7 +618,7 @@ export default function CheckoutPage() {
             <div className="min-h-screen bg-white">
                 <Navbar />
                 <div className="max-w-7xl mx-auto px-4 py-32 text-center">
-                    <h2 className="text-3xl font-serif italic text-gray-900">Please login to checkout</h2>
+                    <h2 className="text-3xl font-serif text-gray-900">Please login to checkout</h2>
                     <p className="mt-4 text-gray-500">You need to be signed in to complete your purchase.</p>
                     <Button onClick={() => navigate('/login')} className="mt-8 mx-auto">Sign In</Button>
                 </div>
@@ -632,7 +632,7 @@ export default function CheckoutPage() {
             <div className="min-h-screen bg-white">
                 <Navbar />
                 <div className="max-w-7xl mx-auto px-4 py-32 text-center">
-                    <h2 className="text-3xl font-serif italic text-gray-900">Your bag is empty</h2>
+                    <h2 className="text-3xl font-serif text-gray-900">Your bag is empty</h2>
                     <p className="mt-4 text-gray-500">Add some pieces to your collection before checking out.</p>
                     <Button onClick={() => navigate('/')} className="mt-8 mx-auto">Browse Collection</Button>
                 </div>
@@ -993,7 +993,7 @@ export default function CheckoutPage() {
                                 </div>
 
                                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-4 border-t border-gray-100">
-                                    <span className="font-serif italic text-xl">Total</span>
+                                    <span className="font-serif text-xl">Total</span>
                                     <span>{format(convert(finalTotal))}</span>
                                 </div>
                             </div>

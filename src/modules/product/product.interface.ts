@@ -10,6 +10,8 @@ export interface IVariant {
     _id?: Types.ObjectId | string;
     size?: string;
     color?: string;
+    colorCode?: string;
+    variantImage?: { imageUrl: string; imagePublicId: string };
     sku: string;
     price: number;
     stock: number;
@@ -37,6 +39,9 @@ export interface IProduct extends Document {
     stock: number; // Total stock
     variants: IVariant[];
     sizeGuide?: Types.ObjectId | string;
+    vendor?: Types.ObjectId | string;
+    approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
     createdAt: Date;
     updatedAt: Date;
 }

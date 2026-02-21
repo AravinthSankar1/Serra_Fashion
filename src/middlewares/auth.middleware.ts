@@ -8,6 +8,7 @@ export interface AuthRequest extends Request {
     user?: {
         sub: string;
         role: UserRole;
+        name?: string;
     };
     headers: Request['headers'];
     body: any;

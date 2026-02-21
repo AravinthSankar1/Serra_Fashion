@@ -31,7 +31,7 @@ export default function ProductDetailsPage() {
         queryKey: ['product', slug],
         queryFn: async () => {
             const res = await api.get(`/products/${slug}`);
-            return res.data.data as Product & { variants?: { size: string; color: string; stock: number; price: number }[] };
+            return res.data.data as Product;
         }
     });
 
@@ -77,9 +77,18 @@ export default function ProductDetailsPage() {
     // Use variants from product if they exist
     const hasVariants = product.variants && product.variants.length > 0;
 
-    // Get unique colors
+    // Get unique colors with their hex codes
     const availableColors = hasVariants
-        ? [...new Set(product.variants!.map(v => v.color).filter(Boolean))] as string[]
+        ? Array.from(
+            product.variants!
+                .reduce((acc, v) => {
+                    if (v.color && !acc.has(v.color)) {
+                        acc.set(v.color, (v as any).colorCode || '');
+                    }
+                    return acc;
+                }, new Map<string, string>())
+                .entries()
+        ).map(([name, code]) => ({ name, code }))
         : [];
 
     // Get sizes based on selected color (if colors exist), otherwise all sizes
@@ -143,11 +152,20 @@ export default function ProductDetailsPage() {
         }
     };
 
-    // Find selected variant for price/stock
+    // Find selected variant for price/stock/image
     const selectedVariant = product.variants?.find(v =>
         (!selectedColor || v.color === selectedColor) &&
         (!selectedSize || v.size === selectedSize)
     );
+
+    // Image logic: if a color is selected and that variant has an image, put it first
+    const variantSpecificImage = product.variants?.find(v => v.color === selectedColor && v.variantImage?.imageUrl)?.variantImage;
+
+    const displayImages = variantSpecificImage?.imageUrl
+        ? [variantSpecificImage, ...product.images.filter(img => img.imageUrl !== variantSpecificImage.imageUrl)]
+        : product.images && product.images.length > 0
+            ? product.images
+            : [{ imageUrl: "https://via.placeholder.com/600x800?text=No+Image", imagePublicId: "placeholder" }];
 
     const currentPrice = selectedVariant ? selectedVariant.price : (product.finalPrice || product.basePrice || 0);
     const currentStock = selectedVariant ? selectedVariant.stock : (product.stock || 0);
@@ -172,7 +190,8 @@ export default function ProductDetailsPage() {
                     {/* Left: Images */}
                     <div>
                         <ImageGalleryLightbox
-                            images={product.images && product.images.length > 0 ? product.images : [{ imageUrl: "https://via.placeholder.com/600x800?text=No+Image", imagePublicId: "placeholder" }]}
+                            key={selectedColor} // Force re-render gallery when color changes to show variant image
+                            images={displayImages}
                             productTitle={product.title}
                         />
                     </div>
@@ -226,7 +245,7 @@ export default function ProductDetailsPage() {
                                 )}
                             </div>
 
-                            <p className="text-gray-600 text-lg leading-relaxed font-light font-serif italic">
+                            <p className="text-gray-600 text-lg leading-relaxed font-light font-serif">
                                 "{product.description}"
                             </p>
 
@@ -238,17 +257,23 @@ export default function ProductDetailsPage() {
                                         <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest">
                                             <span className="text-gray-900">Select Color: <span className="text-gray-500">{selectedColor}</span></span>
                                         </div>
-                                        <div className="flex flex-wrap gap-3">
+                                        <div className="flex flex-wrap gap-4">
                                             {availableColors.map(color => (
                                                 <button
-                                                    key={color}
-                                                    onClick={() => { setSelectedColor(color); setSelectedSize(''); }}
-                                                    className={`h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${selectedColor === color
-                                                        ? 'bg-black text-white border-black'
-                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-black'
-                                                        }`}
+                                                    key={color.name}
+                                                    onClick={() => { setSelectedColor(color.name); setSelectedSize(''); }}
+                                                    className={`group relative flex flex-col items-center gap-2 transition-all duration-300`}
+                                                    title={color.name}
                                                 >
-                                                    {color}
+                                                    <div className={`h-12 w-12 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${selectedColor === color.name ? 'border-black scale-110 shadow-lg' : 'border-transparent hover:border-gray-300'}`}>
+                                                        <div
+                                                            className="h-10 w-10 rounded-full border border-gray-100 shadow-inner"
+                                                            style={{ backgroundColor: color.code || '#f3f4f6' }}
+                                                        />
+                                                    </div>
+                                                    <span className={`text-[9px] font-black uppercase tracking-tighter transition-colors ${selectedColor === color.name ? 'text-black' : 'text-gray-400'}`}>
+                                                        {color.name}
+                                                    </span>
                                                 </button>
                                             ))}
                                         </div>
@@ -299,7 +324,7 @@ export default function ProductDetailsPage() {
                                                     </button>
                                                 )
                                             }) : (
-                                                <p className="text-sm text-gray-400 italic">No sizes available for this color.</p>
+                                                <p className="text-sm text-gray-400">No sizes available for this color.</p>
                                             )}
                                         </div>
                                     </div>

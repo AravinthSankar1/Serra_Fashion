@@ -144,3 +144,47 @@ export const handlePaymentFailure = asyncHandler(async (req: AuthRequest, res: R
 
     res.status(200).json(ApiResponse.success(null, 'Payment failure logged'));
 });
+
+// Step 3: Verify payment and update EXISTING order (for "Switch to UPI")
+export const verifyPaymentAndUpdateOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        orderId
+    } = req.body;
+
+    // 1. Verify Razorpay signature
+    const body = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSignature = crypto
+        .createHmac('sha256', config.razorpay.keySecret)
+        .update(body.toString())
+        .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+        throw { statusCode: 400, message: 'Invalid payment signature' };
+    }
+
+    // 2. Find and update order
+    const order = await Order.findOne({ _id: orderId, user: req.user!.sub });
+    if (!order) {
+        throw { statusCode: 404, message: 'Order not found' };
+    }
+
+    order.paymentMethod = 'RAZORPAY';
+    order.paymentStatus = PaymentStatus.PAID;
+    order.razorpayOrderId = razorpay_order_id;
+    order.razorpayPaymentId = razorpay_payment_id;
+    order.razorpaySignature = razorpay_signature;
+    order.paymentVerified = true;
+
+    order.statusHistory.push({
+        status: order.orderStatus,
+        timestamp: new Date(),
+        note: `Payment method switched to RAZORPAY. Status updated to PAID.`
+    });
+
+    await order.save();
+
+    res.status(200).json(ApiResponse.success(order, 'Payment verified and order updated'));
+});

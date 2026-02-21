@@ -5,7 +5,7 @@ import api from '../api/client';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Mail, Lock, MessageCircle } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, MessageCircle, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
@@ -127,9 +127,9 @@ export default function LoginPage() {
                 </div>
                 <div className="relative z-10 w-full p-24 flex flex-col justify-between text-white">
                     <div>
-                        <div className="flex flex-col">
-                            <h1 className="font-serif text-6xl tracking-tight">SÉRRA</h1>
-                            <span className="text-xl tracking-[0.3em] font-light mt-2 uppercase">FASHION</span>
+                        <div className="flex flex-col items-center leading-none">
+                            <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-6xl">SÉRRA</h1>
+                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-xl uppercase">FASHION</span>
                         </div>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -148,6 +148,14 @@ export default function LoginPage() {
                     animate={{ opacity: 1, x: 0 }}
                     className="w-full max-w-md space-y-8"
                 >
+                    {/* Back to Dashboard */}
+                    <button
+                        onClick={() => navigate('/')}
+                        className="flex items-center gap-2 text-sm text-gray-400 hover:text-black transition-colors -mb-2 group"
+                    >
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        Back to Store
+                    </button>
                     <div className="space-y-2">
                         <h2 className="text-4xl font-serif text-gray-900">Welcome Back</h2>
                         <p className="text-gray-500">Sign in to manage your account.</p>

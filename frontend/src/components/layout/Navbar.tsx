@@ -49,16 +49,25 @@ export default function Navbar() {
                         {user && (
                             <Link to="/orders" className="text-sm font-medium text-gray-700 hover:text-black">My Orders</Link>
                         )}
-                        {user?.role === 'admin' && (
+                        {(user?.role === 'admin' || user?.role === 'super_admin') && (
                             <Link to="/admin" className="text-sm font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
                                 <Settings className="h-3.5 w-3.5" />
                                 Admin
                             </Link>
                         )}
+                        {user?.role === 'vendor' && (
+                            <Link to="/admin" className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                <Settings className="h-3.5 w-3.5" />
+                                Vendor
+                            </Link>
+                        )}
                     </div>
 
                     <div className="flex-shrink-0 flex items-center">
-                        <Link to="/" className="text-2xl font-serif font-bold tracking-tight">SÉRRA FASHION</Link>
+                        <Link to="/" className="flex flex-col items-center leading-none">
+                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-2xl text-black">SÉRRA</span>
+                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[9px] uppercase text-black">FASHION</span>
+                        </Link>
                     </div>
 
                     <div className="flex items-center space-x-2 md:space-x-4">
@@ -146,7 +155,10 @@ export default function Navbar() {
                             className="fixed inset-y-0 left-0 w-4/5 max-w-sm bg-white z-[70] p-8 shadow-2xl flex flex-col"
                         >
                             <div className="flex items-center justify-between mb-12">
-                                <span className="text-2xl font-serif font-bold italic tracking-tight">SÉRRA FASHION</span>
+                                <Link to="/" className="flex flex-col items-center leading-none">
+                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-2xl text-black">SÉRRA</span>
+                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[9px] uppercase text-black">FASHION</span>
+                                </Link>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2">
                                     <X className="h-6 w-6" />
                                 </button>
@@ -163,10 +175,16 @@ export default function Navbar() {
                                     <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Orders</Link>
                                     <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium sm:hidden">My Wishlist</Link>
 
-                                    {user?.role === 'admin' && (
+                                    {(user?.role === 'admin' || user?.role === 'super_admin') && (
                                         <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-bold text-amber-600 flex items-center gap-2">
                                             <Settings className="h-4 w-4" />
                                             Admin Dashboard
+                                        </Link>
+                                    )}
+                                    {user?.role === 'vendor' && (
+                                        <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-bold text-blue-600 flex items-center gap-2">
+                                            <Settings className="h-4 w-4" />
+                                            Vendor Dashboard
                                         </Link>
                                     )}
 

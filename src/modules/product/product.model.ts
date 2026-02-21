@@ -5,6 +5,11 @@ import slugify from 'slugify';
 const variantSchema = new Schema({
     size: String,
     color: String,
+    colorCode: String,
+    variantImage: {
+        imageUrl: String,
+        imagePublicId: String
+    },
     sku: { type: String, required: true },
     price: { type: Number, required: true },
     stock: { type: Number, required: true, min: 0 },
@@ -32,6 +37,13 @@ const productSchema = new Schema(
         stock: { type: Number, default: 0 },
         variants: [variantSchema],
         sizeGuide: { type: Schema.Types.ObjectId, ref: 'SizeGuide' },
+        vendor: { type: Schema.Types.ObjectId, ref: 'User' },
+        approvalStatus: {
+            type: String,
+            enum: ['PENDING', 'APPROVED', 'REJECTED'],
+            default: 'APPROVED'
+        },
+        rejectionReason: String,
     },
     {
         timestamps: true,

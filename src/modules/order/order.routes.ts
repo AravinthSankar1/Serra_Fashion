@@ -11,6 +11,7 @@ router.post('/', orderController.placeOrder);
 router.get('/my-orders', orderController.getMyOrders);
 router.get('/:id', orderController.getOrderDetails);
 router.get('/:id/invoice', orderController.downloadInvoice);
+router.patch('/:id/cancel', orderController.cancelOrder);
 
 // Validate Coupon
 router.post('/validate-coupon', orderController.validateCoupon);

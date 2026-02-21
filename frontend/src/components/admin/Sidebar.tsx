@@ -31,39 +31,51 @@ export default function AdminSidebar() {
 
     return (
         <aside className="w-64 bg-white border-r border-gray-100 flex flex-col h-screen fixed left-0 top-0 z-40">
-            {/* Logo */}
             <div className="p-8 border-b border-gray-50">
                 <Link to="/" className="group">
-                    <h1 className="font-serif text-2xl font-bold tracking-tight text-black italic">
-                        SÉRRA FASHION <span className="text-[10px] uppercase font-sans tracking-[0.3em] text-gray-400 block mt-1 not-italic">Admin Dashboard</span>
-                    </h1>
+                    <div className="flex flex-col items-center leading-none">
+                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-2xl text-black">SÉRRA</span>
+                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[9px] uppercase text-black">FASHION</span>
+                    </div>
+                    <span className="text-[10px] uppercase font-sans tracking-[0.3em] text-gray-400 block mt-2 text-center">
+                        {user?.role === 'vendor' ? 'Vendor Dashboard' : 'Admin Dashboard'}
+                    </span>
                 </Link>
             </div>
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2 scrollbar-hide">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-4">Menu</p>
-                {navItems.map((item) => {
-                    const isActive = location.pathname === item.path;
-                    return (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={cn(
-                                "flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group",
-                                isActive
-                                    ? "bg-black text-white shadow-lg shadow-black/10"
-                                    : "text-gray-500 hover:bg-gray-50 hover:text-black"
-                            )}
-                        >
-                            <div className="flex items-center space-x-3">
-                                <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "text-gray-400 group-hover:text-black")} />
-                                <span className="text-sm font-semibold tracking-wide">{item.title}</span>
-                            </div>
-                            {isActive && <ChevronRight className="h-4 w-4 text-white/50" />}
-                        </Link>
-                    );
-                })}
+                {navItems
+                    .filter(item => {
+                        if (user?.role === 'vendor') {
+                            const vendorAllowed = ['Dashboard', 'Categories', 'Brands', 'Products', 'Orders', 'Size Guides'];
+                            return vendorAllowed.includes(item.title);
+                        }
+                        return true;
+                    })
+                    .map((item) => {
+                        const isActive = location.pathname === item.path;
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={cn(
+                                    "flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group",
+                                    isActive
+                                        ? "bg-black text-white shadow-lg shadow-black/10"
+                                        : "text-gray-500 hover:bg-gray-50 hover:text-black"
+                                )}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "text-gray-400 group-hover:text-black")} />
+                                    <span className="text-sm font-semibold tracking-wide">{item.title}</span>
+                                </div>
+                                {isActive && <ChevronRight className="h-4 w-4 text-white/50" />}
+                            </Link>
+                        );
+                    })
+                }
             </nav>
 
             {/* User Profile */}

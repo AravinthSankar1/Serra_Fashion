@@ -85,6 +85,11 @@ export const getAllOrders = async (filters: any = {}, page: number = 1, limit: n
     if (filters.paymentStatus) query.paymentStatus = filters.paymentStatus;
     if (filters.userId) query.user = filters.userId;
 
+    if (filters.vendorId) {
+        const vendorProductIds = await Product.find({ vendor: filters.vendorId }).distinct('_id');
+        query['items.product'] = { $in: vendorProductIds };
+    }
+
     // Advanced search (e.g. by order ID or user name - handled by controller passing IDs?) 
     // Usually controller handles complex parsing, service handles direct query fields.
 
@@ -128,4 +133,58 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus, no
 
 export const updatePaymentStatus = async (orderId: string, status: PaymentStatus, paymentId?: string) => {
     return await Order.findByIdAndUpdate(orderId, { paymentStatus: status, paymentId }, { new: true });
+};
+
+export const cancelOrderForUser = async (orderId: string, userId: string) => {
+    const order = await Order.findOne({ _id: orderId, user: userId });
+
+    if (!order) {
+        throw { statusCode: 404, message: 'Order not found' };
+    }
+
+    if (!['PENDING', 'PROCESSING'].includes(order.orderStatus)) {
+        throw { statusCode: 400, message: `Order cannot be cancelled in ${order.orderStatus} status` };
+    }
+
+    // Restore stock
+    for (const item of order.items) {
+        const product = await Product.findById(item.product);
+        if (!product) continue;
+
+        if (item.size && product.variants && product.variants.length > 0) {
+            const variant = product.variants.find((v: IVariant) =>
+                v.size === item.size && (item.color ? v.color === item.color : true)
+            );
+
+            if (variant) {
+                await Product.findOneAndUpdate(
+                    { _id: item.product, "variants._id": variant._id },
+                    {
+                        $inc: {
+                            "variants.$.stock": item.quantity,
+                            stock: item.quantity
+                        }
+                    }
+                );
+            }
+        } else {
+            await Product.findByIdAndUpdate(item.product, {
+                $inc: { stock: item.quantity }
+            });
+        }
+    }
+
+    order.orderStatus = 'CANCELLED' as OrderStatus;
+    order.statusHistory.push({
+        status: 'CANCELLED' as OrderStatus,
+        timestamp: new Date(),
+        note: 'Order cancelled by customer'
+    });
+
+    await order.save();
+
+    // Emit event
+    (eventBus as any).emit(Events.ORDER_STATUS_UPDATED, { orderId: order._id, newStatus: 'CANCELLED' });
+
+    return order;
 };

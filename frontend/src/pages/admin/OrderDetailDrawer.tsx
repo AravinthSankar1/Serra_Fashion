@@ -161,7 +161,7 @@ export default function OrderDetailDrawer({ order, isOpen, onClose }: OrderDetai
                                                     {new Date(entry.timestamp).toLocaleString()}
                                                 </p>
                                                 {entry.note && (
-                                                    <p className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded-lg italic">
+                                                    <p className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded-lg">
                                                         {entry.note}
                                                     </p>
                                                 )}
@@ -182,7 +182,7 @@ export default function OrderDetailDrawer({ order, isOpen, onClose }: OrderDetai
                                     <span className="text-emerald-400 font-bold uppercase tracking-widest text-[10px]">Free</span>
                                 </div>
                                 <div className="pt-4 border-t border-white/10 flex justify-between items-center">
-                                    <span className="font-serif italic text-xl">Total Amount</span>
+                                    <span className="font-serif text-xl">Total Amount</span>
                                     <span className="text-2xl font-bold">{format(convert(order.totalAmount))}</span>
                                 </div>
                             </section>
