@@ -17,13 +17,6 @@ const getTransporterConfig = () => {
         debug: true,
     };
 
-    if (config.email.host === 'smtp.gmail.com') {
-        return {
-            ...baseConfig,
-            service: 'gmail'
-        };
-    }
-
     return {
         ...baseConfig,
         host: config.email.host,
