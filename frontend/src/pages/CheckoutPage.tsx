@@ -48,7 +48,7 @@ interface StateData {
 
 // ─── MAIN COMPONENT ────────────────────────────────────────
 export default function CheckoutPage() {
-    const { cartItems, cartTotal, clearCart, isCartLoading } = useCart();
+    const { cartItems, cartTotal, getItemPrice, clearCart, isCartLoading } = useCart();
     const { user, updateUser, isLoading: isAuthLoading } = useAuth();
     const { format, convert } = useCurrency();
     const navigate = useNavigate();
@@ -396,7 +396,7 @@ export default function CheckoutPage() {
                 items: cartItems.map(item => ({
                     product: item.product._id,
                     quantity: item.quantity,
-                    price: item.product.finalPrice || item.product.basePrice,
+                    price: getItemPrice(item),
                     size: item.size,
                     color: item.color
                 })),
@@ -462,7 +462,7 @@ export default function CheckoutPage() {
                                 items: cartItems.map(item => ({
                                     product: item.product._id,
                                     quantity: item.quantity,
-                                    price: item.product.finalPrice || item.product.basePrice,
+                                    price: getItemPrice(item),
                                     size: item.size,
                                     color: item.color
                                 })),
@@ -918,7 +918,7 @@ export default function CheckoutPage() {
                                         ? product.images[0]
                                         : product.images?.[0]?.imageUrl || '';
                                     const title = product.title || 'Product';
-                                    const price = product.finalPrice || product.basePrice || 0;
+                                    const price = getItemPrice(item);
 
                                     return (
                                         <div key={i} className="flex space-x-4">

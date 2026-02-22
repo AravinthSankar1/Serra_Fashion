@@ -37,7 +37,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
                 {/* Badges */}
                 <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-2 z-10">
-                    {product.discount > 0 && (
+                    {product.discountPercentage > 0 && (
                         <span className="bg-white/90 backdrop-blur-sm text-black text-[9px] sm:text-[10px] font-black px-2.5 sm:px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
                             -{Math.round(product.discountPercentage)}%
                         </span>
@@ -91,7 +91,7 @@ export default function ProductCard({ product }: { product: Product }) {
                         </Link>
                     </div>
                     <div className="text-right flex-shrink-0">
-                        {product.discount > 0 ? (
+                        {product.discountPercentage > 0 ? (
                             <div className="flex flex-col items-end">
                                 <span className="text-sm sm:text-sm font-bold text-red-600 whitespace-nowrap">{format(convert(product.finalPrice))}</span>
                                 <span className="text-[10px] sm:text-[10px] text-gray-400 line-through whitespace-nowrap">{format(convert(product.basePrice))}</span>

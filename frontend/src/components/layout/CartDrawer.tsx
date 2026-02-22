@@ -11,7 +11,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-    const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount } = useCart() as any;
+    const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, getItemPrice } = useCart() as any;
     const { format, convert } = useCurrency();
     // Note: useCart returns cartItems which is mapped from cart or guestItems in my implementation
 
@@ -75,80 +75,98 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                     </Button>
                                 </div>
                             ) : (
-                                items.map((item: any, idx: number) => (
-                                    <div
-                                        key={`${item.product._id}-${item.size}-${idx}`}
-                                        className="flex gap-5 p-4 bg-white border border-gray-100 rounded-3xl hover:border-gray-200 transition-colors shadow-sm"
-                                    >
-                                        {/* Image */}
-                                        <div className="h-36 w-28 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0">
-                                            <img
-                                                src={typeof item.product?.images?.[0] === 'string' ? item.product.images[0] : item.product?.images?.[0]?.imageUrl}
-                                                alt={item.product?.title}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        </div>
+                                items.map((item: any, idx: number) => {
+                                    const selectedVariant = item.product.variants?.find((v: any) =>
+                                        (!item.size || v.size === item.size) &&
+                                        (!item.color || v.color === item.color)
+                                    );
 
-                                        {/* Details */}
-                                        <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between items-start gap-3">
-                                                    <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">
-                                                        {item.product.title}
-                                                    </h3>
-                                                    <button
-                                                        onClick={() => removeFromCart(item.product._id, item.size, item.color)}
-                                                        className="text-gray-300 hover:text-red-500 transition-colors -mr-1 p-1"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                                <p className="text-xs text-gray-500 font-medium truncate">{item.product.category?.name}</p>
-                                                <div className="flex flex-wrap items-center gap-2 pt-2">
-                                                    {item.size && (
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap">
-                                                            Size {item.size}
-                                                        </span>
-                                                    )}
-                                                    {item.color && (
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap">
-                                                            {item.color}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                    return (
+                                        <div
+                                            key={`${item.product._id}-${item.size}-${idx}`}
+                                            className="flex gap-5 p-4 bg-white border border-gray-100 rounded-3xl hover:border-gray-200 transition-colors shadow-sm"
+                                        >
+                                            {/* Image */}
+                                            <div className="h-36 w-28 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0">
+                                                <img
+                                                    src={typeof item.product?.images?.[0] === 'string' ? item.product.images[0] : item.product?.images?.[0]?.imageUrl}
+                                                    alt={item.product?.title}
+                                                    className="h-full w-full object-cover"
+                                                />
                                             </div>
 
-                                            <div className="flex items-end justify-between pt-4">
-                                                <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-2 py-1 border border-gray-100">
-                                                    <button
-                                                        onClick={() => updateQuantity(item.product._id, item.quantity - 1, item.size, item.color)}
-                                                        disabled={item.quantity <= 1}
-                                                        className="p-1.5 hover:text-black text-gray-400 disabled:opacity-30 transition-colors"
-                                                    >
-                                                        <Minus className="h-3 w-3" />
-                                                    </button>
-                                                    <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
-                                                    <button
-                                                        onClick={() => updateQuantity(item.product._id, item.quantity + 1, item.size, item.color)}
-                                                        className="p-1.5 hover:text-black text-gray-400 transition-colors"
-                                                    >
-                                                        <Plus className="h-3 w-3" />
-                                                    </button>
+                                            {/* Details */}
+                                            <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between items-start gap-3">
+                                                        <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">
+                                                            {item.product.title}
+                                                        </h3>
+                                                        <button
+                                                            onClick={() => removeFromCart(item.product._id, item.size, item.color)}
+                                                            className="text-gray-300 hover:text-red-500 transition-colors -mr-1 p-1"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 font-medium truncate">{item.product.category?.name}</p>
+                                                    <div className="flex flex-wrap items-center gap-2 pt-2">
+                                                        {item.size && (
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap">
+                                                                Size {item.size}
+                                                            </span>
+                                                        )}
+                                                        {item.color && (
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap">
+                                                                {item.color}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="text-right flex-shrink-0">
-                                                    <p className="text-base font-bold text-gray-900">
-                                                        {format(convert((item.product.finalPrice || item.product.basePrice) * item.quantity))}
-                                                    </p>
-                                                    {item.quantity > 1 && (
-                                                        <p className="text-[10px] text-gray-400 font-medium">
-                                                            {format(convert(item.product.finalPrice || item.product.basePrice))} ea
-                                                        </p>
-                                                    )}
+
+                                                <div className="flex items-end justify-between pt-4">
+                                                    <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-2 py-1 border border-gray-100">
+                                                        <button
+                                                            onClick={() => updateQuantity(item.product._id, item.quantity - 1, item.size, item.color)}
+                                                            disabled={item.quantity <= 1}
+                                                            className="p-1.5 hover:text-black text-gray-400 disabled:opacity-30 transition-colors"
+                                                        >
+                                                            <Minus className="h-3 w-3" />
+                                                        </button>
+                                                        <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
+                                                        <button
+                                                            onClick={() => updateQuantity(item.product._id, item.quantity + 1, item.size, item.color)}
+                                                            className="p-1.5 hover:text-black text-gray-400 transition-colors"
+                                                        >
+                                                            <Plus className="h-3 w-3" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="text-right flex-shrink-0">
+                                                        {item.product.discountPercentage > 0 ? (
+                                                            <div className="flex flex-col items-end">
+                                                                <p className="text-base font-bold text-red-600">
+                                                                    {format(convert(getItemPrice(item) * item.quantity))}
+                                                                </p>
+                                                                <p className="text-[10px] text-gray-400 line-through">
+                                                                    {format(convert((selectedVariant?.price || item.product.basePrice) * item.quantity))}
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-base font-bold text-gray-900">
+                                                                {format(convert(getItemPrice(item) * item.quantity))}
+                                                            </p>
+                                                        )}
+                                                        {item.quantity > 1 && (
+                                                            <p className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                                                                {format(convert(getItemPrice(item)))} ea
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
 
@@ -180,7 +198,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         )}
                     </motion.div>
                 </>
-            )}
-        </AnimatePresence>
+            )
+            }
+        </AnimatePresence >
     );
 }

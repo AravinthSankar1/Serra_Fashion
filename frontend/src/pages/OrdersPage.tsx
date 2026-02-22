@@ -249,7 +249,7 @@ export default function OrdersPage() {
         }
     };
 
-    const { data: orders, isLoading, isError, error } = useQuery({
+    const { data: orders, isLoading, isError } = useQuery({
         queryKey: ['orders', 'my-orders'],
         queryFn: async () => {
             const res = await api.get('/orders/my-orders');

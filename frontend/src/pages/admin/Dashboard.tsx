@@ -203,12 +203,12 @@ export default function AdminDashboard() {
                         <button className="text-[10px] font-black uppercase tracking-widest text-black underline underline-offset-4">View All</button>
                     </div>
                     <div className="space-y-4">
-                        {stats?.recentOrders?.length === 0 ? (
+                        {stats?.lists?.recentOrders?.length === 0 ? (
                             <div className="py-12 text-center bg-gray-50 rounded-[24px] border border-dashed border-gray-200">
                                 <ShoppingBag className="h-8 w-8 text-gray-300 mx-auto mb-3" />
                                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">No Recent Transactions</p>
                             </div>
-                        ) : stats?.recentOrders?.map((order: any) => (
+                        ) : stats?.lists?.recentOrders?.map((order: any) => (
                             <div key={order._id} className="group flex items-center justify-between py-5 px-6 border border-transparent hover:border-gray-100 hover:bg-gray-50/50 rounded-2xl transition-all duration-300">
                                 <div className="flex items-center space-x-5">
                                     <div className="h-12 w-12 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors duration-300">
@@ -244,12 +244,12 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="space-y-6 flex-1">
-                        {stats?.lowStockProducts?.length === 0 ? (
+                        {stats?.lists?.lowStockProducts?.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center py-12 text-center">
                                 <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
                                 <p className="text-[10px] font-black uppercase text-gray-400">All Stock Levels Optimal</p>
                             </div>
-                        ) : stats?.lowStockProducts?.map((product: any) => (
+                        ) : stats?.lists?.lowStockProducts?.map((product: any) => (
                             <div key={product._id} className="flex items-center justify-between group">
                                 <div className="flex items-center space-x-3">
                                     <div className="h-10 w-10 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">

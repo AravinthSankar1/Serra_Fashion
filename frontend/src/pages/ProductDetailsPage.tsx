@@ -167,7 +167,19 @@ export default function ProductDetailsPage() {
             ? product.images
             : [{ imageUrl: "https://via.placeholder.com/600x800?text=No+Image", imagePublicId: "placeholder" }];
 
-    const currentPrice = selectedVariant ? selectedVariant.price : (product.finalPrice || product.basePrice || 0);
+    const getDisplayPrice = () => {
+        let price = selectedVariant ? selectedVariant.price : (product.finalPrice || product.basePrice || 0);
+
+        // If a variant is selected, we need to manually apply the discount if it exists
+        // because variants currently only store their base price.
+        if (selectedVariant && product.discountPercentage > 0) {
+            return Math.round(price - (price * product.discountPercentage) / 100);
+        }
+
+        return price;
+    };
+
+    const currentPrice = getDisplayPrice();
     const currentStock = selectedVariant ? selectedVariant.stock : (product.stock || 0);
     const isOutOfStock = currentStock <= 0;
 
@@ -233,10 +245,10 @@ export default function ProductDetailsPage() {
                                 <span className="text-3xl font-bold text-gray-900">
                                     {format(convert(currentPrice))}
                                 </span>
-                                {product.discountPercentage > 0 && !selectedVariant && (
+                                {product.discountPercentage > 0 && (
                                     <>
                                         <span className="text-xl text-gray-400 line-through">
-                                            {format(convert(product.basePrice))}
+                                            {format(convert(selectedVariant ? selectedVariant.price : product.basePrice))}
                                         </span>
                                         <span className="bg-red-50 text-red-600 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">
                                             Save {product.discountPercentage}%

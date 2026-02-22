@@ -12,6 +12,7 @@ interface CartContextType {
     removeFromCart: (productId: string, size?: string, color?: string) => void;
     cartCount: number;
     cartTotal: number;
+    getItemPrice: (item: CartItem) => number;
     clearCart: () => void;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
@@ -163,7 +164,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const cartItems = isAuthenticated ? cart?.items || [] : guestItems;
     const cartCount = cartItems.reduce((acc: number, item: CartItem) => acc + item.quantity, 0);
-    const cartTotal = cartItems.reduce((acc: number, item: CartItem) => acc + (item.product.finalPrice || item.product.basePrice) * item.quantity, 0);
+
+    const getItemPrice = (item: CartItem) => {
+        const product = item.product;
+        // 1. Determine base price (from variant if exists, else basePrice)
+        let price = product.basePrice;
+
+        if (item.size || item.color) {
+            const variant = product.variants?.find(v =>
+                (!item.size || v.size === item.size) &&
+                (!item.color || v.color === item.color)
+            );
+            if (variant) price = variant.price;
+        }
+
+        // 2. Apply discount if exists
+        if (product.discountPercentage > 0) {
+            return Math.round(price - (price * product.discountPercentage) / 100);
+        }
+
+        return price;
+    };
+
+    const cartTotal = cartItems.reduce((acc: number, item: CartItem) => acc + getItemPrice(item) * item.quantity, 0);
 
     return (
         <CartContext.Provider value={{
@@ -175,6 +198,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             removeFromCart,
             cartCount,
             cartTotal,
+            getItemPrice,
             clearCart,
             isCartOpen,
             setIsCartOpen,
@@ -198,6 +222,7 @@ export function useCart() {
             removeFromCart: () => { },
             cartCount: 0,
             cartTotal: 0,
+            getItemPrice: () => 0,
             clearCart: () => { },
             isCartOpen: false,
             setIsCartOpen: () => { },
