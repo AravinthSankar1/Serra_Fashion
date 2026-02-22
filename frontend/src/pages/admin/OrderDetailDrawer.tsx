@@ -175,8 +175,14 @@ export default function OrderDetailDrawer({ order, isOpen, onClose }: OrderDetai
                             <section className="p-8 rounded-[32px] bg-black text-white space-y-4">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-400">Subtotal</span>
-                                    <span className="font-bold">{format(convert(order.totalAmount))}</span>
+                                    <span className="font-bold">{format(convert(order.subtotal || order.totalAmount))}</span>
                                 </div>
+                                {order.discount > 0 && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">Discount {order.promoCode && `(${order.promoCode})`}</span>
+                                        <span className="text-red-400 font-bold">-{format(convert(order.discount))}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-400">Shipping</span>
                                     <span className="text-emerald-400 font-bold uppercase tracking-widest text-[10px]">Free</span>
