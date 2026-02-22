@@ -5,6 +5,7 @@ import { ApiResponse } from '../../utils/response';
 import { AuthRequest } from '../../middlewares/auth.middleware';
 import { User } from '../user/user.model';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../utils/cloudinary';
+import { UserRole } from '../user/user.interface';
 import { sendVendorSubmissionAlert } from '../../utils/notification';
 
 const parseJson = (val: any) => {
@@ -35,12 +36,14 @@ export const createProduct = asyncHandler(async (req: AuthRequest, res: Response
     }
 
     // Vendor Logic: Set PENDING and record vendor ID
-    if (user?.role === 'vendor') {
+    if (user?.role === UserRole.VENDOR) {
         productData.approvalStatus = 'PENDING';
         productData.isPublished = false;
         productData.vendor = user.sub;
     } else {
-        productData.approvalStatus = 'APPROVED'; // Admins are auto-approved
+        // Admin creations: Auto-approve and Auto-publish
+        productData.approvalStatus = 'APPROVED';
+        productData.isPublished = true;
     }
 
     const product = await productService.createProduct(productData);
@@ -73,8 +76,23 @@ export const rejectProduct = asyncHandler(async (req: AuthRequest, res: Response
     res.status(200).json(ApiResponse.success(product, 'Product rejected'));
 });
 
-export const getProducts = asyncHandler(async (req: Request, res: Response) => {
+export const getProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { page, limit, ...filters } = req.query;
+    const user = req.user;
+
+    // Vendor Isolation Logic:
+    // 1. If user is a vendor, they ONLY see their own products
+    // 2. If user is an admin, they see all products unless they filter
+    // 3. If guest, they only see APPROVED/PUBLISHED
+    if (user?.role === UserRole.VENDOR) {
+        filters.vendor = user.sub;
+    } else if (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN) {
+        // Admin: Signal to service to show all statuses by default
+        filters.isAdmin = true;
+    } else {
+        // Public/Guest: Handled in service by default
+    }
+
     const result = await productService.getProducts(filters, Number(page) || 1, Number(limit) || 20);
     res.status(200).json(ApiResponse.success(result));
 });
@@ -110,7 +128,7 @@ export const getProduct = asyncHandler(async (req: AuthRequest, res: Response) =
     res.status(200).json(ApiResponse.success(product));
 });
 
-export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
+export const updateProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
     const productId = req.params.id;
     const existingProduct = await productService.getProductById(productId);
     if (!existingProduct) throw { statusCode: 404, message: 'Product not found' };
@@ -156,7 +174,7 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
     res.status(200).json(ApiResponse.success(product, 'Product updated successfully'));
 });
 
-export const getRelatedProducts = asyncHandler(async (req: Request, res: Response) => {
+export const getRelatedProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const product = await productService.getProductById(id);
     if (!product) throw { statusCode: 404, message: 'Product not found' };
@@ -165,7 +183,7 @@ export const getRelatedProducts = asyncHandler(async (req: Request, res: Respons
     res.status(200).json(ApiResponse.success(related));
 });
 
-export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
+export const deleteProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
     const product = await productService.getProductById(req.params.id);
     if (!product) throw { statusCode: 404, message: 'Product not found' };
 
@@ -181,7 +199,7 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
     await productService.deleteProduct(req.params.id);
     res.status(200).json(ApiResponse.success(null, 'Product deleted successfully'));
 });
-export const uploadImage = asyncHandler(async (req: Request, res: Response) => {
+export const uploadImage = asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!req.file) {
         throw { statusCode: 400, message: 'Please upload an image' };
     }

@@ -467,6 +467,34 @@ export default function AdminProducts() {
                             </div>
 
                             <form onSubmit={handleSubmit} className="p-8 space-y-8 overflow-y-auto scrollbar-hide">
+                                {/* Role-specific Status Alert */}
+                                {!isAdmin && (editingProduct?.approvalStatus === 'PENDING' || editingProduct?.approvalStatus === 'REJECTED') && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className={cn(
+                                            "p-6 rounded-[24px] border flex items-center justify-between gap-4",
+                                            editingProduct.approvalStatus === 'PENDING' ? "bg-amber-50 border-amber-100 text-amber-900" : "bg-red-50 border-red-100 text-red-900"
+                                        )}
+                                    >
+                                        <div className="flex items-center space-x-4">
+                                            <div className={cn("p-3 rounded-2xl", editingProduct.approvalStatus === 'PENDING' ? "bg-amber-200/50" : "bg-red-200/50")}>
+                                                {editingProduct.approvalStatus === 'PENDING' ? <Clock className="h-6 w-6 text-amber-700" /> : <XCircle className="h-6 w-6 text-red-700" />}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold uppercase tracking-wider">
+                                                    {editingProduct.approvalStatus === 'PENDING' ? 'Submission Under Review' : 'Submission Rejected'}
+                                                </h4>
+                                                <p className="text-[10px] font-medium opacity-80 uppercase tracking-tight mt-0.5">
+                                                    {editingProduct.approvalStatus === 'PENDING'
+                                                        ? 'Our curators are currently verifying this piece. It will be live once approved.'
+                                                        : editingProduct.rejectionReason || 'This piece did not meet our collection standards. Please check the details.'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* Basic Info */}
                                     <div className="space-y-6">

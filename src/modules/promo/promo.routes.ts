@@ -9,11 +9,11 @@ const router = Router();
 router.post('/validate', authenticate, promoController.validatePromo);
 
 // Admin routes
-router.post('/', authenticate, authorize([UserRole.ADMIN]), promoController.createPromo);
-router.get('/', authenticate, authorize([UserRole.ADMIN]), promoController.getAllPromos);
-router.put('/:id', authenticate, authorize([UserRole.ADMIN]), promoController.updatePromo);
-router.patch('/:id', authenticate, authorize([UserRole.ADMIN]), promoController.updatePromo);
-router.delete('/:id', authenticate, authorize([UserRole.ADMIN]), promoController.deletePromo);
-router.get('/:id/analytics', authenticate, authorize([UserRole.ADMIN]), promoController.getPromoAnalytics);
+router.post('/', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), promoController.createPromo);
+router.get('/', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), promoController.getAllPromos);
+router.put('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), promoController.updatePromo);
+router.patch('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), promoController.updatePromo);
+router.delete('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), promoController.deletePromo);
+router.get('/:id/analytics', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), promoController.getPromoAnalytics);
 
 export default router;

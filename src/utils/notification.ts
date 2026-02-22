@@ -3,6 +3,8 @@ import axios from 'axios';
 import { config } from '../config';
 
 const getTransporterConfig = () => {
+    const isGmail = config.email.host?.includes('gmail.com');
+
     const baseConfig: any = {
         auth: {
             user: config.email.auth.user,
@@ -17,6 +19,16 @@ const getTransporterConfig = () => {
         debug: true,
     };
 
+    if (isGmail) {
+        // Many developers find port 587 with secure:false (STARTTLS) more reliable for Gmail
+        return {
+            ...baseConfig,
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
+        };
+    }
+
     return {
         ...baseConfig,
         host: config.email.host,
@@ -30,7 +42,8 @@ const transporter = nodemailer.createTransport(getTransporterConfig());
 // Verify connection configuration
 transporter.verify((error, success) => {
     if (error) {
-        console.error('[EMAIL] SMTP Connection Error:', error);
+        console.error('[EMAIL] SMTP Connection Error:', error.message);
+        console.error('[EMAIL] Check if your Gmail App Password is correct and 2FA is enabled.');
     } else {
         console.log('[EMAIL] SMTP Server is ready to take messages');
     }
@@ -120,8 +133,14 @@ export const sendEmailOtp = async (to: string, otp: string) => {
             command: error.command,
             response: error.response,
             message: error.message,
-            stack: error.stack
         });
+
+        // Fallback for development so testing can continue
+        if (config.env === 'development') {
+            console.log(`[DEV-MODE-FALLBACK] SMTP failed but here is your OTP for ${to}: ${otp}`);
+            return true;
+        }
+
         return false;
     }
 };

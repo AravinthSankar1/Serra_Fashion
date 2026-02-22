@@ -3,6 +3,7 @@ import { Brand } from './brand.model';
 import { ApiResponse } from '../../utils/response';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../utils/cloudinary';
 import { AuthRequest } from '../../middlewares/auth.middleware';
+import { UserRole } from '../user/user.interface';
 import { sendVendorSubmissionAlert } from '../../utils/notification';
 
 export const createBrand = async (req: AuthRequest, res: Response) => {
@@ -23,17 +24,19 @@ export const createBrand = async (req: AuthRequest, res: Response) => {
         };
 
         // Vendor Logic: Set PENDING
-        if (user?.role === 'vendor') {
+        if (user?.role === UserRole.VENDOR) {
             brandData.approvalStatus = 'PENDING';
             brandData.isActive = false;
         } else {
+            // Admin Creations: Auto-approve and activate
             brandData.approvalStatus = 'APPROVED';
+            brandData.isActive = true;
         }
 
         const brand = await Brand.create(brandData);
 
         // Notify Admin
-        if (user?.role === 'vendor') {
+        if (user?.role === UserRole.VENDOR) {
             await sendVendorSubmissionAlert('email', 'brand', brand.name, user.name || 'Vendor');
         }
 
@@ -73,7 +76,21 @@ export const rejectBrand = async (req: AuthRequest, res: Response) => {
 
 export const getBrands = async (req: AuthRequest, res: Response) => {
     try {
-        const brands = await Brand.find().sort({ createdAt: -1 });
+        const user = req.user;
+        const query: any = {};
+
+        // Vendor Isolation & Public Filtering
+        if (user?.role === UserRole.VENDOR) {
+            query.createdBy = user.sub;
+        } else if (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN) {
+            // Admin sees all
+        } else {
+            // Public/Guest: Only see approved brands
+            query.approvalStatus = 'APPROVED';
+            query.isActive = true;
+        }
+
+        const brands = await Brand.find(query).sort({ createdAt: -1 });
         return res.status(200).json(ApiResponse.success(brands));
     } catch (error: any) {
         return res.status(400).json(ApiResponse.error(error.message));

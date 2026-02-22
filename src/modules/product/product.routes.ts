@@ -10,18 +10,18 @@ const router = Router();
 // Public routes
 router.use('/:productId/reviews', reviewRoutes);
 router.get('/:id/related', productController.getRelatedProducts);
-router.get('/', productController.getProducts);
+router.get('/', authenticateOptional, productController.getProducts);
 router.get('/:idOrSlug', authenticateOptional, productController.getProduct);
 
 // Admin & Vendor only routes
-router.post('/upload', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.single('image'), productController.uploadImage);
-router.post('/', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.array('images'), productController.createProduct);
-router.put('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.array('images'), productController.updateProduct);
-router.patch('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), upload.array('images'), productController.updateProduct);
-router.delete('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.VENDOR]), productController.deleteProduct);
+router.post('/upload', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.VENDOR]), upload.single('image'), productController.uploadImage);
+router.post('/', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.VENDOR]), upload.array('images'), productController.createProduct);
+router.put('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.VENDOR]), upload.array('images'), productController.updateProduct);
+router.patch('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.VENDOR]), upload.array('images'), productController.updateProduct);
+router.delete('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.VENDOR]), productController.deleteProduct);
 
 // Admin only routes
-router.patch('/:id/approve', authenticate, authorize([UserRole.ADMIN]), productController.approveProduct);
-router.patch('/:id/reject', authenticate, authorize([UserRole.ADMIN]), productController.rejectProduct);
+router.patch('/:id/approve', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), productController.approveProduct);
+router.patch('/:id/reject', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), productController.rejectProduct);
 
 export default router;

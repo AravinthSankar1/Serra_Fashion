@@ -9,14 +9,16 @@ export const getProducts = async (filters: any, page = 1, limit = 10) => {
     const query: any = {};
 
     // 1. Visibility & Approval Logic
-    if (!filters.approvalStatus && !filters.vendor) {
+    if (filters.approvalStatus) {
+        query.approvalStatus = filters.approvalStatus;
+    } else if (!filters.vendor && !filters.isAdmin) {
+        // Only apply 'APPROVED' filter for public view (not admin, not vendor isolation)
         query.approvalStatus = 'APPROVED';
         query.isPublished = true;
-    } else {
-        if (filters.approvalStatus) query.approvalStatus = filters.approvalStatus;
-        if (filters.vendor) query.vendor = filters.vendor;
-        if (filters.isPublished !== undefined) query.isPublished = filters.isPublished === 'true';
     }
+
+    if (filters.vendor) query.vendor = filters.vendor;
+    if (filters.isPublished !== undefined) query.isPublished = filters.isPublished === 'true';
 
     // 2. Text Search
     if (filters.search) {

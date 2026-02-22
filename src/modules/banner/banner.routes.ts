@@ -9,9 +9,9 @@ const router = Router();
 router.get('/', getBanners);
 
 // Admin routes
-router.get('/admin', authenticate, authorize([UserRole.ADMIN]), getAdminBanners);
-router.post('/', authenticate, authorize([UserRole.ADMIN]), createBanner);
-router.patch('/:id', authenticate, authorize([UserRole.ADMIN]), updateBanner);
-router.delete('/:id', authenticate, authorize([UserRole.ADMIN]), deleteBanner);
+router.get('/admin', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), getAdminBanners);
+router.post('/', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), createBanner);
+router.patch('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), updateBanner);
+router.delete('/:id', authenticate, authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), deleteBanner);
 
 export default router;

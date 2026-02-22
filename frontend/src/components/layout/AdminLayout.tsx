@@ -1,18 +1,73 @@
-import { useNavigate, Outlet } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useNavigate, Outlet, Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import AdminSidebar from '../admin/Sidebar';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, User as UserIcon, X, ShoppingBag, LogOut } from 'lucide-react';
+import { Search, Bell, User as UserIcon, X, ShoppingBag, LogOut, Layers, Tag, Package, ChevronRight, AlertCircle } from 'lucide-react';
 import api from '../../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLoader from '../ui/PremiumLoader';
+import { useQuery } from '@tanstack/react-query';
+import { cn } from '../../utils';
 
 export default function AdminLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any>(null);
     const [isSearching, setIsSearching] = useState(false);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+    const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+
+    // Fetch stats for notifications
+    const { data: stats } = useQuery({
+        queryKey: ['admin-stats'],
+        queryFn: async () => {
+            const res = await api.get('/admin/stats');
+            return res.data.data;
+        },
+        refetchInterval: 30000, // Refresh every 30 seconds
+    });
+
+    const pendingCount = (stats?.overview?.pendingProducts || 0) +
+        (stats?.overview?.pendingBrands || 0) +
+        (stats?.overview?.pendingCategories || 0);
+
+    const pendingNotifications = [
+        {
+            title: 'Pending Products',
+            count: stats?.overview?.pendingProducts || 0,
+            link: '/admin/products?status=PENDING',
+            icon: ShoppingBag,
+            color: 'bg-amber-100 text-amber-600'
+        },
+        {
+            title: 'Pending Brands',
+            count: stats?.overview?.pendingBrands || 0,
+            link: '/admin/brands?status=PENDING',
+            icon: Tag,
+            color: 'bg-blue-100 text-blue-600'
+        },
+        {
+            title: 'Pending Categories',
+            count: stats?.overview?.pendingCategories || 0,
+            link: '/admin/categories?status=PENDING',
+            icon: Layers,
+            color: 'bg-purple-100 text-purple-600'
+        }
+    ].filter(n => n.count > 0);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsNotificationOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
@@ -124,14 +179,92 @@ export default function AdminLayout() {
                     </div>
 
                     <div className="flex items-center space-x-6">
-                        <button className="relative p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
-                            <Bell className="h-5 w-5 text-gray-500" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                        </button>
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                                className={cn(
+                                    "relative p-2.5 rounded-full transition-all duration-300",
+                                    isNotificationOpen ? "bg-black text-white" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                                )}
+                            >
+                                <Bell className="h-5 w-5" />
+                                {pendingCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[8px] font-black text-white flex items-center justify-center">
+                                        {pendingCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            <AnimatePresence>
+                                {isNotificationOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute top-full right-0 mt-4 w-80 bg-white rounded-[32px] shadow-2xl border border-gray-100 overflow-hidden z-50 ring-1 ring-black/[0.02]"
+                                    >
+                                        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900">Notifications</h3>
+                                            <span className="px-2 py-1 bg-black text-white text-[8px] font-black rounded-full uppercase">
+                                                {pendingCount} New
+                                            </span>
+                                        </div>
+
+                                        <div className="max-h-[320px] overflow-y-auto">
+                                            {pendingNotifications.length > 0 ? (
+                                                <div className="p-2">
+                                                    {pendingNotifications.map((notif, idx) => (
+                                                        <Link
+                                                            key={idx}
+                                                            to={notif.link}
+                                                            onClick={() => setIsNotificationOpen(false)}
+                                                            className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all duration-200 group"
+                                                        >
+                                                            <div className="flex items-center space-x-4">
+                                                                <div className={cn("p-2.5 rounded-xl", notif.color)}>
+                                                                    <notif.icon className="h-4 w-4" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-gray-900">{notif.title}</p>
+                                                                    <p className="text-[10px] text-gray-400 font-medium">Awaiting action</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="text-xs font-black text-gray-900 bg-gray-100 h-6 w-6 flex items-center justify-center rounded-lg group-hover:bg-black group-hover:text-white transition-colors">
+                                                                    {notif.count}
+                                                                </span>
+                                                                <ChevronRight className="h-3 w-3 text-gray-300 group-hover:text-black transition-colors" />
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="p-10 text-center">
+                                                    <div className="h-12 w-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                        <AlertCircle className="h-6 w-6" />
+                                                    </div>
+                                                    <p className="text-xs font-bold text-gray-900 uppercase tracking-widest">System Clear</p>
+                                                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">No pending approvals</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-center">
+                                            <button
+                                                onClick={() => { navigate('/admin'); setIsNotificationOpen(false); }}
+                                                className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors"
+                                            >
+                                                View All Activity
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
                         <button
                             onClick={logout}
-                            className="p-2 bg-gray-50 rounded-full hover:bg-red-50 hover:text-red-600 transition-all text-gray-500"
+                            className="p-2.5 bg-gray-50 rounded-full hover:bg-red-50 hover:text-red-600 transition-all text-gray-500"
                             title="Logout"
                         >
                             <LogOut className="h-5 w-5" />
