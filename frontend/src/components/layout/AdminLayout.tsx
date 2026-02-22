@@ -2,7 +2,7 @@ import { useNavigate, Outlet, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import AdminSidebar from '../admin/Sidebar';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, User as UserIcon, X, ShoppingBag, LogOut, Layers, Tag, Package, ChevronRight, AlertCircle } from 'lucide-react';
+import { Search, Bell, User as UserIcon, X, ShoppingBag, LogOut, Layers, Tag, ChevronRight, AlertCircle } from 'lucide-react';
 import api from '../../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLoader from '../ui/PremiumLoader';
@@ -18,7 +18,7 @@ export default function AdminLayout() {
     const [isSearching, setIsSearching] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
-    const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+
 
     // Fetch stats for notifications
     const { data: stats } = useQuery({

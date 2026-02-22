@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { useCurrency } from '../../hooks/useCurrency';
-import { sanitizeNumericInput } from '../../utils';
+import { sanitizeNumericInput, cn } from '../../utils';
 import { toast } from 'react-toastify';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import { useAuth } from '../../context/AuthContext';
