@@ -9,6 +9,8 @@ import {
     LogOut,
     ChevronRight,
     Image as ImageIcon,
+    RefreshCw,
+    MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils';
@@ -23,6 +25,8 @@ const navItems = [
     { title: 'Size Guides', icon: Layers, path: '/admin/size-guides' },
     { title: 'Users', icon: Users, path: '/admin/users' },
     { title: 'Banners', icon: ImageIcon, path: '/admin/banners' },
+    { title: 'Reviews', icon: MessageCircle, path: '/admin/reviews' },
+    { title: 'Settings', icon: RefreshCw, path: '/admin/settings' },
 ];
 
 export default function AdminSidebar() {

@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { authenticate } from '../../middlewares/auth.middleware';
 import * as reviewController from './review.controller';
 
-const router = Router({ mergeParams: true }); // Enable access to :productId from parent router if nested
+const router = Router({ mergeParams: true });
+
+router.get('/featured', reviewController.getFeaturedReviews);
+router.get('/all', authenticate, reviewController.getAllReviews);
+router.patch('/:id/status', authenticate, reviewController.updateReviewStatus);
 
 router.get('/', reviewController.getProductReviews);
 router.post('/', authenticate, reviewController.addReview);

@@ -21,8 +21,8 @@ const productSchema = new Schema(
         name: { type: String, trim: true }, // Sync with title
         slug: { type: String, unique: true, index: true },
         description: { type: String, required: true },
-        brand: { type: Schema.Types.ObjectId, ref: 'Brand', required: true },
-        category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+        brand: { type: Schema.Types.ObjectId, ref: 'Brand', required: true } as any,
+        category: { type: Schema.Types.ObjectId, ref: 'Category', required: true } as any,
         gender: { type: String, enum: Object.values(ProductGender), default: ProductGender.UNISEX },
         images: [{
             imageUrl: String,
@@ -36,14 +36,17 @@ const productSchema = new Schema(
         isPublished: { type: Boolean, default: false, index: true },
         stock: { type: Number, default: 0 },
         variants: [variantSchema],
-        sizeGuide: { type: Schema.Types.ObjectId, ref: 'SizeGuide' },
-        vendor: { type: Schema.Types.ObjectId, ref: 'User' },
+        sizeGuide: { type: Schema.Types.ObjectId, ref: 'SizeGuide' } as any,
+        vendor: { type: Schema.Types.ObjectId, ref: 'User' } as any,
         approvalStatus: {
             type: String,
             enum: ['PENDING', 'APPROVED', 'REJECTED'],
             default: 'APPROVED'
         },
         rejectionReason: String,
+        // Qikink Print-on-Demand integration
+        qikinkSku: { type: String, trim: true }, // SKU from Qikink "My Products" page
+        isFulfilledByQikink: { type: Boolean, default: false }, // Toggle Qikink fulfillment
     },
     {
         timestamps: true,

@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Qikink Sync to Serra",
+    "version": "1.0",
+    "description": "Scrapes Qikink custom products and beams them to Serra Fashion Admin.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "Push to Serra Fashion"
+    },
+    "host_permissions": [
+        "*://dashboard.qikink.com/*",
+        "http://localhost:5000/*",
+        "https://*.onrender.com/*"
+    ]
+}

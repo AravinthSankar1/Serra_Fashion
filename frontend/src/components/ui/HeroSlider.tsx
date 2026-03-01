@@ -99,10 +99,18 @@ export default function HeroSlider() {
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.6 }}
-                                onClick={() => navigate(activeSlides[current].link)}
-                                className="bg-white text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-black hover:text-white transition-all shadow-xl"
+                                onClick={() => {
+                                    const link = activeSlides[current].link || '/collection';
+                                    console.log('Navigating to:', link);
+                                    if (link.startsWith('http')) {
+                                        window.open(link, '_blank');
+                                    } else {
+                                        navigate(link.startsWith('/') ? link : `/${link}`);
+                                    }
+                                }}
+                                className="bg-white text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-black hover:text-white transition-all shadow-xl active:scale-95"
                             >
-                                {activeSlides[current].cta}
+                                {activeSlides[current].cta || 'Shop Now'}
                             </motion.button>
                         </div>
                     </div>

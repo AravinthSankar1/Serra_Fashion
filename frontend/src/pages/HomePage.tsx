@@ -4,6 +4,7 @@ import api from "../api/client";
 import Navbar from "../components/layout/Navbar";
 import ProductCard from "../components/ui/ProductCard";
 import HeroSlider from "../components/ui/HeroSlider";
+import ReviewCarousel from "../components/ui/ReviewCarousel";
 import Footer from "../components/layout/Footer";
 import type { Product } from "../types";
 import { ArrowRight } from "lucide-react";
@@ -102,6 +103,8 @@ export default function HomePage() {
                     )}
                 </div>
             </main>
+
+            <ReviewCarousel />
 
             <Footer />
         </div>

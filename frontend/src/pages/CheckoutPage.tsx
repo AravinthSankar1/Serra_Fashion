@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCart, useAuth } from '../context';
 import { useCurrency } from '../hooks/useCurrency';
+import { useQuery } from '@tanstack/react-query';
 import type { CartItem } from '../types';
 import api from '../api/client';
 import Button from '../components/ui/Button';
@@ -52,6 +53,18 @@ export default function CheckoutPage() {
     const { user, updateUser, isLoading: isAuthLoading } = useAuth();
     const { format, convert } = useCurrency();
     const navigate = useNavigate();
+
+    const { data: settings } = useQuery({
+        queryKey: ['store-settings'],
+        queryFn: async () => {
+            const res = await api.get('/settings');
+            return res.data.data;
+        }
+    });
+
+    const shippingFee = settings
+        ? (cartTotal >= settings.freeShippingThreshold ? 0 : settings.deliveryCharge)
+        : 0;
 
     // ─── PAYMENT STATE ─────────────────────────────────────
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -343,7 +356,7 @@ export default function CheckoutPage() {
             return;
         } // Double-click protection
         setIsSubmitting(true);
-        const finalAmount = cartTotal - discount;
+        const finalAmount = finalTotal;
 
         // ─── SYNC ADDRESS DATA ────────────────────────────────
         if (isAddingAddress) {
@@ -534,7 +547,7 @@ export default function CheckoutPage() {
 
 
     // ─── COMPUTED VALUES ───────────────────────────────────
-    const finalTotal = cartTotal - discount;
+    const finalTotal = cartTotal - discount + shippingFee;
     const phoneCode = countries.find(c => c.code === selectedCountryCode)?.phoneCode || '91';
 
     // ═══════════════════════════════════════════════════════
@@ -989,7 +1002,11 @@ export default function CheckoutPage() {
 
                                 <div className="flex justify-between text-sm text-gray-500">
                                     <span>Shipping</span>
-                                    <span className="text-emerald-500 font-bold uppercase tracking-widest text-[10px]">Complimentary</span>
+                                    {shippingFee === 0 ? (
+                                        <span className="text-emerald-500 font-bold uppercase tracking-widest text-[10px]">Complimentary</span>
+                                    ) : (
+                                        <span className="text-gray-900 font-bold">{format(convert(shippingFee))}</span>
+                                    )}
                                 </div>
 
                                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-4 border-t border-gray-100">

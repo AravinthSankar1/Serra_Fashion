@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../hooks/useCurrency';
 import type { Product } from '../types';
 import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
 import ProductCard from '../components/ui/ProductCard';
 import Reviews from '../components/product/Reviews';
@@ -14,6 +15,22 @@ import { ShoppingBag, ChevronLeft, Star, Truck, RefreshCcw, Loader2, Heart, Shar
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+
+// Map common color names to CSS hex values
+const COLOR_MAP: Record<string, string> = {
+    black: '#000000', white: '#FFFFFF', red: '#E53E3E', blue: '#3182CE',
+    green: '#38A169', grey: '#718096', gray: '#718096', navy: '#1A365D',
+    pink: '#ED64A6', yellow: '#D69E2E', orange: '#DD6B20', purple: '#805AD5',
+    maroon: '#7B341E', brown: '#744210', beige: '#D4A574', cyan: '#00BCD4',
+    teal: '#319795', mint: '#68D391', lavender: '#B794F4', coral: '#FC8181',
+    cream: '#FAF0E6', charcoal: '#2D3748', khaki: '#BDB76B', olive: '#808000',
+};
+
+function getColorCode(name: string, fallback?: string): string {
+    if (fallback && fallback.startsWith('#')) return fallback;
+    const key = name.toLowerCase().replace(/\s+/g, '');
+    return COLOR_MAP[key] || fallback || '#e5e7eb';
+}
 
 export default function ProductDetailsPage() {
     const { slug } = useParams();
@@ -33,6 +50,15 @@ export default function ProductDetailsPage() {
             const res = await api.get(`/products/${slug}`);
             return res.data.data as Product;
         }
+    });
+
+    const { data: storeSettings } = useQuery({
+        queryKey: ['store-settings'],
+        queryFn: async () => {
+            const res = await api.get('/settings');
+            return res.data.data;
+        },
+        staleTime: 5 * 60 * 1000,
     });
 
     const { data: reviews } = useQuery({
@@ -279,8 +305,11 @@ export default function ProductDetailsPage() {
                                                 >
                                                     <div className={`h-12 w-12 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${selectedColor === color.name ? 'border-black scale-110 shadow-lg' : 'border-transparent hover:border-gray-300'}`}>
                                                         <div
-                                                            className="h-10 w-10 rounded-full border border-gray-100 shadow-inner"
-                                                            style={{ backgroundColor: color.code || '#f3f4f6' }}
+                                                            className="h-10 w-10 rounded-full shadow-inner"
+                                                            style={{
+                                                                backgroundColor: getColorCode(color.name, color.code),
+                                                                border: getColorCode(color.name, color.code) === '#FFFFFF' ? '1px solid #e5e7eb' : 'none'
+                                                            }}
                                                         />
                                                     </div>
                                                     <span className={`text-[9px] font-black uppercase tracking-tighter transition-colors ${selectedColor === color.name ? 'text-black' : 'text-gray-400'}`}>
@@ -389,20 +418,27 @@ export default function ProductDetailsPage() {
                                 </div>
                             </div>
 
-                            {/* Value Props */}
+                            {/* Shipping & Returns — Dynamic */}
                             <div className="grid grid-cols-2 gap-4 pt-12 border-t border-gray-50 mt-12">
                                 <div className="flex items-center space-x-3 p-4 rounded-3xl bg-gray-50/50">
                                     <Truck className="h-5 w-5 text-gray-400" />
                                     <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Complimentary</p>
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Shipping on orders over ₹15,000</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Free Shipping</p>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-tighter">
+                                            {storeSettings
+                                                ? `On orders over ${format(convert(storeSettings.freeShippingThreshold))} • ${format(convert(storeSettings.deliveryCharge))} otherwise`
+                                                : 'Loading...'
+                                            }
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-3 p-4 rounded-3xl bg-gray-50/50">
                                     <RefreshCcw className="h-5 w-5 text-gray-400" />
                                     <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Reflective Returns</p>
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-tighter">30-day effortless exchange</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Returns & Exchange</p>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-tighter">
+                                            {storeSettings ? `${storeSettings.returnPolicy} • ${storeSettings.exchangePolicy}` : '...'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -431,6 +467,8 @@ export default function ProductDetailsPage() {
                     <Reviews productId={product._id} />
                 </div>
             </main>
+
+            <Footer />
 
             {/* Size Guide Modal */}
             <SizeGuideModal

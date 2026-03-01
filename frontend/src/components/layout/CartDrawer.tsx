@@ -2,6 +2,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useQuery } from '@tanstack/react-query';
+import api from '../../api/client';
 import Button from '../ui/Button';
 import { Link } from 'react-router-dom';
 
@@ -13,6 +15,14 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, getItemPrice } = useCart() as any;
     const { format, convert } = useCurrency();
+
+    const { data: settings } = useQuery({
+        queryKey: ['store-settings'],
+        queryFn: async () => {
+            const res = await api.get('/settings');
+            return res.data.data;
+        }
+    });
     // Note: useCart returns cartItems which is mapped from cart or guestItems in my implementation
 
     // Adjusted to match the specific logic in CartContext
@@ -54,9 +64,14 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         </div>
 
                         {/* Free Shipping Progress */}
-                        {cartTotal < 150 && cartTotal > 0 && (
-                            <div className="bg-gray-900 text-white text-center py-3 text-[10px] font-bold uppercase tracking-widest">
-                                Spend {format(convert(150 - cartTotal))} more for free shipping
+                        {settings && cartTotal < settings.freeShippingThreshold && cartTotal > 0 && (
+                            <div className="bg-gradient-to-r from-gray-900 to-zinc-800 text-white text-center py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-inner">
+                                Spend {format(convert(settings.freeShippingThreshold - cartTotal))} more for <span className="text-emerald-400">free shipping</span>
+                            </div>
+                        )}
+                        {settings && cartTotal >= settings.freeShippingThreshold && cartTotal > 0 && (
+                            <div className="bg-emerald-500 text-white text-center py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-inner">
+                                You've unlocked <span className="font-black">Free Shipping!</span> 🎉
                             </div>
                         )}
                         {/* Content */}

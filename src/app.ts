@@ -51,6 +51,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Routes
+console.log('🚀 API V1 registering routes...');
 app.use('/api/v1', routes);
 
 // Error Handler

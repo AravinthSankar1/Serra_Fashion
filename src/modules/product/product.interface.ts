@@ -42,6 +42,9 @@ export interface IProduct extends Document {
     vendor?: Types.ObjectId | string;
     approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
     rejectionReason?: string;
+    // Qikink print-on-demand
+    qikinkSku?: string;
+    isFulfilledByQikink?: boolean;
     createdAt: Date;
     updatedAt: Date;
 }

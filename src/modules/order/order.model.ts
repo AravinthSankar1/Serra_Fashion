@@ -55,6 +55,10 @@ export interface IOrder extends Document {
     razorpaySignature?: string; // Razorpay signature for verification
     paymentVerified: boolean; // Payment signature verified
     statusHistory: IStatusHistory[];
+    // Qikink fulfillment tracking
+    qikinkOrderId?: string; // Qikink's order ID returned after submission
+    qikinkStatus?: string; // Latest Qikink fulfillment status
+    qikinkSubmitted: boolean; // Whether order was sent to Qikink
     createdAt: Date;
     updatedAt: Date;
 }
@@ -108,6 +112,10 @@ const orderSchema = new Schema<IOrder>(
         razorpaySignature: { type: String },
         paymentVerified: { type: Boolean, default: false },
         statusHistory: [statusHistorySchema],
+        // Qikink fulfillment
+        qikinkOrderId: { type: String },
+        qikinkStatus: { type: String },
+        qikinkSubmitted: { type: Boolean, default: false },
     },
     { timestamps: true }
 );

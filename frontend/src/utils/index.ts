@@ -55,3 +55,16 @@ export function truncate(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + '…';
 }
+
+/**
+ * Optimizes a Cloudinary image URL by injecting quality and format auto-transforms.
+ * This is the "decompress/optimized show" part of the image strategy.
+ */
+export function optimizeImage(url: string | undefined | null): string {
+    if (!url) return '';
+    if (!url.includes('res.cloudinary.com')) return url;
+
+    // Inject q_auto (best quality/size ratio) and f_auto (best format for browser like WebP/AVIF)
+    return url.replace('/upload/', '/upload/q_auto,f_auto,dpr_auto/');
+}
+

@@ -3,6 +3,7 @@ import { Product } from '../product/product.model';
 import { IVariant } from '../product/product.interface';
 import { clearCart } from '../cart/cart.service';
 import { eventBus, Events } from '../../events/eventBus';
+import { submitOrderToQikink } from '../../services/qikink.service';
 
 export const createOrder = async (userId: string, orderData: Partial<IOrder>) => {
     const order = await Order.create({
@@ -63,6 +64,28 @@ export const createOrder = async (userId: string, orderData: Partial<IOrder>) =>
     });
 
     console.log(`[ORDER] New order placed: ${order._id} by user ${userId}`);
+
+    // ── Qikink Fulfillment (fire-and-forget) ──────────────────────────────
+    // Populate product details needed for Qikink submission
+    Order.findById(order._id).populate('items.product').then(async (populatedOrder) => {
+        if (!populatedOrder) return;
+        submitOrderToQikink(populatedOrder).then(async (result) => {
+            if (result) {
+                const qikinkOrderId = result?.order?.id || result?.order?.order_id || null;
+                await Order.findByIdAndUpdate(order._id, {
+                    qikinkSubmitted: true,
+                    ...(qikinkOrderId ? { qikinkOrderId } : {}),
+                    qikinkStatus: 'SUBMITTED',
+                });
+                console.log(`[QIKINK] Order ${order._id} submitted. Qikink ID: ${qikinkOrderId}`);
+            }
+        }).catch((err: any) => {
+            console.error(`[QIKINK] Failed to submit order ${order._id}:`, err?.message || err);
+        });
+    }).catch((err: any) => {
+        console.error(`[QIKINK] Populate error for order ${order._id}:`, err?.message || err);
+    });
+    // ─────────────────────────────────────────────────────────────────────
 
     return order;
 };

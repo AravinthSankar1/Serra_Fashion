@@ -1,7 +1,18 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import { Instagram, Facebook, Twitter, Mail, MapPin } from 'lucide-react';
+
+import { useQuery } from '@tanstack/react-query';
+import api from '../../api/client';
 
 export default function Footer() {
+    const { data: settings } = useQuery({
+        queryKey: ['store-settings'],
+        queryFn: async () => {
+            const res = await api.get('/settings');
+            return res.data.data;
+        }
+    });
+
     const socialLinks = [
         { icon: Instagram, url: import.meta.env.VITE_INSTAGRAM_URL, label: 'Instagram' },
         { icon: Facebook, url: import.meta.env.VITE_FACEBOOK_URL, label: 'Facebook' },
@@ -77,17 +88,17 @@ export default function Footer() {
                 <div>
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 mb-8">Find Us</h4>
                     <ul className="space-y-5 text-sm text-gray-500 font-medium">
-                        <li className="flex items-start space-x-3">
+                        <li className="flex items-start space-x-3 text-sm">
                             <MapPin className="w-4 h-4 text-black shrink-0 mt-0.5" />
-                            <span>Avadi, Chennai <br />Tamil Nadu 600065, India</span>
+                            <span className="leading-relaxed">
+                                {settings?.storeAddress || "Avadi, Chennai, Tamil Nadu 600065, India"}
+                            </span>
                         </li>
-                        <li className="flex items-center space-x-3">
+                        <li className="flex items-center space-x-3 text-sm">
                             <Mail className="w-4 h-4 text-black shrink-0" />
-                            <a href="mailto:serrafashion123@gmail.com" className="hover:text-black">serrafashion123</a>
-                        </li>
-                        <li className="flex items-center space-x-3">
-                            <Phone className="w-4 h-4 text-black shrink-0" />
-                            <a href="tel:+919080376899" className="hover:text-black">+91 9080376899</a>
+                            <a href={`mailto:${settings?.contactEmail || 'serrafashion123@gmail.com'}`} className="hover:text-black transition-colors">
+                                {settings?.contactEmail || 'serrafashion123@gmail.com'}
+                            </a>
                         </li>
                     </ul>
                 </div>

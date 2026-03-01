@@ -8,6 +8,8 @@ export interface IReview extends Document {
     description?: string; // Detailed review
     images?: string[];
     isVerifiedPurchase: boolean;
+    showOnHomepage: boolean;
+    priority: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -21,6 +23,8 @@ const reviewSchema = new Schema<IReview>(
         description: { type: String, trim: true, maxlength: 1000 },
         images: [String],
         isVerifiedPurchase: { type: Boolean, default: false },
+        showOnHomepage: { type: Boolean, default: false },
+        priority: { type: Number, default: 0 },
     },
     { timestamps: true }
 );

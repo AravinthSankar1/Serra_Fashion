@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useCurrency } from '../../hooks/useCurrency';
 import api from '../../api/client';
 
 interface FilterSidebarProps {
@@ -39,6 +40,8 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
     ) || [];
 
     const displayBrands = brandsData?.filter((brand: any) => brand.isActive) || [];
+
+    const { format, convert } = useCurrency();
 
     // Available sizes (could be fetched from API if needed)
     const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
@@ -243,8 +246,8 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                             >
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between text-xs font-bold text-gray-500">
-                                        <span>${tempPriceRange[0]}</span>
-                                        <span>${tempPriceRange[1]}</span>
+                                        <span>{format(convert(tempPriceRange[0]))}</span>
+                                        <span>{format(convert(tempPriceRange[1]))}</span>
                                     </div>
                                     <div className="space-y-2">
                                         <input

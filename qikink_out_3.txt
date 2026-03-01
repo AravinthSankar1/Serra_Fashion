@@ -1,0 +1,152 @@
+node : (node:9004) [MODULE_TYP
+ELESS_PACKAGE_JSON] Warning: 
+Module type of file:///C:/User
+s/ADMIN/Downloads/Serra_Fashio
+n/test-qikink.js is not 
+specified and it doesn't 
+parse as CommonJS.
+At line:1 char:1
++ node test-qikink.js > 
+qikink_out.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: ((node:900  
+  4) [MO...se as CommonJS.:   
+ String) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+Reparsing as ES module 
+because module syntax was 
+detected. This incurs a 
+performance overhead.
+To eliminate this warning, 
+add "type": "module" to C:\Use
+rs\ADMIN\Downloads\Serra_Fashi
+on\package.json.
+(Use `node --trace-warnings 
+...` to show where the 
+warning was created)
+--- Qikink Diagnostic ---
+Mode: sandbox
+Base URL: https://sandbox.qikink.com
+Client ID: 83043...
+Client Secret: 319eb...
+
+Testing Authentication (/api/token)...
+Auth Success!
+Response Data: {
+  "ClientId": 830439106470688,
+  "Accesstoken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NzIyMDIwMDQsImp0aSI6IjA1M2gzcHFmM1dwMXhYN0RjMEZnbktMQndtMmZjOXZreG9BaFFxbE5uOHc9IiwiZXhwIjoxNzcyMjA1NjA0LCJjbGllbnRJZCI6IjU2NzI0OCJ9.OhVBMczzvQNBimBvErEMZWCeDP2GALQ9E1ji-NTuchY",
+  "expires_in": 3600
+}
+
+Testing Fetch Products (/api/my-products)...
+Fetch Products Failed: {
+  title: 'CodeIgniter\\Excepti
+ons\\PageNotFoundException',
+  type: 'CodeIgniter\\Exceptio
+ns\\PageNotFoundException',
+  code: 404,
+  message: "Can't find a 
+route for 'get: 
+api/my-products'.",
+  file: '/var/www/sandbox.qiki
+nk.com/vendor/codeigniter4/fra
+mework/system/CodeIgniter.php'
+,
+  line: 991,
+  trace: [
+    {
+      file: '/var/www/sandbox.
+qikink.com/vendor/codeigniter4
+/framework/system/CodeIgniter.
+php',
+      line: 991,
+      function: 
+'forPageNotFound',
+      class: 'CodeIgniter\\Exc
+eptions\\PageNotFoundException
+',
+      type: '::'
+    },
+    {
+      file: '/var/www/sandbox.
+qikink.com/vendor/codeigniter4
+/framework/system/CodeIgniter.
+php',
+      line: 385,
+      function: 
+'display404errors',
+      class: 
+'CodeIgniter\\CodeIgniter',
+      type: '->'
+    },
+    {
+      file: '/var/www/sandbox.
+qikink.com/public/index.php',
+      line: 79,
+      function: 'run',
+      class: 
+'CodeIgniter\\CodeIgniter',
+      type: '->'
+    }
+  ]
+}
+
+Trying fallback /api/myproducts...
+Fetch Products (fallback) 
+Failed: {
+  title: 'CodeIgniter\\Excepti
+ons\\PageNotFoundException',
+  type: 'CodeIgniter\\Exceptio
+ns\\PageNotFoundException',
+  code: 404,
+  message: "Can't find a 
+route for 'get: 
+api/myproducts'.",
+  file: '/var/www/sandbox.qiki
+nk.com/vendor/codeigniter4/fra
+mework/system/CodeIgniter.php'
+,
+  line: 991,
+  trace: [
+    {
+      file: '/var/www/sandbox.
+qikink.com/vendor/codeigniter4
+/framework/system/CodeIgniter.
+php',
+      line: 991,
+      function: 
+'forPageNotFound',
+      class: 'CodeIgniter\\Exc
+eptions\\PageNotFoundException
+',
+      type: '::'
+    },
+    {
+      file: '/var/www/sandbox.
+qikink.com/vendor/codeigniter4
+/framework/system/CodeIgniter.
+php',
+      line: 385,
+      function: 
+'display404errors',
+      class: 
+'CodeIgniter\\CodeIgniter',
+      type: '->'
+    },
+    {
+      file: '/var/www/sandbox.
+qikink.com/public/index.php',
+      line: 79,
+      function: 'run',
+      class: 
+'CodeIgniter\\CodeIgniter',
+      type: '->'
+    }
+  ]
+}
+

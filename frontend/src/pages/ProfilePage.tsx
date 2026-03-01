@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { User, Camera, Mail, Globe, ShieldCheck, CheckCircle2, ChevronRight } from 'lucide-react';
+import { User, Camera, Mail, Globe, ShieldCheck, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
 import PremiumLoader from '../components/ui/PremiumLoader';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -165,6 +165,15 @@ export default function ProfilePage() {
 
     return (
         <div className="max-w-5xl mx-auto py-12 px-6">
+            {/* Back Button */}
+            <button
+                onClick={() => navigate(-1)}
+                className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black mb-8 transition-colors group"
+            >
+                <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                <span>Back</span>
+            </button>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Panel: Profile Card */}
                 <motion.div

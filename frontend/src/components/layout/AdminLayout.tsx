@@ -7,11 +7,13 @@ import api from '../../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLoader from '../ui/PremiumLoader';
 import { useQuery } from '@tanstack/react-query';
+import { useCurrency } from '../../hooks/useCurrency';
 import { cn } from '../../utils';
 
 export default function AdminLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const { format, convert } = useCurrency();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any>(null);
@@ -145,7 +147,7 @@ export default function AdminLayout() {
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="text-xs font-bold text-gray-900 truncate">{p.title}</p>
-                                                                <p className="text-[9px] text-gray-400 font-bold uppercase">${p.finalPrice}</p>
+                                                                <p className="text-[9px] text-gray-400 font-bold uppercase">{format(convert(p.finalPrice))}</p>
                                                             </div>
                                                         </button>
                                                     ))}

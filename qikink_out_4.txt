@@ -1,0 +1,15 @@
+--- Qikink Diagnostic ---
+Mode: sandbox
+Base URL: https://sandbox.qikink.com
+Client ID: 83043...
+Client Secret: 319eb...
+
+Testing Authentication (/api/token)...
+Auth Success!
+Response Data: {
+  "ClientId": 830439106470688,
+  "Accesstoken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NzIyMDIxMTcsImp0aSI6IlV0S0N0cWk3eVBxNnV1dEdRWnc2a2NITVl0Y05MWXhmL1BvaTJZQlhIMHM9IiwiZXhwIjoxNzcyMjA1NzE3LCJjbGllbnRJZCI6IjU2NzI0OCJ9.qqaQS4dfO44_Gq0yNh15VQYtNl5kNH15p0sp4CYKyms",
+  "expires_in": 3600
+}
+
+Testing Fetch Products (/api/my-products)...

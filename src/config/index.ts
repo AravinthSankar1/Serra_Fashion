@@ -35,6 +35,12 @@ const envSchema = z.object({
     // Admin Notifications
     ADMIN_EMAIL: z.string().optional(),
     ADMIN_PHONE: z.string().optional(),
+    // Qikink
+    QIKINK_CLIENT_ID: z.string().optional(),
+    QIKINK_CLIENT_SECRET: z.string().optional(),
+    QIKINK_MODE: z.enum(['sandbox', 'live']).default('sandbox'),
+    QIKINK_SHIPPING: z.string().optional().default('1'),
+    QIKINK_GATEWAY: z.string().optional().default('PREPAID'),
 });
 
 const envVars = envSchema.parse(process.env);
@@ -86,5 +92,13 @@ export const config = {
     admin: {
         email: envVars.ADMIN_EMAIL,
         phone: envVars.ADMIN_PHONE,
+    },
+    qikink: {
+        clientId: (envVars.QIKINK_CLIENT_ID || '').trim(),
+        clientSecret: (envVars.QIKINK_CLIENT_SECRET || '').trim(),
+        mode: envVars.QIKINK_MODE,
+        baseUrl: envVars.QIKINK_MODE === 'live' ? 'https://api.qikink.com' : 'https://sandbox.qikink.com',
+        shipping: parseInt(envVars.QIKINK_SHIPPING || '1', 10),
+        gateway: envVars.QIKINK_GATEWAY || 'PREPAID',
     }
 };

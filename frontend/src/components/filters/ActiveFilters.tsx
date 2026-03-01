@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface ActiveFiltersProps {
     searchParams: URLSearchParams;
@@ -31,6 +32,8 @@ export default function ActiveFilters({ searchParams, setSearchParams, categorie
         }
         setSearchParams(searchParams);
     };
+
+    const { format, convert } = useCurrency();
 
     const categoryName = categoriesData?.find(c => c._id === category)?.name;
     const brandName = brandsData?.find(b => b._id === brand)?.name;
@@ -87,7 +90,9 @@ export default function ActiveFilters({ searchParams, setSearchParams, categorie
                     onClick={() => removeFilter('price')}
                     className="flex items-center space-x-2 px-3 py-1.5 bg-black text-white rounded-full text-xs font-bold hover:bg-gray-800 transition-colors group"
                 >
-                    <span>${minPrice || 0} - ${maxPrice || 1000}</span>
+                    <span>
+                        {format(convert(Number(minPrice || 0)))} - {format(convert(Number(maxPrice || 1000)))}
+                    </span>
                     <X className="h-3 w-3 group-hover:rotate-90 transition-transform" />
                 </motion.button>
             )}

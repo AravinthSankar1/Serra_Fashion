@@ -1,6 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context';
-import { useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useCurrency } from '../hooks/useCurrency';
 import api from '../api/client';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -30,6 +31,15 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const { format, convert } = useCurrency();
+
+    const { data: storeSettings } = useQuery({
+        queryKey: ['store-settings'],
+        queryFn: async () => {
+            const res = await api.get('/settings');
+            return res.data.data;
+        }
+    });
 
     const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
         resolver: zodResolver(registerSchema),
@@ -57,7 +67,7 @@ export default function RegisterPage() {
     const benefits = [
         'Exclusive access to new collections',
         'Early bird discounts and special offers',
-        'Free shipping on orders over ₹10,000',
+        `Free shipping on orders over ${storeSettings ? format(convert(storeSettings.freeShippingThreshold)) : format(convert(10000))}`,
         'Tier-1 data protection & privacy',
     ];
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Edit2, Trash2, Calendar, Percent, Ticket } from 'lucide-react';
 import api from '../../api/client';
+import { useCurrency } from '../../hooks/useCurrency';
 import { toast } from 'react-toastify';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -21,6 +22,7 @@ interface Promo {
 }
 
 export default function AdminPromos() {
+    const { format, convert } = useCurrency();
     const [promos, setPromos] = useState<Promo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -174,7 +176,7 @@ export default function AdminPromos() {
                                         Discount
                                     </div>
                                     <span className="text-lg font-bold">
-                                        {promo.type === 'PERCENTAGE' ? `${promo.value}%` : `₹${promo.value}`}
+                                        {promo.type === 'PERCENTAGE' ? `${promo.value}%` : format(convert(promo.value))}
                                     </span>
                                 </div>
                                 <div className="bg-gray-50 rounded-2xl p-4">
@@ -231,7 +233,7 @@ export default function AdminPromos() {
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                                     >
                                         <option value="PERCENTAGE">Percentage (%)</option>
-                                        <option value="FIXED">Fixed Amount (₹)</option>
+                                        <option value="FIXED">Fixed Amount</option>
                                     </select>
                                 </div>
                             </div>

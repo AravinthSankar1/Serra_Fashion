@@ -25,6 +25,8 @@ import AdminOrders from './pages/admin/Orders';
 import AdminPromos from './pages/admin/Promos';
 import AdminSizeGuides from './pages/admin/SizeGuides';
 import AdminBanners from './pages/admin/Banners';
+import AdminReviews from './pages/admin/Reviews';
+import AdminSettings from './pages/admin/Settings';
 
 
 
@@ -63,6 +65,8 @@ function App() {
                             <Route path="promos" element={<AdminPromos />} />
                             <Route path="size-guides" element={<AdminSizeGuides />} />
                             <Route path="banners" element={<AdminBanners />} />
+                            <Route path="reviews" element={<AdminReviews />} />
+                            <Route path="settings" element={<AdminSettings />} />
                         </Route>
                     </Route>
 

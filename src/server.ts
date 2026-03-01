@@ -2,7 +2,6 @@ import app from './app';
 import { config } from './config';
 import { connectDB } from './database/connection';
 import { eventBus, Events } from './events/eventBus';
-
 const startServer = async () => {
     await connectDB();
 
