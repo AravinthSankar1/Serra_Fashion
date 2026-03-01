@@ -219,6 +219,17 @@ export default function ProductDetailsPage() {
 
     return (
         <div className="min-h-screen bg-white">
+            <SEO
+                title={product.title}
+                description={product.description?.slice(0, 160)}
+                image={typeof product.images?.[0] === 'string' ? product.images[0] : product.images?.[0].imageUrl}
+                type="product"
+            />
+            <Helmet>
+                <script type="application/ld+json">
+                    {JSON.stringify(schemaData)}
+                </script>
+            </Helmet>
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 py-12 md:py-20">
