@@ -74,9 +74,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            let lastError = '';
+            if (failCount > 0 && successCount === 0) {
+                // Get error message from last failed request
+                const lastFail = products[products.length - 1]; // simplifying to last for UX
+                lastError = ` (Last Error: Some products failed to import)`;
+            }
+
             statusEl.textContent = successCount > 0
                 ? `✅ ${successCount} product${successCount > 1 ? 's' : ''} added to Serra!${failCount ? ` (${failCount} skipped)` : ''}`
-                : `❌ Could not sync. Check the backend URL and try again.`;
+                : `❌ All ${products.length} sync attempts failed. Check categories/brands in Admin.`;
             statusEl.className = successCount > 0 ? 'success' : 'error';
 
         } catch (err) {
