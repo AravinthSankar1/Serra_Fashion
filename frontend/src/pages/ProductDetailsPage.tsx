@@ -15,6 +15,8 @@ import { ShoppingBag, ChevronLeft, Star, Truck, RefreshCcw, Loader2, Heart, Shar
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import SEO from '../components/common/SEO';
+import { Helmet } from 'react-helmet-async';
 
 // Map common color names to CSS hex values
 const COLOR_MAP: Record<string, string> = {
@@ -81,24 +83,28 @@ export default function ProductDetailsPage() {
         }
     });
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <Loader2 className="h-8 w-8 animate-spin text-black" />
-            </div>
-        );
-    }
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+    if (error || !product) return <div className="min-h-screen flex items-center justify-center text-red-500">Error loading product</div>;
 
-    if (error || !product) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="text-center">
-                    <p className="text-lg text-red-500 mb-4">Failed to load product</p>
-                    <Button onClick={() => window.location.reload()}>Retry</Button>
-                </div>
-            </div>
-        );
-    }
+    const schemaData = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": product.title,
+        "image": product.images?.map(img => typeof img === 'string' ? img : img.imageUrl),
+        "description": product.description,
+        "sku": product._id, // Product interface doesn't have sku, use _id
+        "brand": {
+            "@type": "Brand",
+            "name": typeof product.brand === 'object' ? (product.brand as any).name : "SÉRRA FASHION"
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": window.location.href,
+            "priceCurrency": "INR",
+            "price": product.basePrice,
+            "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+        }
+    };
 
     // Use variants from product if they exist
     const hasVariants = product.variants && product.variants.length > 0;

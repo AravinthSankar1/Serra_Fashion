@@ -1,0 +1,6 @@
+# robots.txt for Serra Fashion
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://serra-fashion.onrender.com/sitemap.xml
