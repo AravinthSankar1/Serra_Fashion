@@ -10,9 +10,12 @@ import { UserRole } from '../user/user.interface';
 // Get reviews for a product
 export const getProductReviews = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { productId } = req.params;
-    const reviews = await Review.find({ product: productId })
+    let reviews = await Review.find({ product: productId })
         .populate('user', 'name profilePicture')
         .sort({ createdAt: -1 });
+
+    // Filter out reviews where user account no longer exists
+    reviews = reviews.filter(review => review.user !== null);
 
     res.status(200).json(ApiResponse.success(reviews));
 });
@@ -59,10 +62,13 @@ export const addReview = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 // Get all reviews (Admin only)
 export const getAllReviews = asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const reviews = await Review.find()
+    let reviews = await Review.find()
         .populate('user', 'name profilePicture')
         .populate('product', 'title slug images')
         .sort({ createdAt: -1 });
+
+    // Filter out reviews where user account no longer exists
+    reviews = reviews.filter(review => review.user !== null);
 
     res.status(200).json(ApiResponse.success(reviews));
 });
@@ -84,10 +90,13 @@ export const updateReviewStatus = asyncHandler(async (req: AuthRequest, res: Res
 
 // Get featured reviews for homepage
 export const getFeaturedReviews = asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const reviews = await Review.find({ showOnHomepage: true })
+    let reviews = await Review.find({ showOnHomepage: true })
         .populate('user', 'name profilePicture')
         .sort({ priority: -1, createdAt: -1 })
         .limit(10);
+
+    // Filter out reviews where user account no longer exists (populate returns null)
+    reviews = reviews.filter(review => review.user !== null);
 
     res.status(200).json(ApiResponse.success(reviews));
 });

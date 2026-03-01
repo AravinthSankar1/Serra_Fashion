@@ -97,20 +97,20 @@ export default function ReviewCarousel() {
 
                                 <div className="flex items-center justify-center space-x-3">
                                     <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
-                                        {activeReviews[current].user.profilePicture ? (
+                                        {activeReviews[current].user?.profilePicture ? (
                                             <img
-                                                src={typeof activeReviews[current].user.profilePicture === 'string'
-                                                    ? activeReviews[current].user.profilePicture
-                                                    : activeReviews[current].user.profilePicture.imageUrl}
+                                                src={typeof activeReviews[current].user?.profilePicture === 'string'
+                                                    ? activeReviews[current].user?.profilePicture
+                                                    : (activeReviews[current].user?.profilePicture as any)?.imageUrl}
                                                 className="h-full w-full object-cover"
-                                                alt={activeReviews[current].user.name}
+                                                alt={activeReviews[current].user?.name || "Verified Customer"}
                                             />
                                         ) : (
                                             <User className="h-5 w-5 text-gray-300" />
                                         )}
                                     </div>
                                     <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">
-                                        {activeReviews[current].user.name}
+                                        {activeReviews[current].user?.name || "Verified Customer"}
                                     </span>
                                 </div>
                             </div>
