@@ -65,8 +65,8 @@ export default function Navbar() {
 
                     <div className="flex-shrink-0 flex items-center">
                         <Link to="/" className="flex flex-col items-center leading-none">
-                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-2xl text-black">SÉRRA</span>
-                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[9px] uppercase text-black">FASHION</span>
+                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-3xl text-black">SÉRRA</span>
+                            <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[10px] uppercase text-black">FASHION</span>
                         </Link>
                     </div>
 
@@ -156,8 +156,8 @@ export default function Navbar() {
                         >
                             <div className="flex items-center justify-between mb-12">
                                 <Link to="/" className="flex flex-col items-center leading-none">
-                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-2xl text-black">SÉRRA</span>
-                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[9px] uppercase text-black">FASHION</span>
+                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-3xl text-black">SÉRRA</span>
+                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[10px] uppercase text-black">FASHION</span>
                                 </Link>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2">
                                     <X className="h-6 w-6" />

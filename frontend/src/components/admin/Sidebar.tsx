@@ -38,8 +38,8 @@ export default function AdminSidebar() {
             <div className="p-8 border-b border-gray-50">
                 <Link to="/" className="group">
                     <div className="flex flex-col items-center leading-none">
-                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-2xl text-black">SÉRRA</span>
-                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[9px] uppercase text-black">FASHION</span>
+                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-3xl text-black">SÉRRA</span>
+                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[10px] uppercase text-black">FASHION</span>
                     </div>
                     <span className="text-[10px] uppercase font-sans tracking-[0.3em] text-gray-400 block mt-2 text-center">
                         {user?.role === 'vendor' ? 'Vendor Dashboard' : 'Admin Dashboard'}
