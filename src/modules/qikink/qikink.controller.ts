@@ -404,18 +404,12 @@ export const handleQikinkWebhook = async (req: Request, res: Response) => {
             brandId = defaultBrand?._id as unknown as string;
         }
 
-        if (!categoryId || !brandId) {
-            console.error('[QIKINK-WEBHOOK] Could not find a default category or brand for auto-import');
-            return res.status(400).json({
-                success: false,
-                message: 'Requirement: At least one Approved Category and Brand must exist for auto-push to work.'
-            });
-        }
-
+        // If still no categoryId/brandId, the importSingleQikinkProduct service will 
+        // automatically create "Qikink Products" category and "Qikink" brand.
         const result = await importSingleQikinkProduct(
             qikinkProduct,
-            categoryId.toString(),
-            brandId.toString(),
+            categoryId?.toString(),
+            brandId?.toString(),
             qikinkProduct._retailPrice || undefined, // Use markup from extension if provided
             true       // Overwrite existing
         );
