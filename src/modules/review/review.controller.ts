@@ -7,6 +7,8 @@ import { ApiResponse } from '../../utils/response';
 import { asyncHandler } from '../../middlewares/error.middleware';
 import { UserRole } from '../user/user.interface';
 
+import { uploadToCloudinary } from '../../utils/cloudinary';
+
 // Get reviews for a product
 export const getProductReviews = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { productId } = req.params;
@@ -23,7 +25,7 @@ export const getProductReviews = asyncHandler(async (req: AuthRequest, res: Resp
 // Add a review
 export const addReview = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { productId } = req.params;
-    const { rating, comment, description, images } = req.body;
+    const { rating, comment, description } = req.body;
     const userId = req.user!.sub;
 
     // Check if product exists
@@ -37,10 +39,19 @@ export const addReview = asyncHandler(async (req: AuthRequest, res: Response) =>
         paymentStatus: 'PAID'
     });
 
+    let images: string[] = [];
+    if (req.files && Array.isArray(req.files)) {
+        const uploadPromises = (req.files as any[]).map(file =>
+            uploadToCloudinary(file, 'reviews')
+        );
+        const uploadedResults = await Promise.all(uploadPromises);
+        images = uploadedResults.map(res => res.imageUrl);
+    }
+
     const review = await Review.create({
         user: userId,
         product: productId,
-        rating,
+        rating: Number(rating),
         comment,
         description,
         images,

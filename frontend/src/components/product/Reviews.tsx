@@ -89,10 +89,19 @@ export default function Reviews({ productId }: { productId: string }) {
 
     return (
         <div className="space-y-10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h3 className="text-2xl font-serif font-bold">Reviews ({reviews?.length || 0})</h3>
-                {user && !isFormOpen && (
-                    <Button onClick={() => setIsFormOpen(true)}>Write a Review</Button>
+                {!isFormOpen && (
+                    user ? (
+                        <Button onClick={() => setIsFormOpen(true)}>Write a Review</Button>
+                    ) : (
+                        <button
+                            onClick={() => window.location.href = '/login'}
+                            className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors underline underline-offset-4"
+                        >
+                            Sign in to write a review
+                        </button>
+                    )
                 )}
             </div>
 
