@@ -51,19 +51,13 @@ const getTransporterConfig = () => {
 
 const transporter = nodemailer.createTransport(getTransporterConfig());
 
-// Verify connection configuration
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('[EMAIL] SMTP Connection Error:', error.message);
-        console.error('[EMAIL] Check if your Gmail App Password is correct and 2FA is enabled.');
-    } else {
-        console.log('[EMAIL] SMTP Server is ready to take messages');
-    }
-});
+// Removed transporter.verify to prevent misleading "SMTP Connection Error" logs on startup when API bypass is active
 
 // Create a universal wrapper that routes over HTTPS (Gmail API) to bypass ENETUNREACH/Timeouts on Server providers
 const sendEmailSecured = async (options: { from?: string, to: string, subject: string, html: string }) => {
-    if (config.email.gmail?.clientId && config.email.gmail?.refreshToken && config.email.gmail?.clientSecret) {
+    const { clientId, clientSecret, refreshToken } = config.email.gmail || {};
+
+    if (clientId && refreshToken && clientSecret) {
         try {
             const { OAuth2Client } = require('google-auth-library');
             const oAuth2Client = new OAuth2Client(
@@ -101,6 +95,8 @@ const sendEmailSecured = async (options: { from?: string, to: string, subject: s
         } catch (apiError: any) {
             console.warn('[EMAIL] HTTPS API Bypass failed, fallback to strict SMTP:', apiError.response?.data || apiError.message);
         }
+    } else {
+        console.warn(`[EMAIL] Skipping API Bypass. Missing Keys - ClientID: ${!!clientId}, Secret: ${!!clientSecret}, Token: ${!!refreshToken}`);
     }
 
     // Strict SMTP Fallback

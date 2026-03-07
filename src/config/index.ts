@@ -88,9 +88,9 @@ export const config = {
         },
         from: (envVars.EMAIL_FROM || envVars.SMTP_USER)?.replace(/^["']|["']$/g, '').trim(),
         gmail: {
-            clientId: envVars.GMAIL_CLIENT_ID?.trim(),
-            clientSecret: envVars.GMAIL_CLIENT_SECRET?.trim(),
-            refreshToken: envVars.GMAIL_REFRESH_TOKEN?.trim(),
+            clientId: envVars.GMAIL_CLIENT_ID?.replace(/[\s\n\r]/g, ''),
+            clientSecret: envVars.GMAIL_CLIENT_SECRET?.replace(/[\s\n\r]/g, ''),
+            refreshToken: envVars.GMAIL_REFRESH_TOKEN?.replace(/[\s\n\r]/g, ''),
         }
     },
     whatsapp: {
