@@ -46,7 +46,7 @@ function App() {
                     <Route path="/sale" element={<CollectionPage title="Special Offers" isSale={true} />} />
                     <Route path="/new" element={<CollectionPage title="New Arrivals" />} />
                     <Route path="/search" element={<CollectionPage title="Search Results" />} />
-                    <Route path="/collection" element={<CollectionPage title="Full Collection" />} />
+                    <Route path="/collection" element={<CollectionPage title="Collections" />} />
                     <Route path="/product/:slug" element={<ProductDetailsPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
                     <Route path="/orders" element={<OrdersPage />} />

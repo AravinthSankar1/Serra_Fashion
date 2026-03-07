@@ -1,6 +1,14 @@
 import nodemailer from 'nodemailer';
 import axios from 'axios';
 import { config } from '../config';
+import dns from 'dns';
+
+// Force node to use IPv4 to avoid ENETUNREACH in deployed environments without IPv6 routing
+try {
+    dns.setDefaultResultOrder('ipv4first');
+} catch (e) {
+    console.warn('[EMAIL] Failed to set default DNS result order');
+}
 
 const getTransporterConfig = () => {
     const isGmail = config.email.host?.includes('gmail.com');
@@ -13,19 +21,22 @@ const getTransporterConfig = () => {
         tls: {
             rejectUnauthorized: false
         },
+        family: 4, // Explicity force IPv4 on the SMTP socket connection
         pool: true,
         connectionTimeout: 20000,
         logger: true,
         debug: true,
+        secure: false,   // added defaults
+        requireTLS: true,
+        ignoreTLS: false,
     };
 
     if (isGmail) {
-        // Many developers find port 587 with secure:false (STARTTLS) more reliable for Gmail
+        // Force IPv4 if IPv6 is unreachable (solves ENETUNREACH on platforms like Docker/Render)
         return {
             ...baseConfig,
             host: 'smtp.gmail.com',
             port: 587,
-            secure: false,
         };
     }
 

@@ -86,6 +86,10 @@ async function handleOrderStatusUpdated(data: { orderId: string, newStatus: stri
 }
 
 // Error handling
+notificationQueue.on('error', (err) => {
+    console.error(`[QUEUE] Redis connection or internal error:`, err.message);
+});
+
 notificationQueue.on('failed', (job, err) => {
     console.error(`[QUEUE] Job ${job.id} failed:`, err.message);
 });
