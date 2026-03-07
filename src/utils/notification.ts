@@ -61,6 +61,52 @@ transporter.verify((error, success) => {
     }
 });
 
+// Create a universal wrapper that routes over HTTPS (Gmail API) to bypass ENETUNREACH/Timeouts on Server providers
+const sendEmailSecured = async (options: { from?: string, to: string, subject: string, html: string }) => {
+    if (config.email.gmail?.clientId && config.email.gmail?.refreshToken && config.email.gmail?.clientSecret) {
+        try {
+            const { OAuth2Client } = require('google-auth-library');
+            const oAuth2Client = new OAuth2Client(
+                config.email.gmail.clientId,
+                config.email.gmail.clientSecret,
+                'https://developers.google.com/oauthplayground'
+            );
+            oAuth2Client.setCredentials({ refresh_token: config.email.gmail.refreshToken });
+            const { token } = await oAuth2Client.getAccessToken();
+
+            if (token) {
+                const str = [
+                    `From: "SÉRRA FASHION" <${options.from || config.email.from || config.email.auth.user}>`,
+                    `To: ${options.to}`,
+                    `Subject: ${options.subject}`,
+                    'MIME-Version: 1.0',
+                    `Content-Type: text/html; charset="UTF-8"`,
+                    '',
+                    options.html
+                ].join('\r\n');
+
+                const encodedMail = Buffer.from(str)
+                    .toString('base64')
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+
+                await axios.post(
+                    'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+                    { raw: encodedMail },
+                    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+                );
+                return { messageId: 'api-bypass-sent' };
+            }
+        } catch (apiError: any) {
+            console.warn('[EMAIL] HTTPS API Bypass failed, fallback to strict SMTP:', apiError.response?.data || apiError.message);
+        }
+    }
+
+    // Strict SMTP Fallback
+    return transporter.sendMail(options);
+};
+
 /**
  * Premium Email Template Wrapper
  */
@@ -131,7 +177,7 @@ export const sendEmailOtp = async (to: string, otp: string) => {
     );
 
     try {
-        const info = await transporter.sendMail({
+        const info = await sendEmailSecured({
             from: config.email.from || config.email.auth.user,
             to,
             subject: `${otp} is your verification code`,
@@ -215,7 +261,7 @@ export const sendOrderConfirmation = async (to: string, order: any, type: 'email
         );
 
         try {
-            await transporter.sendMail({
+            await sendEmailSecured({
                 from: config.email.from,
                 to,
                 subject: `Order Confirmation #${order._id.slice(-6).toUpperCase()}`,
@@ -284,7 +330,7 @@ export const sendOrderStatusUpdate = async (to: string, order: any, newStatus: s
         );
 
         try {
-            await transporter.sendMail({
+            await sendEmailSecured({
                 from: config.email.from,
                 to,
                 subject: `Update on Order #${order._id.slice(-6).toUpperCase()}`,
@@ -340,7 +386,7 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
         );
 
         try {
-            await transporter.sendMail({
+            await sendEmailSecured({
                 from: config.email.from,
                 to: config.admin.email,
                 subject: `[ADMIN] New Order received`,
@@ -399,7 +445,7 @@ export const sendVendorSubmissionAlert = async (type: 'email' | 'whatsapp', item
         );
 
         try {
-            await transporter.sendMail({
+            await sendEmailSecured({
                 from: config.email.from,
                 to: config.admin.email,
                 subject: `[ADMIN] New ${itemType} Submission from ${vendorName}`,

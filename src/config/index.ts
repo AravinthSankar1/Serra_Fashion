@@ -28,6 +28,10 @@ const envSchema = z.object({
     SMTP_USER: z.string().optional(),
     SMTP_PASS: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
+    // Gmail API Bypass
+    GMAIL_CLIENT_ID: z.string().optional(),
+    GMAIL_CLIENT_SECRET: z.string().optional(),
+    GMAIL_REFRESH_TOKEN: z.string().optional(),
     // WhatsApp
     WHATSAPP_API_URL: z.string().optional().default('https://graph.facebook.com/v18.0'),
     WHATSAPP_ACCESS_TOKEN: z.string().optional(),
@@ -83,6 +87,11 @@ export const config = {
             pass: envVars.SMTP_PASS?.replace(/\s/g, ''), // Remove all spaces from App Password
         },
         from: (envVars.EMAIL_FROM || envVars.SMTP_USER)?.replace(/^["']|["']$/g, '').trim(),
+        gmail: {
+            clientId: envVars.GMAIL_CLIENT_ID?.trim(),
+            clientSecret: envVars.GMAIL_CLIENT_SECRET?.trim(),
+            refreshToken: envVars.GMAIL_REFRESH_TOKEN?.trim(),
+        }
     },
     whatsapp: {
         apiUrl: envVars.WHATSAPP_API_URL,
