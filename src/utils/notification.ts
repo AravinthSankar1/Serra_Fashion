@@ -32,11 +32,12 @@ const getTransporterConfig = () => {
     };
 
     if (isGmail) {
-        // Force IPv4 if IPv6 is unreachable (solves ENETUNREACH on platforms like Docker/Render)
+        // Use port 465 (SSL) as many cloud providers (Render/DigitalOcean) block outbound port 587.
         return {
             ...baseConfig,
             host: 'smtp.gmail.com',
-            port: 587,
+            port: 465,
+            secure: true,
         };
     }
 
