@@ -44,7 +44,7 @@ notificationQueue.process(async (job) => {
 });
 
 async function handleOrderCreated(data: { orderId: string }) {
-    const order = await Order.findById(data.orderId).populate('user');
+    const order = await Order.findById(data.orderId).populate('user').populate('items.product');
     if (!order) {
         console.error('[QUEUE] Order not found:', data.orderId);
         return;
@@ -68,7 +68,7 @@ async function handleOrderCreated(data: { orderId: string }) {
 }
 
 async function handleOrderStatusUpdated(data: { orderId: string, newStatus: string }) {
-    const order = await Order.findById(data.orderId).populate('user');
+    const order = await Order.findById(data.orderId).populate('user').populate('items.product');
     if (!order) {
         console.error('[QUEUE] Order not found:', data.orderId);
         return;

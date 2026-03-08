@@ -7,7 +7,11 @@ import { Heart, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '../context/AuthContext';
+import { useEffect } from 'react';
+
 export default function WishlistPage() {
+    const { updateUser, user } = useAuth();
     const { data: wishlist, isLoading } = useQuery({
         queryKey: ['wishlist'],
         queryFn: async () => {
@@ -15,6 +19,16 @@ export default function WishlistPage() {
             return res.data.data as Product[];
         }
     });
+
+    useEffect(() => {
+        if (wishlist && user) {
+            const currentWishlistIds = wishlist.map(p => p._id);
+            // Only update if discrepancy found to avoid infinite loops
+            if (JSON.stringify(user.wishlist) !== JSON.stringify(currentWishlistIds)) {
+                updateUser({ ...user, wishlist: currentWishlistIds });
+            }
+        }
+    }, [wishlist, user, updateUser]);
 
     return (
         <div className="min-h-screen bg-white">

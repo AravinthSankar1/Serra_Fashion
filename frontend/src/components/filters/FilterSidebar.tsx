@@ -228,7 +228,7 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                 </div>
 
                 {/* Price Range */}
-                <div className="space-y-4">
+                <div className="space-y-6">
                     <button
                         onClick={() => toggleSection('price')}
                         className="w-full flex items-center justify-between text-xs font-black uppercase tracking-[0.2em] text-gray-900"
@@ -242,14 +242,34 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="space-y-4 overflow-hidden"
+                                className="px-1 overflow-hidden"
                             >
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-xs font-bold text-gray-500">
-                                        <span>{format(convert(tempPriceRange[0]))}</span>
-                                        <span>{format(convert(tempPriceRange[1]))}</span>
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Min Price</span>
+                                            <span className="text-sm font-bold text-gray-900">{format(convert(tempPriceRange[0]))}</span>
+                                        </div>
+                                        <div className="flex flex-col text-right">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Max Price</span>
+                                            <span className="text-sm font-bold text-gray-900">{format(convert(tempPriceRange[1]))}</span>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
+
+                                    <div className="relative h-6 flex items-center">
+                                        {/* Slider Track */}
+                                        <div className="absolute w-full h-1 bg-gray-100 rounded-full" />
+
+                                        {/* Colored Progress Bar */}
+                                        <div
+                                            className="absolute h-1 bg-black rounded-full"
+                                            style={{
+                                                left: `${(tempPriceRange[0] / 1000) * 100}%`,
+                                                right: `${100 - (tempPriceRange[1] / 1000) * 100}%`
+                                            }}
+                                        />
+
+                                        {/* Dual Inputs */}
                                         <input
                                             type="range"
                                             min="0"
@@ -257,7 +277,7 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                                             step="10"
                                             value={tempPriceRange[0]}
                                             onChange={(e) => handlePriceChange(0, parseInt(e.target.value))}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                                            className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none cursor-pointer z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-lg"
                                         />
                                         <input
                                             type="range"
@@ -266,16 +286,17 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                                             step="10"
                                             value={tempPriceRange[1]}
                                             onChange={(e) => handlePriceChange(1, parseInt(e.target.value))}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                                            className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none cursor-pointer z-10 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-lg"
                                         />
                                     </div>
+
+                                    <button
+                                        onClick={applyPriceFilter}
+                                        className="w-full py-3 bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-gray-800 transition-all active:scale-95"
+                                    >
+                                        Apply Range
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={applyPriceFilter}
-                                    className="w-full py-2 px-4 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-gray-800 transition-colors"
-                                >
-                                    Apply Price
-                                </button>
                             </motion.div>
                         )}
                     </AnimatePresence>

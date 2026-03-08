@@ -155,7 +155,8 @@ export default function Navbar() {
                             className="fixed inset-y-0 left-0 w-4/5 max-w-sm bg-white z-[70] p-8 shadow-2xl flex flex-col"
                         >
                             <div className="flex items-center justify-between mb-12">
-                                <Link to="/" className="flex flex-col items-center leading-none">
+                                <Link to="/" className="flex flex-col items-center leading-none group">
+                                    <img src="/weblogo.png" alt="SÉRRA FASHION" className="h-10 w-auto mb-1 group-hover:scale-105 transition-transform" />
                                     <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-3xl text-black">SÉRRA</span>
                                     <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[10px] uppercase text-black">FASHION</span>
                                 </Link>

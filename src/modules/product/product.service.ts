@@ -1,5 +1,6 @@
 import { Product } from './product.model';
 import { IProduct } from './product.interface';
+import { User } from '../user/user.model';
 
 export const createProduct = async (data: Partial<IProduct>) => {
     return await Product.create(data);
@@ -47,7 +48,13 @@ export const getProducts = async (filters: any, page = 1, limit = 10) => {
         }
     }
 
-    if (filters.gender) query.gender = filters.gender;
+    if (filters.gender) {
+        if (filters.gender === 'MEN' || filters.gender === 'WOMEN') {
+            query.gender = { $in: [filters.gender, 'UNISEX'] };
+        } else {
+            query.gender = filters.gender;
+        }
+    }
     if (filters.sale === 'true') query.discountPercentage = { $gt: 0 };
 
     // 4. Size Filters
@@ -107,6 +114,11 @@ export const updateProduct = async (id: string, data: Partial<IProduct>) => {
 };
 
 export const deleteProduct = async (id: string) => {
+    // Remove from all user wishlists and recently viewed
+    await User.updateMany(
+        { $or: [{ wishlist: id }, { recentlyViewed: id }] },
+        { $pull: { wishlist: id, recentlyViewed: id } }
+    );
     return await Product.findByIdAndDelete(id);
 };
 

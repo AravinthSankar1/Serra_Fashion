@@ -54,7 +54,7 @@ const transporter = nodemailer.createTransport(getTransporterConfig());
 // Removed transporter.verify to prevent misleading "SMTP Connection Error" logs on startup when API bypass is active
 
 // Create a universal wrapper that routes over HTTPS (Gmail API) to bypass ENETUNREACH/Timeouts on Server providers
-const sendEmailSecured = async (options: { from?: string, to: string, subject: string, html: string }) => {
+const sendEmailSecured = async (options: { from?: string, to: string, subject: string, html: string, attachments?: any[] }) => {
     const { clientId, clientSecret, refreshToken } = config.email.gmail || {};
 
     if (clientId && refreshToken && clientSecret) {
@@ -69,14 +69,31 @@ const sendEmailSecured = async (options: { from?: string, to: string, subject: s
             const { token } = await oAuth2Client.getAccessToken();
 
             if (token) {
+                const boundary = 'serra_mail_boundary_' + Date.now();
                 const str = [
                     `From: "SÉRRA FASHION" <${options.from || config.email.from || config.email.auth.user}>`,
                     `To: ${options.to}`,
                     `Subject: ${options.subject}`,
                     'MIME-Version: 1.0',
-                    `Content-Type: text/html; charset="UTF-8"`,
+                    `Content-Type: multipart/related; boundary="${boundary}"`,
                     '',
-                    options.html
+                    `--${boundary}`,
+                    'Content-Type: text/html; charset="UTF-8"',
+                    'Content-Transfer-Encoding: base64',
+                    '',
+                    Buffer.from(options.html).toString('base64'),
+                    '',
+                    ...(options.attachments || []).map(att => [
+                        `--${boundary}`,
+                        `Content-Type: ${att.contentType}`,
+                        'Content-Transfer-Encoding: base64',
+                        `Content-ID: <${att.cid}>`,
+                        `Content-Disposition: inline; filename="${att.filename}"`,
+                        '',
+                        att.content,
+                        ''
+                    ].join('\r\n')),
+                    `--${boundary}--`
                 ].join('\r\n');
 
                 const encodedMail = Buffer.from(str)
@@ -95,12 +112,18 @@ const sendEmailSecured = async (options: { from?: string, to: string, subject: s
         } catch (apiError: any) {
             console.warn('[EMAIL] HTTPS API Bypass failed, fallback to strict SMTP:', apiError.response?.data || apiError.message);
         }
-    } else {
-        console.warn(`[EMAIL] Skipping API Bypass. Missing Keys - ClientID: ${!!clientId}, Secret: ${!!clientSecret}, Token: ${!!refreshToken}`);
     }
 
     // Strict SMTP Fallback
-    return transporter.sendMail(options);
+    return transporter.sendMail({
+        ...options,
+        attachments: (options.attachments || []).map(att => ({
+            filename: att.filename,
+            content: Buffer.from(att.content, 'base64'),
+            contentType: att.contentType,
+            cid: att.cid
+        }))
+    });
 };
 
 /**
@@ -112,49 +135,86 @@ const getEmailTemplate = (title: string, subtitle: string, content: string, ctaT
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f9fafb; color: #111827; }
-        .wrapper { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; margin-top: 40px; margin-bottom: 40px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .header { padding: 40px; text-align: center; background-color: #000000; color: #ffffff; }
-        .brand { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; font-style: italic; }
-        .content { padding: 48px; }
-        .title { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: #111827; }
-        .subtitle { font-size: 16px; color: #6b7280; margin-bottom: 32px; line-height: 1.5; }
-        .body-text { font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 32px; }
-        .button { display: inline-block; padding: 16px 32px; background-color: #000000; color: #ffffff !important; text-decoration: none; border-radius: 12px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
-        .footer { padding: 40px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #f3f4f6; }
-        .order-card { background-color: #f9fafb; border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid #f3f4f6; }
-        .status-badge { display: inline-block; padding: 4px 12px; background-color: #000; color: #fff; font-size: 10px; font-weight: 800; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.1em; }
+        body { font-family: 'Inter', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #ffffff; color: #111827; -webkit-font-smoothing: antialiased; }
+        .wrapper { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+        .header { padding: 40px 20px; text-align: center; }
+        .logo { height: 40px; width: auto; }
+        .content { padding: 0 40px 40px; }
+        .hero { background-color: #f9fafb; border-radius: 32px; padding: 48px; text-align: center; margin-bottom: 40px; }
+        .title { font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: #000000; margin-bottom: 12px; }
+        .subtitle { font-size: 16px; color: #6b7280; line-height: 1.6; max-width: 300px; margin: 0 auto 0; }
+        .body-text { font-size: 15px; color: #374151; line-height: 1.8; margin-top: 32px; }
+        .cta-container { text-align: center; margin-top: 48px; }
+        .button { display: inline-block; padding: 18px 44px; background-color: #000000; color: #ffffff !important; text-decoration: none; border-radius: 100px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .footer { padding: 60px 40px; text-align: center; border-top: 1px solid #f3f4f6; }
+        .footer-text { font-size: 11px; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase; line-height: 2; margin-bottom: 24px; }
+        .social-links { margin-bottom: 24px; }
+        .social-link { display: inline-block; margin: 0 12px; color: #111827; text-decoration: none; font-size: 12px; font-weight: 600; }
+        .order-card { background-color: #ffffff; border: 1px solid #f3f4f6; border-radius: 20px; padding: 24px; margin-top: 32px; }
+        .status-badge { display: inline-block; padding: 6px 14px; background-color: #000; color: #fff; font-size: 10px; font-weight: 800; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.15em; }
     </style>
 </head>
 <body>
     <div class="wrapper">
         <div class="header">
-            <span class="brand">SÉRRA FASHION</span>
+            <img src="cid:weblogo" alt="SÉRRA FASHION" class="logo" />
         </div>
         <div class="content">
-            <div class="title">${title}</div>
-            <div class="subtitle">${subtitle}</div>
+            <div class="hero">
+                <div class="title">${title}</div>
+                <p class="subtitle">${subtitle}</p>
+            </div>
+            
             ${content}
+
             ${ctaText && ctaLink ? `
-            <div style="text-align: center; margin-top: 40px;">
+            <div class="cta-container">
                 <a href="${ctaLink}" class="button">${ctaText}</a>
             </div>` : ''}
         </div>
         <div class="footer">
-            &copy; ${new Date().getFullYear()} SÉRRA FASHION. All rights reserved.<br>
-            Designed for the relentless pursuit of style.
+            <div class="social-links">
+                <a href="#" class="social-link">INSTAGRAM</a>
+                <a href="#" class="social-link">TWITTER</a>
+                <a href="#" class="social-link">FACEBOOK</a>
+            </div>
+            <p class="footer-text">
+                &copy; ${new Date().getFullYear()} SÉRRA FASHION. ALL RIGHTS RESERVED.<br>
+                CRAFTED FOR THE RELENTLESS PURSUIT OF STYLE.
+            </p>
+            <p style="font-size: 10px; color: #d1d5db;">You are receiving this because you shopped at SÉRRA FASHION.</p>
         </div>
     </div>
 </body>
 </html>
 `;
 
+// Helper to get logo attachment
+const getLogoAttachment = () => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const logoPath = path.join(process.cwd(), 'frontend', 'public', 'weblogo.png');
+        if (fs.existsSync(logoPath)) {
+            const content = fs.readFileSync(logoPath).toString('base64');
+            return [{
+                filename: 'weblogo.png',
+                content: content,
+                contentType: 'image/png',
+                cid: 'weblogo'
+            }];
+        }
+    } catch (e) {
+        console.warn('[EMAIL] Failed to load logo for attachment');
+    }
+    return [];
+};
+
 export const sendEmailOtp = async (to: string, otp: string) => {
     if (!config.email.auth.user || !config.email.auth.pass) {
         console.warn(`[EMAIL] SMTP credentials missing. NODE_ENV: ${config.env}`);
-        // Return true in development to allow flow testing, but false in production to signal failure
         if (config.env === 'development') {
             console.log(`[DEV-MODE] OTP for ${to}: ${otp}`);
             return true;
@@ -163,21 +223,22 @@ export const sendEmailOtp = async (to: string, otp: string) => {
     }
 
     const html = getEmailTemplate(
-        'Verify Your Account',
-        'Secure your access to the SÉRRA collection.',
+        'VERIFY ACCESS',
+        'Secure your presence in the SÉRRA collection.',
         `<div class="order-card" style="text-align: center;">
-            <div style="font-size: 32px; font-weight: 800; letter-spacing: 0.2em; color: #000;">${otp}</div>
-            <p style="margin-top: 12px; font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 700;">Valid for 5 minutes</p>
+            <div style="font-size: 32px; font-weight: 800; letter-spacing: 0.3em; color: #000; margin-bottom: 8px;">${otp}</div>
+            <p style="font-size: 10px; color: #9ca3af; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;">Valid for 5 minutes</p>
         </div>
-        <p class="body-text">Please enter this code on the verification page to continue. If you didn't request this, you can safely ignore this email.</p>`
+        <p class="body-text" style="text-align: center;">Enter this code on the verification page to finalize your access. If you did not initiate this, please ignore this communication.</p>`
     );
 
     try {
         const info = await sendEmailSecured({
             from: config.email.from || config.email.auth.user,
             to,
-            subject: `${otp} is your verification code`,
+            subject: `Verification Code: ${otp}`,
             html,
+            attachments: getLogoAttachment()
         });
         console.log(`[EMAIL] Sent successfully: ${info.messageId}`);
         return true;
@@ -241,18 +302,18 @@ export const sendOrderConfirmation = async (to: string, order: any, type: 'email
 
     if (type === 'email') {
         const html = getEmailTemplate(
-            'Order Confirmed',
-            `Thank you for your purchase, ${order.user?.name || 'Valued Customer'}. We're preparing your pieces.`,
+            'ORDER CONFIRMED',
+            `Thank you for your purchase, ${order.user?.name || 'Valued Customer'}. We are meticulously preparing your pieces.`,
             `<div class="order-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <span style="font-size: 12px; color: #6b7280; font-weight: 700; text-transform: uppercase;">Order ID: #${order._id.slice(-6).toUpperCase()}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <span style="font-size: 11px; color: #9ca3af; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Order ID: #${order._id.slice(-6).toUpperCase()}</span>
                     <span class="status-badge" style="background-color: #10b981;">Confirmed</span>
                 </div>
-                <div style="font-size: 24px; font-weight: 700; color: #111827;">₹${order.totalAmount}</div>
-                <p style="margin-top: 16px; font-size: 14px; color: #374151;">Your curated collection is currently being processed by our team.</p>
+                <div style="font-size: 28px; font-weight: 700; color: #111827; margin-bottom: 8px;">₹${order.totalAmount.toLocaleString()}</div>
+                <p style="font-size: 14px; color: #4b5563; line-height: 1.6;">Your curated collection is currently being processed with the utmost care by our fulfillment specialists. You'll receive another update once your package is dispatched.</p>
             </div>
-            <p class="body-text">We'll notify you as soon as your order is dispatched. You can track your order status anytime on your dashboard.</p>`,
-            'Track Order',
+            <p class="body-text">We appreciate your discerning taste and trust in SÉRRA FASHION. View your full order history or track your delivery progress anytime.</p>`,
+            'Order Status',
             `${config.frontendUrl}/orders`
         );
 
@@ -260,8 +321,9 @@ export const sendOrderConfirmation = async (to: string, order: any, type: 'email
             await sendEmailSecured({
                 from: config.email.from,
                 to,
-                subject: `Order Confirmation #${order._id.slice(-6).toUpperCase()}`,
-                html
+                subject: `Confirmed: Order #${order._id.slice(-6).toUpperCase()}`,
+                html,
+                attachments: getLogoAttachment()
             });
             console.log(`[EMAIL] Order confirmation sent to ${to}`);
             return true;
@@ -311,17 +373,17 @@ export const sendOrderStatusUpdate = async (to: string, order: any, newStatus: s
 
     if (type === 'email') {
         const html = getEmailTemplate(
-            'Order Update',
-            `Something has changed with your order #${order._id.slice(-6).toUpperCase()}.`,
+            'STATUS UPDATE',
+            `Your curated order #${order._id.slice(-6).toUpperCase()} has progressed to the next stage.`,
             `<div class="order-card">
-                <div style="margin-bottom: 24px;">
-                    <span style="font-size: 11px; color: #6b7280; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">New Status</span><br>
-                    <span class="status-badge" style="background-color: ${statusColors[newStatus] || '#000'}; padding: 8px 16px; font-size: 14px; margin-top: 8px;">${newStatus}</span>
+                <div style="margin-bottom: 24px; text-align: center;">
+                    <span style="font-size: 10px; color: #9ca3af; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; display: block; margin-bottom: 12px;">Current Status</span>
+                    <span class="status-badge" style="background-color: ${statusColors[newStatus] || '#000'}; padding: 12px 24px; font-size: 14px; letter-spacing: 0.2em;">${newStatus}</span>
                 </div>
-                <p style="font-size: 15px; color: #374151; line-height: 1.6;">Your order is moving through our fulfillment process. We're dedicated to ensuring your pieces arrive in perfect condition.</p>
+                <p style="font-size: 14px; color: #4b5563; line-height: 1.8; text-align: center;">Our logistics team is diligently working to ensure your pieces arrive in pristine condition. Every step reflects our commitment to excellence.</p>
             </div>
-            <p class="body-text">If you have any questions regarding this change, please contact our support team or view your order details.</p>`,
-            'View Order Details',
+            <p class="body-text">If you have inquiries regarding this status change, our concierge team is available to assist you. Detail tracking is available via your SÉRRA account.</p>`,
+            'Order Concierge',
             `${config.frontendUrl}/orders`
         );
 
@@ -329,10 +391,40 @@ export const sendOrderStatusUpdate = async (to: string, order: any, newStatus: s
             await sendEmailSecured({
                 from: config.email.from,
                 to,
-                subject: `Update on Order #${order._id.slice(-6).toUpperCase()}`,
-                html
+                subject: `Update: Order #${order._id.slice(-6).toUpperCase()} is ${newStatus}`,
+                html,
+                attachments: getLogoAttachment()
             });
             console.log(`[EMAIL] Status update sent to ${to}`);
+
+            // Also Notify Admin of Status Change as requested
+            if (config.admin.email) {
+                const adminHtml = getEmailTemplate(
+                    'STATUS CHANGED',
+                    `Order #${order._id.slice(-6).toUpperCase()} status has been updated.`,
+                    `<div class="order-card">
+                        <div style="margin-bottom: 20px;">
+                            <p style="font-size: 11px; color: #9ca3af; font-weight: 700; text-transform: uppercase;">Customer</p>
+                            <p style="font-size: 15px; font-weight: 700; color: #000;">${order.user?.name || 'Customer'}</p>
+                        </div>
+                        <div style="display: flex; gap: 40px; align-items: center;">
+                            <div>
+                                <p style="font-size: 11px; color: #9ca3af; font-weight: 700; text-transform: uppercase;">New Status</p>
+                                <span class="status-badge" style="background-color: ${statusColors[newStatus] || '#000'};">${newStatus}</span>
+                            </div>
+                        </div>
+                    </div>`,
+                    'View Admin Dashboard',
+                    `${config.frontendUrl}/admin/orders`
+                );
+                await sendEmailSecured({
+                    from: config.email.from,
+                    to: config.admin.email,
+                    subject: `[ADMIN] Status Change: #${order._id.slice(-6).toUpperCase()} is ${newStatus}`,
+                    html: adminHtml,
+                    attachments: getLogoAttachment()
+                });
+            }
             return true;
         } catch (error) {
             console.error('[EMAIL] Status update failed:', error);
@@ -370,14 +462,36 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
 
     if (type === 'email' && config.admin.email) {
         const html = getEmailTemplate(
-            'New Order Received',
-            'Take action on a new customer order.',
+            'NEW ACQUISITION',
+            'A new acquisition has been recorded from a customer.',
             `<div class="order-card">
-                <p><strong>Customer:</strong> ${order.user?.name || 'Guest'}</p>
-                <p><strong>Amount:</strong> ₹${order.totalAmount}</p>
-                <p><strong>Order ID:</strong> #${order._id}</p>
+                <div style="margin-bottom: 16px; border-bottom: 1px solid #f3f4f6; padding-bottom: 16px;">
+                    <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Discerned Customer</p>
+                    <p style="font-size: 16px; font-weight: 700; color: #000;">${order.user?.name || 'Guest User'} <span style="font-size: 12px; font-weight: 400; color: #6b7280;">(${order.user?.email || order.shippingAddress.email})</span></p>
+                </div>
+                
+                <div style="margin-bottom: 24px;">
+                    <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700; margin-bottom: 12px;">Order Summary</p>
+                    ${(order.items || []).map((item: any) => `
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+                            <span style="color: #374151;">${item.product?.title || 'Premium Item'} (x${item.quantity})</span>
+                            <span style="font-weight: 700; color: #111827;">₹${(item.price * item.quantity).toLocaleString()}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+                    <div>
+                        <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Valuation</p>
+                        <p style="font-size: 20px; font-weight: 700; color: #000;">₹${order.totalAmount.toLocaleString()}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Reference ID</p>
+                        <p style="font-size: 14px; font-weight: 700; color: #6b7280;">#${order._id.slice(-8).toUpperCase()}</p>
+                    </div>
+                </div>
             </div>`,
-            'Manage Order',
+            'Acknowledge Order',
             `${config.frontendUrl}/admin/orders`
         );
 
@@ -385,8 +499,9 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
             await sendEmailSecured({
                 from: config.email.from,
                 to: config.admin.email,
-                subject: `[ADMIN] New Order received`,
-                html
+                subject: `[ADMIN] Acquisition Alert: #${order._id.slice(-8).toUpperCase()}`,
+                html,
+                attachments: getLogoAttachment()
             });
             console.log('[EMAIL] Admin alert sent');
             return true;

@@ -5,12 +5,12 @@ import api from '../api/client';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Mail, Lock, MessageCircle, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, MessageCircle, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SocialLoginSelector from '../components/auth/SocialLoginSelector';
 
 const loginSchema = z.object({
@@ -33,9 +33,12 @@ export default function LoginPage() {
     // Social Login State
     const [socialProvider, setSocialProvider] = useState<'Google' | 'Facebook' | null>(null);
 
+    const [serverError, setServerError] = useState<string | null>(null);
+
     // Password Login Mutation
     const passwordMutation = useMutation({
         mutationFn: async (data: LoginForm) => {
+            setServerError(null);
             const res = await api.post('/auth/login', data);
             return res.data;
         },
@@ -45,7 +48,9 @@ export default function LoginPage() {
             navigate('/');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Authentication failed.');
+            const msg = error.response?.data?.message || 'Authentication failed. Please check your credentials.';
+            setServerError(msg);
+            // We don't toast anymore because we show it in a prominent box
         }
     });
 
@@ -53,6 +58,7 @@ export default function LoginPage() {
     const sendOtpMutation = useMutation({
         mutationFn: async () => {
             if (!contact) throw new Error('Please enter your contact details');
+            setServerError(null);
             const res = await api.post('/auth/send-otp', { contact, type: otpChannel });
             return res.data;
         },
@@ -61,13 +67,14 @@ export default function LoginPage() {
             setOtpStep('verify');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to send OTP.');
+            setServerError(error.response?.data?.message || 'Failed to send OTP.');
         }
     });
 
     // Verify OTP Mutation
     const verifyOtpMutation = useMutation({
         mutationFn: async () => {
+            setServerError(null);
             const res = await api.post('/auth/verify-otp', { contact, otp: otpCode, type: otpChannel });
             return res.data;
         },
@@ -77,23 +84,27 @@ export default function LoginPage() {
             navigate('/');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Invalid OTP.');
+            setServerError(error.response?.data?.message || 'Invalid OTP.');
         }
     });
 
     // Social Login Mutation
     const socialMutation = useMutation({
         mutationFn: async (data: any) => {
+            setServerError(null);
             const res = await api.post('/auth/social-login', data);
             return res.data;
         },
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             login(data.data);
-            toast.success(`Welcome back! Authenticated via ${socialProvider}.`);
+            toast.success(`Welcome back! Authenticated via ${variables.provider}.`);
             navigate('/');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Social authentication failed.');
+            setServerError(error.response?.data?.message || 'Social authentication failed.');
+        },
+        onSettled: () => {
+            setSocialProvider(null);
         }
     });
 
@@ -106,13 +117,20 @@ export default function LoginPage() {
             idToken: account.idToken,
             accessToken: account.accessToken
         });
-        setSocialProvider(null);
     };
 
-    const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+    const { register, handleSubmit, formState: { errors }, watch } = useForm<LoginForm>({
         resolver: zodResolver(loginSchema),
         defaultValues: { rememberMe: false }
     });
+
+    // Clear server error when user starts typing
+    useEffect(() => {
+        const subscription = watch(() => {
+            if (serverError) setServerError(null);
+        });
+        return () => subscription.unsubscribe();
+    }, [watch, serverError]);
 
     return (
         <div className="min-h-screen flex bg-white">
@@ -128,6 +146,7 @@ export default function LoginPage() {
                 <div className="relative z-10 w-full p-24 flex flex-col justify-between text-white">
                     <div>
                         <div className="flex flex-col items-center leading-none">
+                            <img src="/weblogo.png" alt="SÉRRA FASHION" className="h-20 w-auto mb-4 invert brightness-200" />
                             <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-6xl">SÉRRA</h1>
                             <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-xl uppercase">FASHION</span>
                         </div>
@@ -161,6 +180,25 @@ export default function LoginPage() {
                         <p className="text-gray-500">Sign in to manage your account.</p>
                     </div>
 
+                    <AnimatePresence mode="wait">
+                        {serverError && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-4"
+                            >
+                                <div className="p-2 bg-red-100 rounded-xl text-red-600">
+                                    <AlertTriangle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-red-900 leading-none mb-1">There was a problem</h4>
+                                    <p className="text-xs text-red-700 font-medium leading-relaxed">{serverError}</p>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     {/* Auth Method Tabs */}
                     <div className="flex p-1 bg-gray-100 rounded-xl relative">
                         <button
@@ -188,10 +226,7 @@ export default function LoginPage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                onSubmit={(e: React.FormEvent) => {
-                                    e.preventDefault();
-                                    handleSubmit((data) => passwordMutation.mutate(data))(e);
-                                }}
+                                onSubmit={handleSubmit((data) => passwordMutation.mutate(data))}
                                 className="space-y-6"
                             >
                                 <div className="space-y-4">
