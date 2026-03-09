@@ -140,7 +140,7 @@ const getEmailTemplate = (title: string, subtitle: string, content: string, ctaT
         body { font-family: 'Inter', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #ffffff; color: #111827; -webkit-font-smoothing: antialiased; }
         .wrapper { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; }
         .header { padding: 40px 20px; text-align: center; }
-        .logo { height: 40px; width: auto; }
+        .logo { height: 170px; width: auto; }
         .content { padding: 0 40px 40px; }
         .hero { background-color: #f9fafb; border-radius: 32px; padding: 48px; text-align: center; margin-bottom: 40px; }
         .title { font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: #000000; margin-bottom: 12px; }
