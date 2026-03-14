@@ -9,6 +9,7 @@ export interface IStoreSettings extends Document {
     contactEmail: string;
     contactPhone: string;
     storeAddress: string;
+    isCodEnabled: boolean;           // Added for COD toggle
     updatedAt: Date;
 }
 
@@ -22,6 +23,7 @@ const storeSettingsSchema = new Schema<IStoreSettings>(
         contactEmail: { type: String, default: 'serrafashion123@gmail.com' },
         contactPhone: { type: String, default: '+91 9876543210' },
         storeAddress: { type: String, default: 'Avadi, Chennai, Tamil Nadu 600065, India' },
+        isCodEnabled: { type: Boolean, default: true },
     },
     { timestamps: true }
 );

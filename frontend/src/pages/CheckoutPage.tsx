@@ -9,7 +9,7 @@ import api from '../api/client';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Navbar from '../components/layout/Navbar';
-import { ShieldCheck, Truck, CreditCard, ArrowRight, Loader2, CheckCircle2, Check, Plus, Download, MapPin } from 'lucide-react';
+import { ShieldCheck, Truck, CreditCard, ArrowRight, Loader2, CheckCircle2, Check, Plus, Download, MapPin, ChevronLeft } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -661,6 +661,15 @@ export default function CheckoutPage() {
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 py-12 md:py-20 lg:p-24">
+                {/* Back Navigation */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black mb-12 transition-colors group"
+                >
+                    <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                    <span>Continue Shopping</span>
+                </button>
+
                 <div className="flex flex-col lg:flex-row gap-16">
                     {/* ─── LEFT: FORM ───────────────────────── */}
                     <div className="flex-1 space-y-12">
@@ -888,27 +897,29 @@ export default function CheckoutPage() {
                                 </motion.div>
 
                                 {/* COD Option */}
-                                <motion.div
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => setPaymentMethod('COD')}
-                                    className={`p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all duration-200 ${paymentMethod === 'COD'
-                                        ? 'border-black bg-gray-50 shadow-sm'
-                                        : 'border-gray-100 hover:border-gray-200'
-                                        }`}
-                                >
-                                    <div className="flex items-center space-x-3">
-                                        <div className="h-10 w-10 bg-black rounded-xl flex items-center justify-center shadow-sm text-white font-bold text-xs">
-                                            COD
+                                {settings?.isCodEnabled !== false && (
+                                    <motion.div
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => setPaymentMethod('COD')}
+                                        className={`p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all duration-200 ${paymentMethod === 'COD'
+                                            ? 'border-black bg-gray-50 shadow-sm'
+                                            : 'border-gray-100 hover:border-gray-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <div className="h-10 w-10 bg-black rounded-xl flex items-center justify-center shadow-sm text-white font-bold text-xs">
+                                                COD
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold">Cash On Delivery</p>
+                                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">Pay when your order arrives</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold">Cash On Delivery</p>
-                                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">Pay when your order arrives</p>
+                                        <div className="h-5 w-5 rounded-full border-2 border-black flex items-center justify-center">
+                                            {paymentMethod === 'COD' && <div className="h-2.5 w-2.5 bg-black rounded-full" />}
                                         </div>
-                                    </div>
-                                    <div className="h-5 w-5 rounded-full border-2 border-black flex items-center justify-center">
-                                        {paymentMethod === 'COD' && <div className="h-2.5 w-2.5 bg-black rounded-full" />}
-                                    </div>
-                                </motion.div>
+                                    </motion.div>
+                                )}
                             </div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest text-center">
                                 Your transaction is encrypted and secure.

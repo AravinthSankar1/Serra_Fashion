@@ -146,7 +146,6 @@ export default function LoginPage() {
                 <div className="relative z-10 w-full p-24 flex flex-col justify-between text-white">
                     <div>
                         <div className="flex flex-col items-center leading-none">
-                            <img src="/weblogo.png" alt="SÉRRA FASHION" className="h-20 w-auto mb-4 invert brightness-200" />
                             <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-6xl">SÉRRA</h1>
                             <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-xl uppercase">FASHION</span>
                         </div>

@@ -15,7 +15,7 @@ interface FilterSidebarProps {
 
 export default function FilterSidebar({ isOpen, onClose, searchParams, setSearchParams, gender }: FilterSidebarProps) {
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['category', 'price', 'size']));
-    const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([0, 1000]);
+    const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([0, 10000]);
 
     // Fetch categories
     const { data: categoriesData } = useQuery({
@@ -55,7 +55,7 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
 
     useEffect(() => {
         const min = parseFloat(minPrice || '0');
-        const max = parseFloat(maxPrice || '1000');
+        const max = parseFloat(maxPrice || '10000');
         setTempPriceRange([min, max]);
     }, [minPrice, maxPrice]);
 
@@ -144,7 +144,7 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
         searchParams.delete('minPrice');
         searchParams.delete('maxPrice');
         setSearchParams(searchParams);
-        setTempPriceRange([0, 1000]);
+        setTempPriceRange([0, 10000]);
     };
 
     const hasActiveFilters = category || brand || sizes.length > 0 || minPrice || maxPrice;
@@ -264,8 +264,8 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                                         <div
                                             className="absolute h-1 bg-black rounded-full"
                                             style={{
-                                                left: `${(tempPriceRange[0] / 1000) * 100}%`,
-                                                right: `${100 - (tempPriceRange[1] / 1000) * 100}%`
+                                                left: `${(tempPriceRange[0] / 10000) * 100}%`,
+                                                right: `${100 - (tempPriceRange[1] / 10000) * 100}%`
                                             }}
                                         />
 
@@ -273,8 +273,8 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                                         <input
                                             type="range"
                                             min="0"
-                                            max="1000"
-                                            step="10"
+                                            max="10000"
+                                            step="100"
                                             value={tempPriceRange[0]}
                                             onChange={(e) => handlePriceChange(0, parseInt(e.target.value))}
                                             className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none cursor-pointer z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-lg"
@@ -282,8 +282,8 @@ export default function FilterSidebar({ isOpen, onClose, searchParams, setSearch
                                         <input
                                             type="range"
                                             min="0"
-                                            max="1000"
-                                            step="10"
+                                            max="10000"
+                                            step="100"
                                             value={tempPriceRange[1]}
                                             onChange={(e) => handlePriceChange(1, parseInt(e.target.value))}
                                             className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none cursor-pointer z-10 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-lg"

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { User, Camera, Mail, Globe, ShieldCheck, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { User, Camera, Mail, Globe, ShieldCheck, CheckCircle2, ChevronRight, ChevronLeft, ShoppingBag } from 'lucide-react';
 import PremiumLoader from '../components/ui/PremiumLoader';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -33,6 +33,21 @@ export default function ProfilePage() {
     const [addresses, setAddresses] = useState<any[]>(user?.address || []);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [isPinLoading, setIsPinLoading] = useState(false);
+
+    // Fetch real order data for dynamic profile card
+    const { data: ordersData } = useQuery({
+        queryKey: ['orders', 'my-orders'],
+        queryFn: async () => {
+            const res = await api.get('/orders/my-orders');
+            return res.data.data as any[];
+        },
+        enabled: !!user,
+        staleTime: 60000,
+    });
+
+    const totalOrders = ordersData?.length || 0;
+    const deliveredOrders = ordersData?.filter((o: any) => o.orderStatus === 'DELIVERED').length || 0;
+    const totalSpent = ordersData?.filter((o: any) => o.paymentStatus === 'PAID').reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0) || 0;
 
     // Redirect if not logged in
     useEffect(() => {
@@ -226,10 +241,30 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="bg-black rounded-[40px] p-8 text-white">
-                        <h3 className="text-lg font-serif mb-4">SÉRRA FASHION Rewards</h3>
-                        <p className="text-white/60 text-xs leading-relaxed mb-6">You are 250 points away from unlocking Exclusive Priority Shipping.</p>
+                        <div className="flex items-center space-x-3 mb-4">
+                            <div className="h-10 w-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                <ShoppingBag className="h-5 w-5 text-white" />
+                            </div>
+                            <h3 className="text-lg font-serif">SÉRRA FASHION</h3>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-white/10 rounded-2xl p-3 text-center">
+                                <p className="text-2xl font-serif font-bold">{totalOrders}</p>
+                                <p className="text-[9px] uppercase tracking-widest text-white/60 mt-1">Total Orders</p>
+                            </div>
+                            <div className="bg-white/10 rounded-2xl p-3 text-center">
+                                <p className="text-2xl font-serif font-bold">{deliveredOrders}</p>
+                                <p className="text-[9px] uppercase tracking-widest text-white/60 mt-1">Delivered</p>
+                            </div>
+                            <div className="bg-white/10 rounded-2xl p-3 text-center">
+                                <p className="text-lg font-serif font-bold">₹{totalSpent > 999 ? (totalSpent / 1000).toFixed(1) + 'k' : totalSpent}</p>
+                                <p className="text-[9px] uppercase tracking-widest text-white/60 mt-1">Spent</p>
+                            </div>
+                        </div>
+
                         <Link to="/orders" className="flex items-center justify-between group">
-                            <span className="text-xs font-bold uppercase tracking-widest">View My Earnings</span>
+                            <span className="text-xs font-bold uppercase tracking-widest">View All Orders</span>
                             <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>

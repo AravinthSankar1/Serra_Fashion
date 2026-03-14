@@ -4,9 +4,9 @@ import api from '../api/client';
 import { type Order } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 import Navbar from '../components/layout/Navbar';
-import { Package, MapPin, Download, XCircle, CheckCircle2, Truck, Clock, ShoppingBag, CreditCard } from 'lucide-react';
+import { Package, MapPin, Download, XCircle, CheckCircle2, Truck, Clock, ShoppingBag, CreditCard, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useRazorpay } from 'react-razorpay';
 
@@ -188,6 +188,7 @@ export default function OrdersPage() {
     const { format, convert } = useCurrency();
     const queryClient = useQueryClient();
     const { Razorpay } = useRazorpay();
+    const navigate = useNavigate();
     const [isPaying, setIsPaying] = useState<string | null>(null);
 
     const handlePayment = async (order: Order) => {
@@ -279,6 +280,15 @@ export default function OrdersPage() {
             <Navbar />
 
             <main className="max-w-3xl mx-auto px-4 py-12 md:py-20">
+                {/* Back Navigation */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black mb-8 transition-colors group"
+                >
+                    <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                    <span>Back</span>
+                </button>
+
                 {/* Page Header */}
                 <div className="mb-10">
                     <h1 className="text-4xl font-serif font-bold text-gray-900 mb-1">My Orders</h1>

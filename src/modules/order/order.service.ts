@@ -4,8 +4,17 @@ import { IVariant } from '../product/product.interface';
 import { clearCart } from '../cart/cart.service';
 import { eventBus, Events } from '../../events/eventBus';
 import { submitOrderToQikink } from '../../services/qikink.service';
+import { StoreSettings } from '../settings/settings.model';
 
 export const createOrder = async (userId: string, orderData: Partial<IOrder>) => {
+    // Validate COD if applicable
+    if (orderData.paymentMethod === 'COD') {
+        const settings = await StoreSettings.findOne();
+        if (settings && settings.isCodEnabled === false) {
+            throw { statusCode: 400, message: 'Cash on Delivery is currently disabled' };
+        }
+    }
+
     const order = await Order.create({
         ...orderData,
         user: userId,
