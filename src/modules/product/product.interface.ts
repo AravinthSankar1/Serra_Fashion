@@ -45,6 +45,13 @@ export interface IProduct extends Document {
     // Qikink print-on-demand
     qikinkSku?: string;
     isFulfilledByQikink?: boolean;
+    
+    // Bewakoof-style individual product controls
+    isCodAvailable: boolean;
+    isReturnable: boolean;
+    isReplaceable: boolean;
+    returnWindow: number; // in days
+
     createdAt: Date;
     updatedAt: Date;
 }

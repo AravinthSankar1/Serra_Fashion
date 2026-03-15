@@ -26,6 +26,7 @@ const navItems = [
     { title: 'Users', icon: Users, path: '/admin/users' },
     { title: 'Banners', icon: ImageIcon, path: '/admin/banners' },
     { title: 'Reviews', icon: MessageCircle, path: '/admin/reviews' },
+    { title: 'Support Desk', icon: MessageCircle, path: '/admin/support' },
     { title: 'Settings', icon: RefreshCw, path: '/admin/settings' },
 ];
 

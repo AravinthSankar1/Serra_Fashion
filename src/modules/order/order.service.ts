@@ -9,9 +9,15 @@ import { StoreSettings } from '../settings/settings.model';
 export const createOrder = async (userId: string, orderData: Partial<IOrder>) => {
     // Validate COD if applicable
     if (orderData.paymentMethod === 'COD') {
-        const settings = await StoreSettings.findOne();
-        if (settings && settings.isCodEnabled === false) {
-            throw { statusCode: 400, message: 'Cash on Delivery is currently disabled' };
+        // Check if any product in the order does NOT support COD
+        for (const item of orderData.items || []) {
+            const product = await Product.findById(item.product);
+            if (product && product.isCodAvailable === false) {
+                throw { 
+                    statusCode: 400, 
+                    message: `Product "${product.title}" is not available for Cash on Delivery. Please use online payment or remove this item.` 
+                };
+            }
         }
     }
 

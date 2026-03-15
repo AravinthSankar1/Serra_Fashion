@@ -27,6 +27,8 @@ import AdminSizeGuides from './pages/admin/SizeGuides';
 import AdminBanners from './pages/admin/Banners';
 import AdminReviews from './pages/admin/Reviews';
 import AdminSettings from './pages/admin/Settings';
+import AdminSupport from './pages/admin/Support';
+import ChatWidget from './components/common/ChatWidget';
 
 
 
@@ -67,12 +69,14 @@ function App() {
                             <Route path="banners" element={<AdminBanners />} />
                             <Route path="reviews" element={<AdminReviews />} />
                             <Route path="settings" element={<AdminSettings />} />
+                            <Route path="support" element={<AdminSupport />} />
                         </Route>
                     </Route>
 
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                <ChatWidget />
             </Router>
         </>
     );

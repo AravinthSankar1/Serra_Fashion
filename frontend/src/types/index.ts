@@ -101,6 +101,10 @@ export interface Product {
     vendor?: string | User;
     approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
     rejectionReason?: string;
+    isCodAvailable?: boolean;
+    isReturnable?: boolean;
+    isReplaceable?: boolean;
+    returnWindow?: number;
 }
 
 export interface CartItem {

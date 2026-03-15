@@ -18,7 +18,6 @@ export default function AdminSettings() {
         contactEmail: '',
         contactPhone: '',
         storeAddress: '',
-        isCodEnabled: true,
     });
 
     useEffect(() => {
@@ -96,21 +95,6 @@ export default function AdminSettings() {
                             />
                         </div>
 
-                        <div className="flex items-center justify-between p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
-                            <div>
-                                <h3 className="text-sm font-bold text-gray-900">Cash on Delivery</h3>
-                                <p className="text-xs text-gray-500 mt-1">Allow customers to pay upon receiving their order</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    className="sr-only peer"
-                                    checked={settings.isCodEnabled}
-                                    onChange={(e) => setSettings({ ...settings, isCodEnabled: e.target.checked })}
-                                />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
-                            </label>
-                        </div>
                     </section>
 
                     <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-6">

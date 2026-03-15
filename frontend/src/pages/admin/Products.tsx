@@ -67,6 +67,10 @@ export default function AdminProducts() {
     const [sizeGuides, setSizeGuides] = useState<SizeGuide[]>([]);
     const [sizeGuideId, setSizeGuideId] = useState('');
     const [isUploadingVariantId, setIsUploadingVariantId] = useState<number | null>(null);
+    const [isCodAvailable, setIsCodAvailable] = useState(true);
+    const [isReturnable, setIsReturnable] = useState(true);
+    const [isReplaceable, setIsReplaceable] = useState(true);
+    const [returnWindow, setReturnWindow] = useState(7);
 
     const fetchData = async () => {
         try {
@@ -107,6 +111,11 @@ export default function AdminProducts() {
         formData.append('stock', stock.toString());
         formData.append('isPublished', isPublished.toString());
         if (sizeGuideId) formData.append('sizeGuide', sizeGuideId);
+        
+        formData.append('isCodAvailable', isCodAvailable.toString());
+        formData.append('isReturnable', isReturnable.toString());
+        formData.append('isReplaceable', isReplaceable.toString());
+        formData.append('returnWindow', returnWindow.toString());
 
         const validImages = images.filter(img => {
             if (typeof img === 'string') return img.trim() !== '';
@@ -176,6 +185,10 @@ export default function AdminProducts() {
             setStock(product.stock);
             setIsPublished(product.isPublished);
             setSizeGuideId(typeof product.sizeGuide === 'string' ? product.sizeGuide : (product.sizeGuide as any)?._id || '');
+            setIsCodAvailable(product.isCodAvailable ?? true);
+            setIsReturnable(product.isReturnable ?? true);
+            setIsReplaceable(product.isReplaceable ?? true);
+            setReturnWindow(product.returnWindow ?? 7);
         } else {
             setEditingProduct(null);
             setTitle('');
@@ -190,6 +203,10 @@ export default function AdminProducts() {
             setStock(0);
             setIsPublished(false);
             setSizeGuideId('');
+            setIsCodAvailable(true);
+            setIsReturnable(true);
+            setIsReplaceable(true);
+            setReturnWindow(7);
         }
         setProductFiles([]);
         setIsModalOpen(true);
@@ -581,6 +598,57 @@ export default function AdminProducts() {
                                                     <option key={guide._id} value={guide._id}>{guide.name}</option>
                                                 ))}
                                             </select>
+                                        </div>
+
+                                        {/* Policy & COD Settings */}
+                                        <div className="space-y-4 pt-4 border-t border-gray-50">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Policy & COD</p>
+                                            
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-xl border border-gray-100">
+                                                    <span className="text-[10px] font-bold text-gray-700 uppercase">Cash on Delivery</span>
+                                                    <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="sr-only peer"
+                                                            checked={isCodAvailable}
+                                                            onChange={(e) => setIsCodAvailable(e.target.checked)}
+                                                        />
+                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                                                    </label>
+                                                </div>
+                                                <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-xl border border-gray-100">
+                                                    <span className="text-[10px] font-bold text-gray-700 uppercase">Return Policy</span>
+                                                    <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="sr-only peer"
+                                                            checked={isReturnable}
+                                                            onChange={(e) => setIsReturnable(e.target.checked)}
+                                                        />
+                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                                                    </label>
+                                                </div>
+                                                <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-xl border border-gray-100">
+                                                    <span className="text-[10px] font-bold text-gray-700 uppercase">Replacement</span>
+                                                    <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="sr-only peer"
+                                                            checked={isReplaceable}
+                                                            onChange={(e) => setIsReplaceable(e.target.checked)}
+                                                        />
+                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                                                    </label>
+                                                </div>
+                                                <Input
+                                                   label="Return Window (Days)"
+                                                   type="number"
+                                                   value={returnWindow}
+                                                   onChange={(e) => setReturnWindow(Number(e.target.value))}
+                                                   disabled={!isReturnable && !isReplaceable}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Image Assets */}
