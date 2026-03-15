@@ -11,4 +11,7 @@ router.post('/add', cartController.addItem);
 router.put('/update', cartController.updateItem);
 router.delete('/clear', cartController.clearCart);
 
+router.post('/apply-promo', cartController.applyPromo);
+router.post('/remove-promo', cartController.removePromo);
+
 export default router;

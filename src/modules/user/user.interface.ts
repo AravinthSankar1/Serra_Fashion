@@ -43,6 +43,9 @@ export interface IUser extends Document {
     otpAttempts?: number;
     otpLastSentAt?: Date;
 
+    isVip: boolean;
+    coinBalance: number;
+
     createdAt: Date;
     updatedAt: Date;
 

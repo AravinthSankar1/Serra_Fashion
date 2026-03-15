@@ -10,6 +10,7 @@ export interface ICartItem {
 export interface ICart extends Document {
     user: mongoose.Types.ObjectId;
     items: ICartItem[];
+    appliedPromo?: string;
 }
 
 const cartItemSchema = new Schema({
@@ -23,6 +24,7 @@ const cartSchema = new Schema<ICart>(
     {
         user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
         items: [cartItemSchema],
+        appliedPromo: { type: String }
     },
     { timestamps: true }
 );
