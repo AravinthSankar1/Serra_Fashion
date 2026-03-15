@@ -16,6 +16,7 @@ import bannerRoutes from './modules/banner/banner.routes';
 import qikinkRoutes from './modules/qikink/qikink.routes';
 import settingsRoutes from './modules/settings/settings.routes';
 import reviewRoutes from './modules/review/review.routes';
+import supportRoutes from './modules/support/support.routes';
 
 const router = Router();
 
@@ -36,6 +37,7 @@ router.use('/size-guides', sizeGuideRoutes);
 router.use('/banners', bannerRoutes);
 router.use('/qikink', qikinkRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/support', supportRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

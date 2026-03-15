@@ -98,18 +98,21 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center space-x-2 md:space-x-4">
-                        <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="p-2 text-gray-400 hover:text-black">
+                        <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="p-2 text-gray-400 hover:text-black relative group" title="Search">
                             <Search className="h-5 w-5" />
+                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">SEARCH</span>
                         </button>
 
                         {user && (
-                            <Link to="/orders" className="hidden sm:block p-2 text-gray-400 hover:text-black" title="My Orders">
+                            <Link to="/orders" className="hidden sm:block p-2 text-gray-400 hover:text-black relative group" title="My Orders">
                                 <Package className="h-5 w-5" />
+                                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">ORDERS</span>
                             </Link>
                         )}
 
-                        <Link to="/wishlist" className="hidden sm:block p-2 text-gray-400 hover:text-black relative">
+                        <Link to="/wishlist" className="hidden sm:block p-2 text-gray-400 hover:text-black relative group" title="Wishlist">
                             <Heart className="h-5 w-5" />
+                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">WISHLIST</span>
                             {user?.wishlist && user.wishlist.length > 0 && (
                                 <span className="absolute top-1 right-1 h-3.5 w-3.5 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white">
                                     {user.wishlist.length}
@@ -117,18 +120,21 @@ export default function Navbar() {
                             )}
                         </Link>
 
-                        <Link to="/profile" className="hidden sm:block p-2 text-gray-400 hover:text-black">
+                        <Link to="/profile" className="hidden sm:block p-2 text-gray-400 hover:text-black relative group" title="Profile">
                             <UserIcon className="h-5 w-5" />
+                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">PROFILE</span>
                         </Link>
 
                         {user && (
-                            <button onClick={logout} className="hidden lg:block p-2 text-gray-400 hover:text-red-600 transition-colors" title="Logout">
+                            <button onClick={logout} className="hidden lg:block p-2 text-gray-400 hover:text-red-600 transition-colors relative group" title="Logout">
                                 <LogOut className="h-5 w-5" />
+                                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">LOGOUT</span>
                             </button>
                         )}
 
-                        <button onClick={() => setIsCartOpen(true)} className="p-2 text-gray-400 hover:text-black relative">
+                        <button onClick={() => setIsCartOpen(true)} className="p-2 text-gray-400 hover:text-black relative group" title="Cart">
                             <ShoppingBag className="h-5 w-5" />
+                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 uppercase">BAG</span>
                             {cartCount > 0 && (
                                 <span className="absolute top-1 right-1 h-3.5 w-3.5 bg-black rounded-full flex items-center justify-center text-[8px] text-white">
                                     {cartCount}

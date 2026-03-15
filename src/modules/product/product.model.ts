@@ -47,6 +47,12 @@ const productSchema = new Schema(
         // Qikink Print-on-Demand integration
         qikinkSku: { type: String, trim: true }, // SKU from Qikink "My Products" page
         isFulfilledByQikink: { type: Boolean, default: false }, // Toggle Qikink fulfillment
+        
+        // Bewakoof-style individual product controls
+        isCodAvailable: { type: Boolean, default: true },
+        isReturnable: { type: Boolean, default: true },
+        isReplaceable: { type: Boolean, default: true },
+        returnWindow: { type: Number, default: 7 }, // Default 7 days return window
     },
     {
         timestamps: true,
