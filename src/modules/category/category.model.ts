@@ -11,6 +11,8 @@ export interface ICategory extends Document {
     slug: string;
     gender: CategoryGender;
     image?: { imageUrl: string; imagePublicId: string };
+    iconUrl?: string; // For circular slider categories
+    parentCategory?: Types.ObjectId | string; // For Mega Menu nesting
     isActive: boolean;
     createdBy?: Types.ObjectId | string;
     approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -27,6 +29,8 @@ const categorySchema = new Schema<ICategory>(
             imageUrl: { type: String, default: '' },
             imagePublicId: { type: String, default: '' },
         },
+        iconUrl: { type: String },
+        parentCategory: { type: Schema.Types.ObjectId, ref: 'Category' },
         gender: { type: String, enum: Object.values(CategoryGender), default: CategoryGender.UNISEX },
         isActive: { type: Boolean, default: true },
         createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
