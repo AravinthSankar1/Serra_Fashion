@@ -7,7 +7,7 @@ import { ApiResponse } from '../../utils/response';
 import { asyncHandler } from '../../middlewares/error.middleware';
 import { UserRole } from '../user/user.interface';
 
-import { uploadToCloudinary } from '../../utils/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary } from '../../utils/cloudinary';
 
 // Get reviews for a product
 export const getProductReviews = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -39,13 +39,12 @@ export const addReview = asyncHandler(async (req: AuthRequest, res: Response) =>
         paymentStatus: 'PAID'
     });
 
-    let images: string[] = [];
+    let images: { imageUrl: string, imagePublicId: string }[] = [];
     if (req.files && Array.isArray(req.files)) {
         const uploadPromises = (req.files as any[]).map(file =>
             uploadToCloudinary(file, 'reviews')
         );
-        const uploadedResults = await Promise.all(uploadPromises);
-        images = uploadedResults.map(res => res.imageUrl);
+        images = (await Promise.all(uploadPromises)) as { imageUrl: string, imagePublicId: string }[];
     }
 
     const review = await Review.create({
@@ -124,6 +123,16 @@ export const deleteReview = asyncHandler(async (req: AuthRequest, res: Response)
     }
 
     const productId = review.product;
+    
+    // Purge images from cloud
+    if (review.images && review.images.length > 0) {
+        for (const img of review.images) {
+            if (img.imagePublicId) {
+                await deleteFromCloudinary(img.imagePublicId);
+            }
+        }
+    }
+
     await review.deleteOne();
 
     // Update Product Stats

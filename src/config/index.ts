@@ -100,7 +100,7 @@ export const config = {
     },
     admin: {
         email: envVars.ADMIN_EMAIL,
-        phone: envVars.ADMIN_PHONE,
+        phone: envVars.ADMIN_PHONE?.split('#')[0].trim(),
     },
     qikink: {
         clientId: (envVars.QIKINK_CLIENT_ID || '').trim(),

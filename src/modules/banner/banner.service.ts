@@ -38,6 +38,10 @@ export const getAllBanners = async () => {
     return await Banner.find().sort({ order: 1, createdAt: -1 });
 };
 
+export const getBannerById = async (id: string) => {
+    return await Banner.findById(id);
+};
+
 export const createBanner = async (data: Partial<IBanner>) => {
     return await Banner.create(data);
 };

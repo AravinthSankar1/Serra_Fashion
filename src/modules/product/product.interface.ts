@@ -35,6 +35,11 @@ export interface IProduct extends Document {
     discountPercentage: number; // Same as discount
     discount: number;
     finalPrice: number;
+    vipPrice?: number; // Tribe Member Price
+    fit?: string;
+    sleeveLength?: string;
+    material?: string;
+    collectionTags?: string[];
     isPublished: boolean;
     stock: number; // Total stock
     variants: IVariant[];

@@ -63,7 +63,21 @@ export const getProducts = async (filters: any, page = 1, limit = 10) => {
         query['variants.size'] = { $in: sizes };
     }
 
-    // 5. Price Range
+    // 5. Bewakoof Advanced Filters
+    if (filters.fit) {
+        query.fit = { $in: filters.fit.split(',') };
+    }
+    if (filters.sleeveLength) {
+        query.sleeveLength = { $in: filters.sleeveLength.split(',') };
+    }
+    if (filters.material) {
+        query.material = { $in: filters.material.split(',') };
+    }
+    if (filters.collectionTags) {
+        query.collectionTags = { $in: filters.collectionTags.split(',') };
+    }
+
+    // 6. Price Range
     if (filters.minPrice || filters.maxPrice) {
         query.finalPrice = {};
         if (filters.minPrice) query.finalPrice.$gte = Number(filters.minPrice);

@@ -9,7 +9,7 @@ import { sendVendorSubmissionAlert } from '../../utils/notification';
 
 export const createCategory = async (req: AuthRequest, res: Response) => {
     try {
-        const { name, gender, isActive } = req.body;
+        const { name, gender, isActive, iconUrl, parentCategory } = req.body;
         const user = req.user;
         const slug = slugify(name, { lower: true, strict: true });
 
@@ -24,6 +24,8 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
             gender,
             isActive: isActive === 'false' ? false : true,
             image: categoryImage,
+            iconUrl,
+            parentCategory: parentCategory || null,
             createdBy: user?.sub
         };
 
@@ -104,7 +106,7 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
 export const updateCategory = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, gender, isActive } = req.body;
+        const { name, gender, isActive, iconUrl, parentCategory } = req.body;
 
         const category = await Category.findById(id);
         if (!category) return res.status(404).json(ApiResponse.error('Category not found', 404));
@@ -122,6 +124,8 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
             name,
             gender,
             isActive: isActive === 'false' ? false : true,
+            iconUrl,
+            parentCategory: parentCategory || null,
             image: categoryImage
         };
         if (name) {

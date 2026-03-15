@@ -458,7 +458,8 @@ export const sendOrderStatusUpdate = async (to: string, order: any, newStatus: s
 
 // Admin Alerts
 export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any) => {
-    const message = `[ADMIN] New Order Alert!\nOrder ID: #${order._id.slice(-6).toUpperCase()}\nAmount: ₹${order.totalAmount}`;
+    const customerPhone = order.shippingAddress?.phone || order.user?.phoneNumber || 'N/A';
+    const message = `[ADMIN] New Order Alert!\nOrder ID: #${order._id.slice(-6).toUpperCase()}\nAmount: ₹${order.totalAmount}\nCustomer Phone: ${customerPhone}`;
 
     if (type === 'email' && config.admin.email) {
         const html = getEmailTemplate(
@@ -467,7 +468,8 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
             `<div class="order-card">
                 <div style="margin-bottom: 16px; border-bottom: 1px solid #f3f4f6; padding-bottom: 16px;">
                     <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Discerned Customer</p>
-                    <p style="font-size: 16px; font-weight: 700; color: #000;">${order.user?.name || 'Guest User'} <span style="font-size: 12px; font-weight: 400; color: #6b7280;">(${order.user?.email || order.shippingAddress.email})</span></p>
+                    <p style="font-size: 16px; font-weight: 700; color: #000;">${order.user?.name || 'Guest User'} <span style="font-size: 12px; font-weight: 400; color: #6b7280;">(${order.user?.email || order.shippingAddress?.email})</span></p>
+                    <p style="font-size: 14px; font-weight: 500; color: #374151; margin-top: 6px;">📞 ${order.shippingAddress?.phone || order.user?.phoneNumber || 'N/A'}</p>
                 </div>
                 
                 <div style="margin-bottom: 24px;">

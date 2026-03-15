@@ -44,6 +44,14 @@ const userSchema = new Schema<IUser>(
         otpExpires: { type: Date, select: false },
         otpAttempts: { type: Number, default: 0, select: false },
         otpLastSentAt: { type: Date, select: false },
+        isVip: {
+            type: Boolean,
+            default: false
+        },
+        coinBalance: {
+            type: Number,
+            default: 0
+        }
     },
     { timestamps: true }
 );
