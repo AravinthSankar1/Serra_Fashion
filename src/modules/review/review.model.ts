@@ -6,7 +6,7 @@ export interface IReview extends Document {
     rating: number;
     comment: string; // Title or short summary
     description?: string; // Detailed review
-    images?: string[];
+    images?: { imageUrl: string; imagePublicId: string }[];
     isVerifiedPurchase: boolean;
     showOnHomepage: boolean;
     priority: number;
@@ -21,7 +21,10 @@ const reviewSchema = new Schema<IReview>(
         rating: { type: Number, required: true, min: 1, max: 5 },
         comment: { type: String, trim: true, maxlength: 100 },
         description: { type: String, trim: true, maxlength: 1000 },
-        images: [String],
+        images: [{
+            imageUrl: String,
+            imagePublicId: String
+        }],
         isVerifiedPurchase: { type: Boolean, default: false },
         showOnHomepage: { type: Boolean, default: false },
         priority: { type: Number, default: 0 },
