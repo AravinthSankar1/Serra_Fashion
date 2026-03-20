@@ -57,6 +57,15 @@ const transporter = nodemailer.createTransport(getTransporterConfig());
 const sendEmailSecured = async (options: { from?: string, to: string, subject: string, html: string, attachments?: any[] }) => {
     const { clientId, clientSecret, refreshToken } = config.email.gmail || {};
 
+    // Detailed debug logs for server admins (visible in Render/Deployment logs)
+    if (!clientId || !refreshToken || !clientSecret) {
+        console.warn('[EMAIL-DEBUG] Gmail API Bypass skipped. Missing:', {
+            hasClientId: !!clientId,
+            hasClientSecret: !!clientSecret,
+            hasRefreshToken: !!refreshToken
+        });
+    }
+
     if (clientId && refreshToken && clientSecret) {
         try {
             const { OAuth2Client } = require('google-auth-library');
@@ -70,8 +79,14 @@ const sendEmailSecured = async (options: { from?: string, to: string, subject: s
 
             if (token) {
                 const boundary = 'serra_mail_boundary_' + Date.now();
+                const fromAddress = options.from || config.email.from || config.email.auth.user;
+                
+                if (!fromAddress) {
+                    console.warn('[EMAIL-DEBUG] Critical Warning: No "From" address found (SMTP_USER or EMAIL_FROM missing).');
+                }
+
                 const str = [
-                    `From: "SÉRRA FASHION" <${options.from || config.email.from || config.email.auth.user}>`,
+                    `From: "SÉRRA FASHION" <${fromAddress}>`,
                     `To: ${options.to}`,
                     `Subject: ${options.subject}`,
                     'MIME-Version: 1.0',
@@ -110,7 +125,12 @@ const sendEmailSecured = async (options: { from?: string, to: string, subject: s
                 return { messageId: 'api-bypass-sent' };
             }
         } catch (apiError: any) {
-            console.warn('[EMAIL] HTTPS API Bypass failed, fallback to strict SMTP:', apiError.response?.data || apiError.message);
+            console.error('[EMAIL-ERROR] Gmail API Bypass failed:', {
+                status: apiError.response?.status,
+                data: apiError.response?.data,
+                message: apiError.message
+            });
+            console.warn('[EMAIL] Falling back to strict SMTP (likely to fail on Render/Cloud hosts)...');
         }
     }
 
