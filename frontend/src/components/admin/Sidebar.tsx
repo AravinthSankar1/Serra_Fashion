@@ -54,13 +54,16 @@ export default function AdminSidebar() {
                 {navItems
                     .filter(item => {
                         if (user?.role === 'vendor') {
-                            const vendorAllowed = ['Dashboard', 'Categories', 'Brands', 'Products', 'Orders', 'Size Guides'];
+                            // Vendor dashboard already has a prominent 'Orders' box, removing redundant sidebar link if asked
+                            const vendorAllowed = ['Dashboard', 'Categories', 'Products', 'Size Guides'];
                             return vendorAllowed.includes(item.title);
                         }
                         return true;
                     })
                     .map((item) => {
-                        const isActive = location.pathname === item.path;
+                        const isActive = item.path === '/admin' 
+                            ? location.pathname === '/admin' 
+                            : location.pathname.startsWith(item.path);
                         return (
                             <Link
                                 key={item.path}

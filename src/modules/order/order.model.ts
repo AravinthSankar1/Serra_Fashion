@@ -5,7 +5,8 @@ export enum OrderStatus {
     PROCESSING = 'PROCESSING',
     SHIPPED = 'SHIPPED',
     DELIVERED = 'DELIVERED',
-    CANCELLED = 'CANCELLED'
+    CANCELLED = 'CANCELLED',
+    REFUND_REQUESTED = 'REFUND_REQUESTED'
 }
 
 export enum PaymentStatus {
@@ -55,6 +56,11 @@ export interface IOrder extends Document {
     razorpaySignature?: string; // Razorpay signature for verification
     paymentVerified: boolean; // Payment signature verified
     statusHistory: IStatusHistory[];
+    // Cancellation/Refund Feedback
+    cancellationReason?: string;
+    cancellationDescription?: string;
+    refundReason?: string;
+    refundDescription?: string;
     // Qikink fulfillment tracking
     qikinkOrderId?: string; // Qikink's order ID returned after submission
     qikinkStatus?: string; // Latest Qikink fulfillment status
@@ -112,6 +118,11 @@ const orderSchema = new Schema<IOrder>(
         razorpaySignature: { type: String },
         paymentVerified: { type: Boolean, default: false },
         statusHistory: [statusHistorySchema],
+        // Cancellation/Refund Feedback
+        cancellationReason: { type: String },
+        cancellationDescription: { type: String },
+        refundReason: { type: String },
+        refundDescription: { type: String },
         // Qikink fulfillment
         qikinkOrderId: { type: String },
         qikinkStatus: { type: String },

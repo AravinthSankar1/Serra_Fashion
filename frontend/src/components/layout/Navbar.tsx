@@ -1,15 +1,17 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useCart } from '../../context';
 import { ShoppingBag, User as UserIcon, Search, Heart, Menu, X, LogOut, Settings, Package, ArrowRight, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CartDrawer from './CartDrawer';
+import { cn } from '../../utils';
 import api from '../../api/client';
 
 export default function Navbar() {
     const { user, logout } = useAuth();
     const { cartCount, isCartOpen, setIsCartOpen } = useCart();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -70,12 +72,9 @@ export default function Navbar() {
                     </div>
 
                     <div className="hidden lg:flex lg:items-center lg:space-x-8">
-                        <Link to="/collection" className="text-sm font-medium text-gray-700 hover:text-black">Collection</Link>
-                        <Link to="/men" className="text-sm font-medium text-gray-700 hover:text-black">Men</Link>
-                        <Link to="/women" className="text-sm font-medium text-gray-700 hover:text-black">Women</Link>
-                        {user && (
-                            <Link to="/orders" className="text-sm font-medium text-gray-700 hover:text-black">My Orders</Link>
-                        )}
+                        <Link to="/collection" className={cn("text-sm font-medium transition-colors", location.pathname === '/collection' ? 'text-black font-bold border-b-2 border-black pb-1' : 'text-gray-700 hover:text-black')}>Collection</Link>
+                        <Link to="/men" className={cn("text-sm font-medium transition-colors", location.pathname === '/men' ? 'text-black font-bold border-b-2 border-black pb-1' : 'text-gray-700 hover:text-black')}>Men</Link>
+                        <Link to="/women" className={cn("text-sm font-medium transition-colors", location.pathname === '/women' ? 'text-black font-bold border-b-2 border-black pb-1' : 'text-gray-700 hover:text-black')}>Women</Link>
                         {(user?.role === 'admin' || user?.role === 'super_admin') && (
                             <Link to="/admin" className="text-sm font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
                                 <Settings className="h-3.5 w-3.5" />
@@ -120,10 +119,23 @@ export default function Navbar() {
                             )}
                         </Link>
 
-                        <Link to="/profile" className="hidden sm:block p-2 text-gray-400 hover:text-black relative group" title="Profile">
-                            <UserIcon className="h-5 w-5" />
-                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">PROFILE</span>
-                        </Link>
+                        {user ? (
+                            <div className="hidden lg:flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-full border border-gray-100 transition-all hover:bg-white hover:shadow-sm group">
+                                <div className="h-8 w-8 bg-black text-white rounded-full flex items-center justify-center text-[10px] font-black group-hover:scale-110 transition-transform">
+                                    {user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[8px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Welcome back</span>
+                                    <Link to="/profile" className="text-[11px] font-bold text-gray-900 hover:text-black transition-colors leading-none">
+                                        {user.name}
+                                    </Link>
+                                </div>
+                            </div>
+                        ) : (
+                            <Link to="/login" className="hidden sm:flex items-center space-x-2 px-6 py-2.5 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all hover:scale-105 active:scale-95 shadow-md shadow-black/10">
+                                <span>LOGIN</span>
+                            </Link>
+                        )}
 
                         {user && (
                             <button onClick={logout} className="hidden lg:block p-2 text-gray-400 hover:text-red-600 transition-colors relative group" title="Logout">
@@ -363,8 +375,17 @@ export default function Navbar() {
                                 <Link to="/sale" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium text-red-600 tracking-tight">Sale</Link>
 
                                 <div className="pt-8 border-t border-gray-100 flex flex-col space-y-6">
-                                    <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Profile</Link>
-                                    <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Orders</Link>
+                                {user ? (
+                                    <>
+                                        <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Profile</Link>
+                                        <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Orders</Link>
+                                    </>
+                                ) : (
+                                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-black flex items-center gap-2">
+                                        <UserIcon className="h-5 w-5" />
+                                        Login / Create Account
+                                    </Link>
+                                )}
                                     <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium sm:hidden">My Wishlist</Link>
 
                                     {(user?.role === 'admin' || user?.role === 'super_admin') && (

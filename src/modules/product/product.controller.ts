@@ -19,6 +19,12 @@ const parseJson = (val: any) => {
     return val;
 };
 
+const parseBoolean = (val: any) => {
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    return val;
+};
+
 export const createProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
     const productData = { ...req.body };
     const user = req.user;
@@ -26,6 +32,13 @@ export const createProduct = asyncHandler(async (req: AuthRequest, res: Response
     // Parse JSON strings if they come from FormData
     if (productData.variants) productData.variants = parseJson(productData.variants);
     if (productData.images) productData.images = parseJson(productData.images);
+
+    // Parse Booleans if they come as strings
+    if (productData.isPublished !== undefined) productData.isPublished = parseBoolean(productData.isPublished);
+    if (productData.isCodAvailable !== undefined) productData.isCodAvailable = parseBoolean(productData.isCodAvailable);
+    if (productData.isReturnable !== undefined) productData.isReturnable = parseBoolean(productData.isReturnable);
+    if (productData.isReplaceable !== undefined) productData.isReplaceable = parseBoolean(productData.isReplaceable);
+    if (productData.returnWindow !== undefined) productData.returnWindow = Number(productData.returnWindow);
 
     if (req.files && Array.isArray(req.files)) {
         const uploadPromises = (req.files as any[]).map(file =>
@@ -50,7 +63,20 @@ export const createProduct = asyncHandler(async (req: AuthRequest, res: Response
 
     // Notify Admin if it's a vendor submission
     if (user?.role === 'vendor') {
-        await sendVendorSubmissionAlert('email', 'product', product.title, user.name || 'Vendor');
+        import('../../utils/notification').then(({ sendVendorSubmissionAlert }) => {
+            sendVendorSubmissionAlert('email', 'product', product.title, user.name || 'Vendor');
+        });
+
+        import('../notification/notification.service').then(({ createAdminNotification }) => {
+            import('../notification/notification.model').then(({ NotificationType }) => {
+                createAdminNotification(
+                    'New Vendor Submission',
+                    `A new product "${product.title}" has been submitted for review by ${user.name || 'a vendor'}.`,
+                    NotificationType.VENDOR_SUBMISSION,
+                    product._id.toString()
+                );
+            });
+        });
     }
 
     res.status(201).json(ApiResponse.success(product, 'Product created successfully'));
@@ -138,6 +164,13 @@ export const updateProduct = asyncHandler(async (req: AuthRequest, res: Response
     // Parse JSON strings if they come from FormData
     if (productData.variants) productData.variants = parseJson(productData.variants);
     if (productData.images) productData.images = parseJson(productData.images);
+
+    // Parse Booleans if they come as strings
+    if (productData.isPublished !== undefined) productData.isPublished = parseBoolean(productData.isPublished);
+    if (productData.isCodAvailable !== undefined) productData.isCodAvailable = parseBoolean(productData.isCodAvailable);
+    if (productData.isReturnable !== undefined) productData.isReturnable = parseBoolean(productData.isReturnable);
+    if (productData.isReplaceable !== undefined) productData.isReplaceable = parseBoolean(productData.isReplaceable);
+    if (productData.returnWindow !== undefined) productData.returnWindow = Number(productData.returnWindow);
 
     // Sanitize productData
     const sanitizedData = { ...productData };

@@ -7,7 +7,7 @@ import FilterSidebar from "../components/filters/FilterSidebar";
 import ActiveFilters from "../components/filters/ActiveFilters";
 import { ProductGridSkeleton } from "../components/ui/Skeletons";
 import type { Product } from "../types";
-import { SlidersHorizontal, Grid3x3, LayoutGrid } from "lucide-react";
+import { SlidersHorizontal, Grid3x3, LayoutGrid, ArrowRight, ChevronRight, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 
@@ -35,7 +35,8 @@ export default function CollectionPage({ title, gender, isSale }: { title: strin
     } = useInfiniteQuery({
         queryKey: ["products", gender, category, brand, sizes, sort, minPrice, maxPrice, q],
         queryFn: async ({ pageParam = 1 }) => {
-            const params: any = { sort, page: pageParam, limit: 12 };
+            const isLanding = !category && !brand && !sizes && !minPrice && !maxPrice && !q;
+            const params: any = { sort, page: pageParam, limit: isLanding ? 40 : 12 };
             if (gender) params.gender = gender;
             if (isSale) params.sale = 'true';
             if (category) params.category = category;
@@ -98,6 +99,17 @@ export default function CollectionPage({ title, gender, isSale }: { title: strin
     const activeCategory = categoriesData?.find(c => c._id === category);
     const displayTitle = q ? `Search: ${q}` : (activeCategory ? activeCategory.name : title);
 
+    // Filter categories relevant to current gender/context
+    const relevantCategories = categoriesData?.filter(cat => 
+        gender ? (cat.gender === gender || cat.gender === 'UNISEX') : true
+    ) || [];
+
+    const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+    const scrollToSection = (catId: string) => {
+        sectionRefs.current[catId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     return (
         <div className="min-h-screen bg-white">
             <Navbar />
@@ -125,19 +137,45 @@ export default function CollectionPage({ title, gender, isSale }: { title: strin
             <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
-                    <button
-                        onClick={() => setIsFilterOpen(!isFilterOpen)}
-                        className="flex items-center space-x-2 text-sm font-bold uppercase tracking-widest hover:text-gray-600 transition-colors px-4 py-2 rounded-xl hover:bg-gray-50"
-                    >
-                        <SlidersHorizontal className="h-4 w-4" />
-                        <span className="hidden sm:inline">Filter & Refine</span>
-                        <span className="sm:hidden">Filters</span>
-                        {(category || brand || sizes || minPrice || maxPrice) && (
-                            <span className="ml-2 px-2 py-0.5 bg-black text-white text-[10px] font-black rounded-full">
-                                {[category, brand, sizes?.split(',').length, minPrice || maxPrice].filter(Boolean).length}
-                            </span>
+                    <div className="flex items-center space-x-6">
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="flex items-center space-x-2 text-sm font-bold uppercase tracking-widest hover:text-gray-600 transition-colors px-4 py-2 rounded-xl hover:bg-gray-50 shrink-0"
+                        >
+                            <SlidersHorizontal className="h-4 w-4" />
+                            <span className="hidden sm:inline">Filter & Refine</span>
+                            <span className="sm:hidden">Filters</span>
+                            {(category || brand || sizes || minPrice || maxPrice) && (
+                                <span className="ml-2 px-2 py-0.5 bg-black text-white text-[10px] font-black rounded-full">
+                                    {[category, brand, sizes?.split(',').length, minPrice || maxPrice].filter(Boolean).length}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Flipkart Style Category Icons Nav */}
+                        {!category && !q && relevantCategories.length > 0 && (
+                            <div className="flex items-center space-x-8 border-l border-gray-100 pl-8 overflow-x-auto no-scrollbar scroll-smooth pr-4 py-2">
+                                {relevantCategories.map(cat => (
+                                    <button 
+                                        key={cat._id}
+                                        onClick={() => scrollToSection(cat._id)}
+                                        className="flex flex-col items-center space-y-2 group shrink-0"
+                                    >
+                                        <div className="h-14 w-14 rounded-full bg-gray-50 border-2 border-transparent group-hover:border-black transition-all flex items-center justify-center overflow-hidden shadow-sm">
+                                            {cat.image?.imageUrl ? (
+                                                <img src={cat.image.imageUrl} alt={cat.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform" />
+                                            ) : (
+                                                <ShoppingBag className="h-6 w-6 text-gray-400" />
+                                            )}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-black transition-colors">
+                                            {cat.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         )}
-                    </button>
+                    </div>
 
                     <div className="flex items-center space-x-4 w-full sm:w-auto">
                         {/* Grid Size Toggle - Hidden on mobile */}
@@ -200,19 +238,94 @@ export default function CollectionPage({ title, gender, isSale }: { title: strin
                             <ProductGridSkeleton count={isFilterOpen ? 9 : 12} />
                         ) : (
                             <>
-                                <motion.div
-                                    layout
-                                    className={`grid ${isFilterOpen
-                                        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                                        : `grid-cols-2 md:grid-cols-${gridSize === 3 ? '3' : '3'} lg:grid-cols-${gridSize}`
-                                        } gap-6 sm:gap-8`}
-                                >
-                                    {infiniteData?.pages.map((page: any) => (
-                                        page.products.map((product: Product) => (
-                                            <ProductCard key={product._id} product={product} />
-                                        ))
-                                    ))}
-                                </motion.div>
+                                {/* Sectioned View Logic */}
+                                {!category && !q && !brand && !sizes && !minPrice && !maxPrice ? (
+                                    <div className="space-y-16 py-8">
+                                        {relevantCategories.map((cat: any) => {
+                                            const catProducts = infiniteData?.pages
+                                                .flatMap(p => p.products)
+                                                .filter(p => p.category?._id === cat._id || p.category === cat._id)
+                                                .slice(0, gridSize * 2);
+
+                                            if (!catProducts || catProducts.length === 0) return null;
+
+                                            return (
+                                                <div 
+                                                    key={cat._id} 
+                                                    ref={el => sectionRefs.current[cat._id] = el}
+                                                    className="scroll-mt-32 group/section"
+                                                >
+                                                    {/* Section Header with Arrow */}
+                                                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                                                        <div className="flex items-center space-x-4">
+                                                            <div className="h-12 w-1.5 bg-black rounded-full" />
+                                                            <div>
+                                                                <h2 className="text-2xl font-serif font-bold text-gray-900 group-hover/section:text-black transition-colors">{cat.name}</h2>
+                                                                <p className="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-1">Found {catProducts.length}+ curated essentials</p>
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => {
+                                                                searchParams.set("category", cat._id);
+                                                                setSearchParams(searchParams);
+                                                                window.scrollTo(0, 0);
+                                                            }}
+                                                            className="h-10 w-10 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-black/20"
+                                                            title={`View all in ${cat.name}`}
+                                                        >
+                                                            <ArrowRight className="h-5 w-5" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Flipkart Style Horizontal Scroll */}
+                                                    <div className="relative group">
+                                                        <div className="flex overflow-x-auto pb-4 gap-6 no-scrollbar snap-x scroll-smooth">
+                                                            {catProducts.map((product: Product) => (
+                                                                <div 
+                                                                    key={product._id} 
+                                                                    className="min-w-[240px] sm:min-w-[280px] snap-start"
+                                                                >
+                                                                    <ProductCard product={product} />
+                                                                </div>
+                                                            ))}
+                                                            
+                                                            {/* View All Card at the end */}
+                                                            <button 
+                                                                onClick={() => {
+                                                                    searchParams.set("category", cat._id);
+                                                                    setSearchParams(searchParams);
+                                                                    window.scrollTo(0, 0);
+                                                                }}
+                                                                className="min-w-[200px] flex flex-col items-center justify-center bg-gray-50 rounded-2xl border border-dashed border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all snap-start group/viewall"
+                                                            >
+                                                                <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover/viewall:scale-110 transition-transform">
+                                                                    <ChevronRight className="h-6 w-6 text-gray-400 group-hover/viewall:text-black" />
+                                                                </div>
+                                                                <span className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 group-hover/viewall:text-black">View Full Section</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {/* If no sections matched but products exist, show a General section */}
+                                        {/* (Or just handle remaining in a grid below) */}
+                                    </div>
+                                ) : (
+                                    <motion.div
+                                        layout
+                                        className={`grid ${isFilterOpen
+                                            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                                            : `grid-cols-2 md:grid-cols-3 lg:grid-cols-${gridSize}`
+                                            } gap-6 sm:gap-8`}
+                                    >
+                                        {infiniteData?.pages.map((page: any) => (
+                                            page.products.map((product: Product) => (
+                                                <ProductCard key={product._id} product={product} />
+                                            ))
+                                        ))}
+                                    </motion.div>
+                                )}
 
                                 {/* Observer Target */}
                                 <div ref={observerTarget} className="h-10 mt-10 flex items-center justify-center">

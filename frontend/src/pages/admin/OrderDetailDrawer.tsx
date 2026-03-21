@@ -1,7 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, Truck, CreditCard, User, MapPin, Calendar, Hash, Clock } from 'lucide-react';
-import { type Order } from '../../types';
+import { X, Package, CreditCard, User, MapPin, Calendar, Hash, Clock } from 'lucide-react';
+import { type Order, type OrderStatus } from '../../types';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../api/client';
+import { toast } from 'react-toastify';
 
 interface OrderDetailDrawerProps {
     order: Order | null;
@@ -11,6 +14,32 @@ interface OrderDetailDrawerProps {
 
 export default function OrderDetailDrawer({ order, isOpen, onClose }: OrderDetailDrawerProps) {
     const { format, convert } = useCurrency();
+    const queryClient = useQueryClient();
+
+    const updateStatusMutation = useMutation({
+        mutationFn: async ({ status }: { status: OrderStatus }) => {
+            if (!order) return;
+            const res = await api.patch(`/orders/${order._id}/status`, { status });
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+            toast.success('Order status updated');
+        }
+    });
+
+    const updatePaymentMutation = useMutation({
+        mutationFn: async ({ status }: { status: string }) => {
+            if (!order) return;
+            const res = await api.patch(`/orders/${order._id}/payment`, { status });
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+            toast.success('Payment status updated');
+        }
+    });
+
     if (!order) return null;
 
     return (
@@ -195,14 +224,37 @@ export default function OrderDetailDrawer({ order, isOpen, onClose }: OrderDetai
                         </div>
 
                         {/* Footer / Actions */}
-                        <div className="p-8 border-t border-gray-100 flex items-center space-x-4 bg-gray-50/30">
-                            <button className="flex-1 h-14 bg-white border border-gray-200 rounded-2xl text-xs font-bold uppercase tracking-widest hover:border-black transition-colors flex items-center justify-center">
-                                <Truck className="h-4 w-4 mr-2" />
-                                Track Order
-                            </button>
-                            <button className="h-14 w-14 bg-white border border-gray-200 rounded-2xl flex items-center justify-center hover:border-black transition-colors">
-                                <CreditCard className="h-4 w-4" />
-                            </button>
+                        <div className="p-8 border-t border-gray-100 flex flex-col space-y-4 bg-gray-50/30">
+                            <div className="flex items-center space-x-4">
+                                <div className="flex-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-1">Update Order Lifecycle</p>
+                                    <select
+                                        value={order.orderStatus}
+                                        onChange={(e) => updateStatusMutation.mutate({ status: e.target.value as OrderStatus })}
+                                        className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-xs font-bold uppercase tracking-widest outline-none focus:border-black transition-colors"
+                                    >
+                                        <option value="PENDING">Pending</option>
+                                        <option value="PROCESSING">Processing / Packing</option>
+                                        <option value="SHIPPED">Shipped / In Transit</option>
+                                        <option value="DELIVERED">Delivered</option>
+                                        <option value="CANCELLED">Cancelled</option>
+                                        <option value="REFUND_REQUESTED">Refund Requested</option>
+                                    </select>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-1">Finance Status</p>
+                                    <select
+                                        value={order.paymentStatus}
+                                        onChange={(e) => updatePaymentMutation.mutate({ status: e.target.value })}
+                                        className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-xs font-bold uppercase tracking-widest outline-none focus:border-black transition-colors"
+                                    >
+                                        <option value="PENDING">Pending Payment</option>
+                                        <option value="PAID">Payment Received</option>
+                                        <option value="FAILED">Payment Failed</option>
+                                        <option value="REFUNDED">Refunded</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </motion.div>
                 </>

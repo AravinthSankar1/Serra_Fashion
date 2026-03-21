@@ -47,6 +47,12 @@ export const updateOrder = asyncHandler(async (req: AuthRequest, res: Response) 
     res.status(200).json(ApiResponse.success(order, 'Order status updated'));
 });
 
+export const updatePayment = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { status, note } = req.body;
+    const order = await orderService.updatePaymentStatus(req.params.id, status, note);
+    res.status(200).json(ApiResponse.success(order, 'Payment status updated'));
+});
+
 import * as promoService from '../promo/promo.service';
 
 export const validateCoupon = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -66,6 +72,13 @@ export const downloadInvoice = asyncHandler(async (req: AuthRequest, res: Respon
 });
 
 export const cancelOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const order = await orderService.cancelOrderForUser(req.params.id, req.user!.sub);
+    const { reason, description } = req.body;
+    const order = await orderService.cancelOrderForUser(req.params.id, req.user!.sub, reason, description);
     res.status(200).json(ApiResponse.success(order, 'Order cancelled successfully'));
+});
+
+export const requestRefund = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { reason, description } = req.body;
+    const order = await orderService.requestRefundForUser(req.params.id, req.user!.sub, reason, description);
+    res.status(200).json(ApiResponse.success(order, 'Refund request submitted successfully'));
 });

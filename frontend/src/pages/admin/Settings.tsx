@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Save, Truck, Mail, MapPin, Shield, Info } from 'lucide-react';
+import { Save, Truck, Mail, MapPin, Shield, Info, CreditCard } from 'lucide-react';
 import api from '../../api/client';
 import { toast } from 'react-toastify';
+import { useQueryClient } from '@tanstack/react-query';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import PremiumLoader from '../../components/ui/PremiumLoader';
@@ -9,6 +10,7 @@ import PremiumLoader from '../../components/ui/PremiumLoader';
 export default function AdminSettings() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const queryClient = useQueryClient();
     const [settings, setSettings] = useState({
         freeShippingThreshold: 999,
         deliveryCharge: 79,
@@ -18,6 +20,8 @@ export default function AdminSettings() {
         contactEmail: '',
         contactPhone: '',
         storeAddress: '',
+        isCodEnabled: true,
+        isRazorpayEnabled: true,
     });
 
     useEffect(() => {
@@ -42,6 +46,7 @@ export default function AdminSettings() {
         setIsSaving(true);
         try {
             await api.put('/settings', settings);
+            queryClient.invalidateQueries({ queryKey: ['store-settings'] });
             toast.success('Settings updated successfully');
         } catch (error) {
             toast.error('Failed to update settings');
@@ -171,6 +176,49 @@ export default function AdminSettings() {
                                 onChange={(e) => setSettings({ ...settings, storeAddress: e.target.value })}
                                 placeholder="Store address for invoices and footer"
                             />
+                        </div>
+                    </section>
+
+                    <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
+                        <div className="flex items-center space-x-3 mb-2">
+                            <div className="h-10 w-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                                <CreditCard className="h-5 w-5" />
+                            </div>
+                            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-900">Payment Gateways</h2>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                <div>
+                                    <p className="text-sm font-bold">Razorpay Online</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Enable automated payments</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        className="sr-only peer" 
+                                        checked={settings.isRazorpayEnabled}
+                                        onChange={(e) => setSettings({ ...settings, isRazorpayEnabled: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                                </label>
+                            </div>
+                            
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                <div>
+                                    <p className="text-sm font-bold">Cash On Delivery</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Enable manual collection</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        className="sr-only peer" 
+                                        checked={settings.isCodEnabled}
+                                        onChange={(e) => setSettings({ ...settings, isCodEnabled: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                                </label>
+                            </div>
                         </div>
                     </section>
 

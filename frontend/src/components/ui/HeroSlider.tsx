@@ -101,7 +101,6 @@ export default function HeroSlider() {
                                 transition={{ delay: 0.6 }}
                                 onClick={() => {
                                     const link = activeSlides[current].link || '/collection';
-                                    console.log('Navigating to:', link);
                                     if (link.startsWith('http')) {
                                         window.open(link, '_blank');
                                     } else {

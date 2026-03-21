@@ -70,30 +70,68 @@ export default function ImageGalleryLightbox({ images, productTitle }: ImageGall
         <>
             {/* Main Product Image Gallery */}
             <div className="space-y-4">
-                {/* Main Image */}
-                <div
-                    className="relative aspect-[3/4] sm:aspect-square overflow-hidden rounded-3xl bg-gray-100 cursor-zoom-in group"
-                    onClick={() => openLightbox(selectedImage)}
-                >
-                    <img
-                        src={images[selectedImage]?.imageUrl}
-                        alt={`${productTitle} - Image ${selectedImage + 1}`}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            whileHover={{ opacity: 1, scale: 1 }}
-                            className="hidden sm:flex items-center justify-center h-14 w-14 bg-white/90 backdrop-blur-sm rounded-full shadow-xl"
-                        >
-                            <ZoomIn className="h-6 w-6 text-black" />
-                        </motion.div>
+                {/* Main Image Container */}
+                <div className="relative group">
+                    <div
+                        className="relative aspect-[3/4] sm:aspect-square overflow-hidden rounded-3xl bg-gray-100 cursor-zoom-in overflow-hidden touch-pan-y"
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        <AnimatePresence mode="wait">
+                            <motion.img
+                                key={selectedImage}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                                src={images[selectedImage]?.imageUrl}
+                                alt={`${productTitle} - Image ${selectedImage + 1}`}
+                                className="h-full w-full object-cover"
+                                onClick={() => openLightbox(selectedImage)}
+                            />
+                        </AnimatePresence>
+
+                        {/* Interactive Overlay for Desktop - Show on Hover */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
+                        
+                        {/* Zoom Pulse */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <div className="h-14 w-14 bg-white/90 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center">
+                                <ZoomIn className="h-6 w-6 text-black" />
+                            </div>
+                        </div>
+
+                        {/* Pagination Dots - Mobile only */}
+                        <div className="sm:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-1.5 px-3 py-2 bg-black/20 backdrop-blur-md rounded-full">
+                            {images.map((_, i) => (
+                                <div 
+                                    key={i} 
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${i === selectedImage ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`} 
+                                />
+                            ))}
+                        </div>
                     </div>
-                    {/* Mobile Zoom Indicator */}
-                    <div className="sm:hidden absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1">
-                        <ZoomIn className="h-3 w-3" />
-                        <span>Tap to Zoom</span>
-                    </div>
+
+                    {/* Navigation Arrows for Main Image */}
+                    {images.length > 1 && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-black opacity-0 group-hover:opacity-100 transition-all hover:bg-black hover:text-white"
+                                aria-label="Previous image"
+                            >
+                                <ChevronLeft className="h-6 w-6" />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-black opacity-0 group-hover:opacity-100 transition-all hover:bg-black hover:text-white"
+                                aria-label="Next image"
+                            >
+                                <ChevronRight className="h-6 w-6" />
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 {/* Thumbnail Gallery */}

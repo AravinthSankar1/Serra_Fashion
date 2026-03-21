@@ -59,8 +59,7 @@ export default function ProductDetailsPage() {
         queryFn: async () => {
             const res = await api.get('/settings');
             return res.data.data;
-        },
-        staleTime: 5 * 60 * 1000,
+        }
     });
 
     const { data: reviews } = useQuery({
@@ -458,6 +457,12 @@ export default function ProductDetailsPage() {
                                         </p>
                                     </div>
                                 </div>
+                                {product.isCodAvailable !== false && (
+                                    <div className="flex items-center space-x-3 p-4 rounded-3xl bg-emerald-50/50 border border-emerald-100 col-span-2">
+                                        <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Cash on Delivery Available</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

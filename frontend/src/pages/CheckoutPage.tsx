@@ -54,7 +54,7 @@ export default function CheckoutPage() {
     const { format, convert } = useCurrency();
     const navigate = useNavigate();
 
-    const { data: settings } = useQuery({
+    const { data: settings, isLoading: isSettingsLoading } = useQuery({
         queryKey: ['store-settings'],
         queryFn: async () => {
             const res = await api.get('/settings');
@@ -62,6 +62,8 @@ export default function CheckoutPage() {
         }
     });
 
+    const isRazorpayAvailable = settings?.isRazorpayEnabled !== false;
+    const isCodAvailable = settings?.isCodEnabled !== false && cartItems.every(item => (item.product as any).isCodAvailable !== false);
     const shippingFee = settings
         ? (cartTotal >= settings.freeShippingThreshold ? 0 : settings.deliveryCharge)
         : 0;
@@ -70,6 +72,14 @@ export default function CheckoutPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<'RAZORPAY' | 'COD'>('RAZORPAY');
+
+    useEffect(() => {
+        if (paymentMethod === 'RAZORPAY' && !isRazorpayAvailable && isCodAvailable) {
+            setPaymentMethod('COD');
+        } else if (paymentMethod === 'COD' && !isCodAvailable && isRazorpayAvailable) {
+            setPaymentMethod('RAZORPAY');
+        }
+    }, [isRazorpayAvailable, isCodAvailable, paymentMethod]);
 
     // ─── RAZORPAY LIFECYCLE REFS ───────────────────────────
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -348,9 +358,6 @@ export default function CheckoutPage() {
 
     // ─── MAIN SUBMIT HANDLER ───────────────────────────────
     const onSubmit = async (data: CheckoutFormData) => {
-        console.log('[CHECKOUT] onSubmit called with data:', data);
-        console.log('[CHECKOUT] Payment Method:', paymentMethod);
-
         if (isSubmitting) {
             console.warn('[CHECKOUT] Submission blocked: isSubmitting is true');
             return;
@@ -426,7 +433,6 @@ export default function CheckoutPage() {
 
         // ─── RAZORPAY PATH (HARDENED) ──────────────────────
         try {
-            console.log('[RAZORPAY] Initiating payment flow...');
             const RzpConstructor = Razorpay || (window as any).Razorpay;
 
             if (!RzpConstructor) {
@@ -434,7 +440,6 @@ export default function CheckoutPage() {
                 throw new Error("Razorpay SDK not loaded");
             }
 
-            console.log('[RAZORPAY] Fetching keys...');
             const [keyRes, orderRes] = await Promise.all([
                 api.get('/payment/razorpay-key'),
                 api.post('/payment/create-order', { amount: finalAmount, currency: 'INR' })
@@ -617,7 +622,7 @@ export default function CheckoutPage() {
     }
 
     // ─── LOADING ───────────────────────────────────────────
-    if (isAuthLoading || isCartLoading) {
+    if (isAuthLoading || isCartLoading || isSettingsLoading) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <PremiumLoader />
@@ -873,31 +878,31 @@ export default function CheckoutPage() {
                                 Payment Method
                             </h3>
                             <div className="space-y-4">
-                                {/* Razorpay Option */}
-                                <motion.div
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => setPaymentMethod('RAZORPAY')}
-                                    className={`p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all duration-200 ${paymentMethod === 'RAZORPAY'
-                                        ? 'border-black bg-gray-50 shadow-sm'
-                                        : 'border-gray-100 hover:border-gray-200'
-                                        }`}
-                                >
-                                    <div className="flex items-center space-x-3">
-                                        <div className="h-10 w-10 bg-[#3395FF] rounded-xl flex items-center justify-center shadow-sm text-white font-bold text-xs">
-                                            Pay
+                                {isRazorpayAvailable && (
+                                    <motion.div
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => setPaymentMethod('RAZORPAY')}
+                                        className={`p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all duration-200 ${paymentMethod === 'RAZORPAY'
+                                            ? 'border-black bg-gray-50 shadow-sm'
+                                            : 'border-gray-100 hover:border-gray-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <div className="h-10 w-10 bg-[#3395FF] rounded-xl flex items-center justify-center shadow-sm text-white font-bold text-xs">
+                                                Pay
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold">Razorpay Secure</p>
+                                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">UPI / Cards / Netbanking</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold">Razorpay Secure</p>
-                                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">UPI / Cards / Netbanking</p>
+                                        <div className="h-5 w-5 rounded-full border-2 border-black flex items-center justify-center">
+                                            {paymentMethod === 'RAZORPAY' && <div className="h-2.5 w-2.5 bg-black rounded-full" />}
                                         </div>
-                                    </div>
-                                    <div className="h-5 w-5 rounded-full border-2 border-black flex items-center justify-center">
-                                        {paymentMethod === 'RAZORPAY' && <div className="h-2.5 w-2.5 bg-black rounded-full" />}
-                                    </div>
-                                </motion.div>
+                                    </motion.div>
+                                )}
 
-                                {/* COD Option */}
-                                {settings?.isCodEnabled !== false && (
+                                {isCodAvailable && (
                                     <motion.div
                                         whileTap={{ scale: 0.98 }}
                                         onClick={() => setPaymentMethod('COD')}
@@ -919,6 +924,12 @@ export default function CheckoutPage() {
                                             {paymentMethod === 'COD' && <div className="h-2.5 w-2.5 bg-black rounded-full" />}
                                         </div>
                                     </motion.div>
+                                )}
+
+                                {!isRazorpayAvailable && !isCodAvailable && (
+                                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-amber-700 text-xs text-center font-bold">
+                                        No payment methods available for the items in your bag.
+                                    </div>
                                 )}
                             </div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest text-center">

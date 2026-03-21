@@ -120,7 +120,7 @@ export interface Cart {
     items: CartItem[];
 }
 
-export type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+export type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUND_REQUESTED';
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 export interface Order {
@@ -152,6 +152,10 @@ export interface Order {
     subtotal: number;
     discount: number;
     promoCode?: string;
+    cancellationReason?: string;
+    cancellationDescription?: string;
+    refundReason?: string;
+    refundDescription?: string;
     statusHistory: {
         status: string;
         timestamp: string;

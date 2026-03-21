@@ -3,7 +3,8 @@ import api from '../../api/client';
 import { type Order, type OrderStatus } from '../../types';
 import { useCurrency } from '../../hooks/useCurrency';
 import { Search, ExternalLink, TrendingUp, ShoppingBag, Clock, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import OrderDetailDrawer from './OrderDetailDrawer';
 import { motion } from 'framer-motion';
@@ -15,6 +16,8 @@ export default function AdminOrders() {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const { format, convert } = useCurrency();
+    const [searchParams] = useSearchParams();
+    const orderIdToOpen = searchParams.get('id');
 
     const { data: orders, isLoading } = useQuery({
         queryKey: ['admin-orders'],
@@ -27,6 +30,16 @@ export default function AdminOrders() {
         refetchInterval: 10000, // Poll every 10 seconds for real-time updates
     });
 
+    useEffect(() => {
+        if (orderIdToOpen && orders) {
+            const order = (orders as Order[]).find(o => o._id === orderIdToOpen);
+            if (order) {
+                setSelectedOrder(order);
+                setIsDrawerOpen(true);
+            }
+        }
+    }, [orderIdToOpen, orders]);
+
     const updateStatusMutation = useMutation({
         mutationFn: async ({ orderId, status }: { orderId: string, status: OrderStatus }) => {
             const res = await api.patch(`/orders/${orderId}/status`, { status });
@@ -35,6 +48,17 @@ export default function AdminOrders() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
             toast.success('Order status updated');
+        }
+    });
+
+    const updatePaymentMutation = useMutation({
+        mutationFn: async ({ orderId, status }: { orderId: string, status: string }) => {
+            const res = await api.patch(`/orders/${orderId}/payment`, { status });
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+            toast.success('Payment status updated');
         }
     });
 
@@ -100,18 +124,18 @@ export default function AdminOrders() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
                         key={i}
-                        className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center space-x-6"
+                        className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm flex items-center space-x-8"
                     >
-                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${stat.color === 'blue' ? 'bg-blue-50 text-blue-600' :
+                        <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 ${stat.color === 'blue' ? 'bg-blue-50 text-blue-600' :
                             stat.color === 'amber' ? 'bg-amber-50 text-amber-600' :
                                 stat.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
                                     'bg-purple-50 text-purple-600'
                             }`}>
-                            <stat.icon className="h-6 w-6" />
+                            <stat.icon className="h-7 w-7" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{stat.label}</p>
-                            <p className="text-xl font-serif font-bold text-gray-900">{stat.value}</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                            <p className="text-2xl font-serif font-bold text-gray-900 whitespace-nowrap">{stat.value}</p>
                         </div>
                     </motion.div>
                 ))}
@@ -148,7 +172,7 @@ export default function AdminOrders() {
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Items</th>
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Payment</th>
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -182,18 +206,37 @@ export default function AdminOrders() {
                                         <span className="font-bold text-gray-900">{format(convert(order.totalAmount))}</span>
                                     </td>
                                     <td className="px-8 py-6">
-                                        <select
-                                            value={order.orderStatus}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onChange={(e) => updateStatusMutation.mutate({ orderId: order._id, status: e.target.value as OrderStatus })}
-                                            className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full border outline-none cursor-pointer transition-all hover:shadow-sm ${getStatusStyle(order.orderStatus)}`}
-                                        >
-                                            <option value="PENDING">Pending</option>
-                                            <option value="PROCESSING">Processing</option>
-                                            <option value="SHIPPED">Shipped</option>
-                                            <option value="DELIVERED">Delivered</option>
-                                            <option value="CANCELLED">Cancelled</option>
-                                        </select>
+                                        <div className="flex flex-col gap-2">
+                                            <select
+                                                value={order.orderStatus}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onChange={(e) => updateStatusMutation.mutate({ orderId: order._id, status: e.target.value as OrderStatus })}
+                                                className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border outline-none cursor-pointer transition-all hover:shadow-sm ${getStatusStyle(order.orderStatus)}`}
+                                            >
+                                                <option value="PENDING">Pending</option>
+                                                <option value="PROCESSING">Processing</option>
+                                                <option value="SHIPPED">Shipped</option>
+                                                <option value="DELIVERED">Delivered</option>
+                                                <option value="CANCELLED">Cancelled</option>
+                                                <option value="REFUND_REQUESTED">Refund Req.</option>
+                                            </select>
+                                            
+                                            <select
+                                                value={order.paymentStatus}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onChange={(e) => updatePaymentMutation.mutate({ orderId: order._id, status: e.target.value })}
+                                                className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border outline-none cursor-pointer transition-all ${
+                                                    order.paymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                                    order.paymentStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                    'bg-red-50 text-red-600 border-red-100'
+                                                }`}
+                                            >
+                                                <option value="PENDING">Unpaid</option>
+                                                <option value="PAID">Paid</option>
+                                                <option value="FAILED">Failed</option>
+                                                <option value="REFUNDED">Refunded</option>
+                                            </select>
+                                        </div>
                                     </td>
                                     <td className="px-8 py-6 text-right">
                                         <button

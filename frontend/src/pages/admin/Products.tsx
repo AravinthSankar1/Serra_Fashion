@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, ShoppingBag, Eye, EyeOff, Paperclip, X, CheckCircle, XCircle, Clock } from 'lucide-react';
 import PremiumLoader from '../../components/ui/PremiumLoader';
 import api from '../../api/client';
@@ -25,6 +26,8 @@ export default function AdminProducts() {
     const [searchTerm, setSearchTerm] = useState('');
     const [approvalFilter, setApprovalFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
     const { format, convert } = useCurrency();
+    const [searchParams] = useSearchParams();
+    const productIdToOpen = searchParams.get('id');
 
     const handleApprove = async (id: string) => {
         try {
@@ -95,6 +98,15 @@ export default function AdminProducts() {
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (productIdToOpen && products.length > 0) {
+            const prod = (products as Product[]).find(p => p._id === productIdToOpen);
+            if (prod) {
+                openModal(prod);
+            }
+        }
+    }, [productIdToOpen, products]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

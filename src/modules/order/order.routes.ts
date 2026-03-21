@@ -12,6 +12,7 @@ router.get('/my-orders', orderController.getMyOrders);
 router.get('/:id', orderController.getOrderDetails);
 router.get('/:id/invoice', orderController.downloadInvoice);
 router.patch('/:id/cancel', orderController.cancelOrder);
+router.patch('/:id/refund', orderController.requestRefund);
 
 // Validate Coupon
 router.post('/validate-coupon', orderController.validateCoupon);
@@ -19,5 +20,6 @@ router.post('/validate-coupon', orderController.validateCoupon);
 // Admin Routes
 router.get('/', authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), orderController.getAllOrders);
 router.patch('/:id/status', authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), orderController.updateOrder);
+router.patch('/:id/payment', authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]), orderController.updatePayment);
 
 export default router;

@@ -2,7 +2,7 @@ import { useNavigate, Outlet, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import AdminSidebar from '../admin/Sidebar';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, User as UserIcon, X, ShoppingBag, LogOut, Layers, Tag, ChevronRight, AlertCircle, Settings, Sun, Moon } from 'lucide-react';
+import { Search, Bell, User as UserIcon, X, ShoppingBag, LogOut, AlertCircle, Settings, Sun, Moon, FilePlus } from 'lucide-react';
 import api from '../../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLoader from '../ui/PremiumLoader';
@@ -25,6 +25,8 @@ export default function AdminLayout() {
     const [isGearOpen, setIsGearOpen] = useState(false);
 
     // Fetch stats for notifications
+    // Removed unused stats query since notifications are now persistent and dynamic
+    /*
     const { data: stats } = useQuery({
         queryKey: ['admin-stats'],
         queryFn: async () => {
@@ -33,34 +35,58 @@ export default function AdminLayout() {
         },
         refetchInterval: 30000,
     });
+    */
 
-    const pendingCount = (stats?.overview?.pendingProducts || 0) +
-        (stats?.overview?.pendingBrands || 0) +
-        (stats?.overview?.pendingCategories || 0);
+    // Fetch real persistent notifications
+    const { data: notificationsData, refetch: refetchNotifications } = useQuery({
+        queryKey: ['admin-notifications'],
+        queryFn: async () => {
+            const res = await api.get('/notifications/admin');
+            return res.data.data;
+        },
+        refetchInterval: 60000,
+    });
 
-    const pendingNotifications = [
-        {
-            title: 'Pending Products',
-            count: stats?.overview?.pendingProducts || 0,
-            link: '/admin/products?status=PENDING',
-            icon: ShoppingBag,
-            color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400'
-        },
-        {
-            title: 'Pending Brands',
-            count: stats?.overview?.pendingBrands || 0,
-            link: '/admin/brands?status=PENDING',
-            icon: Tag,
-            color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
-        },
-        {
-            title: 'Pending Categories',
-            count: stats?.overview?.pendingCategories || 0,
-            link: '/admin/categories?status=PENDING',
-            icon: Layers,
-            color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400'
+    const notifications = notificationsData || [];
+    const unreadCount = notifications.filter((n: any) => !n.read).length;
+
+    const markAsRead = async (id: string) => {
+        try {
+            await api.patch(`/notifications/${id}/read`);
+            refetchNotifications();
+        } catch (e) {
+            console.error('Failed to mark read');
         }
-    ].filter(n => n.count > 0);
+    };
+
+    const markAllRead = async () => {
+        try {
+            await api.post('/notifications/read-all');
+            refetchNotifications();
+        } catch (e) {
+            console.error('Failed to mark all read');
+        }
+    };
+
+    const getIcon = (type: string) => {
+        switch (type) {
+            case 'ORDER_PLACED': return ShoppingBag;
+            case 'ORDER_CANCELLED': return X;
+            case 'REFUND_REQUESTED': return AlertCircle;
+            case 'VENDOR_SUBMISSION': return FilePlus;
+            default: return Bell;
+        }
+    };
+
+    const getColor = (type: string) => {
+        switch (type) {
+            case 'ORDER_PLACED': return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400';
+            case 'ORDER_CANCELLED': return 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400';
+            case 'REFUND_REQUESTED': return 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400';
+            case 'VENDOR_SUBMISSION': return 'bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400';
+            default: return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+        }
+    };
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -280,9 +306,9 @@ export default function AdminLayout() {
                                 )}
                             >
                                 <Bell className="h-5 w-5" />
-                                {pendingCount > 0 && (
+                                {unreadCount > 0 && (
                                     <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-900 text-[8px] font-black text-white flex items-center justify-center">
-                                        {pendingCount}
+                                        {unreadCount}
                                     </span>
                                 )}
                             </button>
@@ -297,35 +323,44 @@ export default function AdminLayout() {
                                     >
                                         <div className="p-6 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
                                             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100">Notifications</h3>
-                                            <span className="px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-[8px] font-black rounded-full uppercase">
-                                                {pendingCount} New
-                                            </span>
+                                            <div className="flex items-center space-x-3">
+                                                {unreadCount > 0 && (
+                                                    <button onClick={markAllRead} className="text-[9px] font-bold text-gray-400 hover:text-black dark:hover:text-white uppercase tracking-widest">Clear All</button>
+                                                )}
+                                                <span className="px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-[8px] font-black rounded-full uppercase">
+                                                    {unreadCount} New
+                                                </span>
+                                            </div>
                                         </div>
 
-                                        <div className="max-h-[320px] overflow-y-auto">
-                                            {pendingNotifications.length > 0 ? (
+                                        <div className="max-h-[360px] overflow-y-auto custom-scrollbar">
+                                            {notifications.length > 0 ? (
                                                 <div className="p-2">
-                                                    {pendingNotifications.map((notif, idx) => (
+                                                    {notifications.map((notif: any) => (
                                                         <Link
-                                                            key={idx}
-                                                            to={notif.link}
-                                                            onClick={() => setIsNotificationOpen(false)}
-                                                            className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-all duration-200 group"
+                                                            key={notif._id}
+                                                            to={notif.link || '#'}
+                                                            onClick={() => { setIsNotificationOpen(false); markAsRead(notif._id); }}
+                                                            className={cn(
+                                                                "flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-all duration-200 group relative",
+                                                                !notif.read && "bg-gray-50/30 dark:bg-gray-800/20"
+                                                                )}
                                                         >
-                                                            <div className="flex items-center space-x-4">
-                                                                <div className={cn("p-2.5 rounded-xl", notif.color)}>
-                                                                    <notif.icon className="h-4 w-4" />
+                                                            {!notif.read && <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-black dark:bg-white rounded-full" />}
+                                                            <div className="flex items-start space-x-4 pl-2">
+                                                                <div className={cn("p-2.5 rounded-xl shrink-0 mt-0.5", getColor(notif.type))}>
+                                                                    {(() => {
+                                                                        const Icon = getIcon(notif.type);
+                                                                        return <Icon className="h-4 w-4" />;
+                                                                    })()}
                                                                 </div>
-                                                                <div>
-                                                                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{notif.title}</p>
-                                                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Awaiting action</p>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100 leading-tight">{notif.title}</p>
+                                                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium mt-1 leading-relaxed">{notif.message}</p>
+                                                                    <p className="text-[8px] text-gray-300 dark:text-gray-600 font-black uppercase tracking-widest mt-2">
+                                                                        {new Date(notif.createdAt).toLocaleDateString()} at {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </p>
                                                                 </div>
-                                                            </div>
-                                                            <div className="flex items-center space-x-2">
-                                                                <span className="text-xs font-black text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 h-6 w-6 flex items-center justify-center rounded-lg group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-colors">
-                                                                    {notif.count}
-                                                                </span>
-                                                                <ChevronRight className="h-3 w-3 text-gray-300 dark:text-gray-600 group-hover:text-black dark:group-hover:text-white transition-colors" />
                                                             </div>
                                                         </Link>
                                                     ))}
@@ -336,7 +371,7 @@ export default function AdminLayout() {
                                                         <AlertCircle className="h-6 w-6" />
                                                     </div>
                                                     <p className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest">System Clear</p>
-                                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-tighter">No pending approvals</p>
+                                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-tighter">No new notifications</p>
                                                 </div>
                                             )}
                                         </div>

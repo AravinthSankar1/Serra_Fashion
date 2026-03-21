@@ -21,6 +21,13 @@ export const getRazorpayKey = asyncHandler(async (req: Request, res: Response) =
 // Step 1: Create Razorpay Order (before user pays)
 export const createRazorpayOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { amount, currency = 'INR' } = req.body;
+    
+    // Check if Razorpay is enabled in store settings
+    const { StoreSettings } = await import('../settings/settings.model');
+    const settings = await StoreSettings.findOne();
+    if (settings && settings.isRazorpayEnabled === false) {
+        throw { statusCode: 400, message: 'Online payments are currently disabled.' };
+    }
 
     if (!amount || amount <= 0) {
         throw { statusCode: 400, message: 'Invalid amount' };
@@ -34,7 +41,6 @@ export const createRazorpayOrder = asyncHandler(async (req: AuthRequest, res: Re
 
     try {
         const razorpayOrder = await razorpay.orders.create(options);
-        console.log(`[RAZORPAY] Order created: ${razorpayOrder.id} for amount ${options.amount}`);
 
         res.status(200).json(ApiResponse.success({
             id: razorpayOrder.id,
@@ -66,13 +72,10 @@ export const verifyPaymentAndCreateOrder = asyncHandler(async (req: AuthRequest,
         .update(body.toString())
         .digest('hex');
 
-    console.log(`[RAZORPAY] Verifying payment: Order=${razorpay_order_id}, Payment=${razorpay_payment_id}`);
-
     if (expectedSignature !== razorpay_signature) {
         console.error(`[RAZORPAY] Signature Mismatch! Expected: ${expectedSignature}, Received: ${razorpay_signature}`);
         throw { statusCode: 400, message: 'Invalid payment signature. Payment verification failed.' };
     }
-    console.log('[RAZORPAY] Signature verified successfully');
 
     // 2. Check if order already exists with this razorpay_order_id (prevent duplicates)
     const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });

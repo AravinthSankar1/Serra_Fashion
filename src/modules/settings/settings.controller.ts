@@ -15,11 +15,33 @@ export const getSettings = asyncHandler(async (_req: Request, res: Response) => 
 
 // PUT /api/v1/settings — admin only, update settings
 export const updateSettings = asyncHandler(async (req: Request, res: Response) => {
-    const { freeShippingThreshold, deliveryCharge, returnWindowDays, returnPolicy, exchangePolicy, contactEmail, contactPhone, storeAddress } = req.body;
+    const { 
+        freeShippingThreshold, 
+        deliveryCharge, 
+        returnWindowDays, 
+        returnPolicy, 
+        exchangePolicy, 
+        contactEmail, 
+        contactPhone, 
+        storeAddress,
+        isCodEnabled,
+        isRazorpayEnabled
+    } = req.body;
 
     let settings = await StoreSettings.findOne();
     if (!settings) {
-        settings = await StoreSettings.create({ freeShippingThreshold, deliveryCharge, returnWindowDays, returnPolicy, exchangePolicy, contactEmail, contactPhone, storeAddress });
+        settings = await StoreSettings.create({ 
+            freeShippingThreshold, 
+            deliveryCharge, 
+            returnWindowDays, 
+            returnPolicy, 
+            exchangePolicy, 
+            contactEmail, 
+            contactPhone, 
+            storeAddress,
+            isCodEnabled,
+            isRazorpayEnabled
+        });
     } else {
         if (freeShippingThreshold !== undefined) settings.freeShippingThreshold = Number(freeShippingThreshold);
         if (deliveryCharge !== undefined) settings.deliveryCharge = Number(deliveryCharge);
@@ -29,6 +51,8 @@ export const updateSettings = asyncHandler(async (req: Request, res: Response) =
         if (contactEmail !== undefined) settings.contactEmail = contactEmail;
         if (contactPhone !== undefined) settings.contactPhone = contactPhone;
         if (storeAddress !== undefined) settings.storeAddress = storeAddress;
+        if (isCodEnabled !== undefined) settings.isCodEnabled = isCodEnabled;
+        if (isRazorpayEnabled !== undefined) settings.isRazorpayEnabled = isRazorpayEnabled;
         await settings.save();
     }
 

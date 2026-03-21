@@ -525,7 +525,6 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
                 html,
                 attachments: getLogoAttachment()
             });
-            console.log('[EMAIL] Admin alert sent');
             return true;
         } catch (error) {
             console.error('[EMAIL] Admin alert failed:', error);
@@ -548,7 +547,6 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
                     }
                 }
             );
-            console.log('[WHATSAPP] Admin alert sent');
             return true;
         } catch (error: any) {
             console.error('[WHATSAPP] Admin alert failed:', error.response?.data);
@@ -582,9 +580,9 @@ export const sendVendorSubmissionAlert = async (type: 'email' | 'whatsapp', item
                 from: config.email.from,
                 to: config.admin.email,
                 subject: `[ADMIN] New ${itemType} Submission from ${vendorName}`,
-                html
+                html,
+                attachments: getLogoAttachment()
             });
-            console.log('[EMAIL] Admin submission alert sent');
             return true;
         } catch (error) {
             console.error('[EMAIL] Admin submission alert failed:', error);
@@ -607,7 +605,6 @@ export const sendVendorSubmissionAlert = async (type: 'email' | 'whatsapp', item
                     }
                 }
             );
-            console.log('[WHATSAPP] Admin submission alert sent');
             return true;
         } catch (error: any) {
             console.error('[WHATSAPP] Admin submission alert failed:', error.response?.data);
@@ -615,6 +612,102 @@ export const sendVendorSubmissionAlert = async (type: 'email' | 'whatsapp', item
         }
     }
 
+    return false;
+};
+
+// Admin Order Cancellation Alert
+export const sendAdminCancellationAlert = async (type: 'email' | 'whatsapp', order: any, reason?: string) => {
+    const message = `[ADMIN] Order Cancelled!\nOrder ID: #${order._id.slice(-6).toUpperCase()}\nReason: ${reason || 'Not provided'}`;
+
+    if (type === 'email' && config.admin.email) {
+        const html = getEmailTemplate(
+            'ORDER CANCELLED',
+            `Order #${order._id.slice(-6).toUpperCase()} has been cancelled by the customer.`,
+            `<div class="order-card" style="border-left: 4px solid #ef4444;">
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 11px; color: #9ca3af; font-weight: 700; text-transform: uppercase;">Customer</p>
+                    <p style="font-size: 15px; font-weight: 700; color: #000;">${order.user?.name || 'Customer'}</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 11px; color: #9ca3af; font-weight: 700; text-transform: uppercase;">Reason for Cancellation</p>
+                    <p style="font-size: 14px; color: #374151; font-style: italic;">"${reason || 'No reason provided'}"</p>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+                    <div>
+                        <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700;">Valuation</p>
+                        <p style="font-size: 18px; font-weight: 700; color: #000;">₹${order.totalAmount.toLocaleString()}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700;">Reference ID</p>
+                        <p style="font-size: 14px; font-weight: 700; color: #6b7280;">#${order._id.slice(-8).toUpperCase()}</p>
+                    </div>
+                </div>
+            </div>`,
+            'Manage Order',
+            `${config.frontendUrl}/admin/orders`
+        );
+
+        try {
+            await sendEmailSecured({
+                from: config.email.from,
+                to: config.admin.email,
+                subject: `[ADMIN] Order Cancellation: #${order._id.slice(-8).toUpperCase()}`,
+                html,
+                attachments: getLogoAttachment()
+            });
+            return true;
+        } catch (error) {
+            console.error('[EMAIL] Admin cancellation alert failed:', error);
+            return false;
+        }
+    }
+    // WhatsApp logic could follow here too if needed
+    return false;
+};
+
+// Admin Refund Request Alert
+export const sendAdminRefundAlert = async (type: 'email' | 'whatsapp', order: any, reason: string, description?: string) => {
+    const message = `[ADMIN] Refund Requested!\nOrder ID: #${order._id.slice(-6).toUpperCase()}\nReason: ${reason}`;
+
+    if (type === 'email' && config.admin.email) {
+        const html = getEmailTemplate(
+            'REFUND REQUESTED',
+            `A refund has been requested for Order #${order._id.slice(-6).toUpperCase()}. Attention required.`,
+            `<div class="order-card" style="border-left: 4px solid #fbbf24;">
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 11px; color: #9ca3af; font-weight: 700; text-transform: uppercase;">Customer</p>
+                    <p style="font-size: 15px; font-weight: 700; color: #000;">${order.user?.name || 'Customer'}</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 11px; color: #9ca3af; font-weight: 700; text-transform: uppercase;">Reason for Refund</p>
+                    <p style="font-size: 14px; font-weight: 700; color: #b45309;">${reason}</p>
+                    ${description ? `<p style="font-size: 13px; color: #4b5563; margin-top: 8px;">Description: ${description}</p>` : ''}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+                    <div>
+                        <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700;">Valuation</p>
+                        <p style="font-size: 18px; font-weight: 700; color: #000;">₹${order.totalAmount.toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>`,
+            'Review Refund',
+            `${config.frontendUrl}/admin/orders`
+        );
+
+        try {
+            await sendEmailSecured({
+                from: config.email.from,
+                to: config.admin.email,
+                subject: `[ADMIN] Refund Request: #${order._id.slice(-8).toUpperCase()}`,
+                html,
+                attachments: getLogoAttachment()
+            });
+            return true;
+        } catch (error) {
+            console.error('[EMAIL] Admin refund alert failed:', error);
+            return false;
+        }
+    }
     return false;
 };
 

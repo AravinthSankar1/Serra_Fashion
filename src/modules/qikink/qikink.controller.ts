@@ -323,8 +323,6 @@ export const listQikinkProducts = async (_req: Request, res: Response) => {
  * Secure it with a secret query param if necessary.
  */
 export const handleQikinkWebhook = async (req: Request, res: Response) => {
-    console.log('[QIKINK-WEBHOOK] Received push notification');
-
     try {
         const payload = req.body;
 
@@ -338,8 +336,6 @@ export const handleQikinkWebhook = async (req: Request, res: Response) => {
 
         // Check if it looks like a WooCommerce format (has 'name', 'type', 'regular_price')
         if (payload.name && (payload.regular_price || payload.retail_price)) {
-            console.log(`[QIKINK-WEBHOOK] Parsing payload for product: ${payload.name}`);
-
             // Extract color & size options from attributes array
             const sizeAttr = payload.attributes?.find((a: any) => a.name?.toLowerCase() === 'size');
             const colorAttr = payload.attributes?.find((a: any) => a.name?.toLowerCase() === 'color' || a.name?.toLowerCase() === 'colour');
@@ -413,8 +409,6 @@ export const handleQikinkWebhook = async (req: Request, res: Response) => {
             qikinkProduct._retailPrice || undefined, // Use markup from extension if provided
             true       // Overwrite existing
         );
-
-        console.log(`[QIKINK-WEBHOOK] Auto-import successful: ${qikinkProduct.name || qikinkProduct.title}`);
 
         // Return 201 Created to satisfy the WooCommerce integration
         return res.status(201).json({

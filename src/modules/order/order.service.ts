@@ -9,6 +9,10 @@ import { StoreSettings } from '../settings/settings.model';
 export const createOrder = async (userId: string, orderData: Partial<IOrder>) => {
     // Validate COD if applicable
     if (orderData.paymentMethod === 'COD') {
+        const settings = await StoreSettings.findOne();
+        if (settings && settings.isCodEnabled === false) {
+            throw { statusCode: 400, message: 'Cash on Delivery is currently disabled by the store.' };
+        }
         // Check if any product in the order does NOT support COD
         for (const item of orderData.items || []) {
             const product = await Product.findById(item.product);
@@ -76,6 +80,17 @@ export const createOrder = async (userId: string, orderData: Partial<IOrder>) =>
     // Send Notifications
     import('../../utils/notification').then(({ sendOrderNotification }) => {
         sendOrderNotification(order);
+    });
+
+    import('../notification/notification.service').then(({ createAdminNotification }) => {
+        import('../notification/notification.model').then(({ NotificationType }) => {
+            createAdminNotification(
+                'New Order Received',
+                `A new order #${order._id.toString().slice(-6).toUpperCase()} has been placed for ₹${order.totalAmount.toLocaleString()}.`,
+                NotificationType.ORDER_PLACED,
+                order._id.toString()
+            );
+        });
     });
 
     console.log(`[ORDER] New order placed: ${order._id} by user ${userId}`);
@@ -152,14 +167,25 @@ export const getAllOrders = async (filters: any = {}, page: number = 1, limit: n
 };
 
 export const updateOrderStatus = async (orderId: string, status: OrderStatus, note?: string) => {
-    const order = await Order.findByIdAndUpdate(
-        orderId,
-        {
-            $set: { orderStatus: status },
-            $push: { statusHistory: { status, timestamp: new Date(), note: note || `Order status updated to ${status}` } }
-        },
-        { new: true }
-    );
+    let update: any = {
+        $set: { orderStatus: status },
+        $push: { statusHistory: { status, timestamp: new Date(), note: note || `Order status updated to ${status}` } }
+    };
+
+    // If marked as DELIVERED and it was COD, automatically mark as PAID
+    if (status === OrderStatus.DELIVERED) {
+        const currentOrder = await Order.findById(orderId);
+        if (currentOrder && currentOrder.paymentMethod === 'COD' && currentOrder.paymentStatus === 'PENDING') {
+            update.$set.paymentStatus = 'PAID';
+            update.$push.statusHistory.push({
+                status: 'PAYMENT_RECEIVED',
+                timestamp: new Date(),
+                note: 'Payment received via Cash on Delivery'
+            });
+        }
+    }
+
+    const order = await Order.findByIdAndUpdate(orderId, update, { new: true });
 
     // Emit event for notifications
     if (order) {
@@ -169,11 +195,19 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus, no
     return order;
 };
 
-export const updatePaymentStatus = async (orderId: string, status: PaymentStatus, paymentId?: string) => {
-    return await Order.findByIdAndUpdate(orderId, { paymentStatus: status, paymentId }, { new: true });
+export const updatePaymentStatus = async (orderId: string, status: any, note?: string) => {
+    const order = await Order.findByIdAndUpdate(
+        orderId,
+        {
+            $set: { paymentStatus: status },
+            $push: { statusHistory: { status: `PAYMENT_${status}`, timestamp: new Date(), note: note || `Payment status updated to ${status}` } }
+        },
+        { new: true }
+    );
+    return order;
 };
 
-export const cancelOrderForUser = async (orderId: string, userId: string) => {
+export const cancelOrderForUser = async (orderId: string, userId: string, reason?: string, description?: string) => {
     const order = await Order.findOne({ _id: orderId, user: userId });
 
     if (!order) {
@@ -212,17 +246,86 @@ export const cancelOrderForUser = async (orderId: string, userId: string) => {
         }
     }
 
-    order.orderStatus = 'CANCELLED' as OrderStatus;
+    order.orderStatus = OrderStatus.CANCELLED;
+    order.cancellationReason = reason;
+    order.cancellationDescription = description;
     order.statusHistory.push({
-        status: 'CANCELLED' as OrderStatus,
+        status: OrderStatus.CANCELLED,
         timestamp: new Date(),
-        note: 'Order cancelled by customer'
+        note: `Order cancelled by customer. Reason: ${reason || 'Not provided'}`
     });
 
     await order.save();
 
+    // Notify Admin via Email and In-App notification
+    const populatedOrder = await Order.findById(order._id).populate('user', 'name email');
+    import('../../utils/notification').then(({ sendAdminCancellationAlert }) => {
+        sendAdminCancellationAlert('email', populatedOrder, reason);
+    });
+
+    import('../notification/notification.service').then(({ createAdminNotification }) => {
+        import('../notification/notification.model').then(({ NotificationType }) => {
+            createAdminNotification(
+                'Order Cancelled',
+                `Order #${order._id.toString().slice(-6).toUpperCase()} was cancelled by the customer. Reason: ${reason || 'Not provided'}.`,
+                NotificationType.ORDER_CANCELLED,
+                order._id.toString()
+            );
+        }).catch(err => console.error('[NOTIF_ERR] Admin cancellation notification failed:', err));
+    });
+
     // Emit event
-    (eventBus as any).emit(Events.ORDER_STATUS_UPDATED, { orderId: order._id, newStatus: 'CANCELLED' });
+    (eventBus as any).emit(Events.ORDER_STATUS_UPDATED, { orderId: order._id, newStatus: OrderStatus.CANCELLED });
+
+    return order;
+};
+
+export const requestRefundForUser = async (orderId: string, userId: string, reason: string, description?: string) => {
+    const order = await Order.findOne({ _id: orderId, user: userId });
+
+    if (!order) {
+        throw { statusCode: 404, message: 'Order not found' };
+    }
+
+    // Usually can only refund if PAID or DELIVERED (if not delivered they'd cancel)
+    if (order.paymentStatus !== PaymentStatus.PAID) {
+        throw { statusCode: 400, message: 'Only paid orders can be requested for refund.' };
+    }
+
+    if (order.orderStatus === OrderStatus.CANCELLED || order.orderStatus === OrderStatus.REFUND_REQUESTED) {
+        throw { statusCode: 400, message: `Order is already ${order.orderStatus}.` };
+    }
+
+    order.orderStatus = OrderStatus.REFUND_REQUESTED;
+    order.refundReason = reason;
+    order.refundDescription = description;
+    order.statusHistory.push({
+        status: OrderStatus.REFUND_REQUESTED,
+        timestamp: new Date(),
+        note: `Refund requested by customer. Reason: ${reason}`
+    });
+
+    await order.save();
+
+    // Notify Admin via Email and In-App notification
+    const populatedOrder = await Order.findById(order._id).populate('user', 'name email');
+    import('../../utils/notification').then(({ sendAdminRefundAlert }) => {
+        sendAdminRefundAlert('email', populatedOrder, reason, description);
+    });
+
+    import('../notification/notification.service').then(({ createAdminNotification }) => {
+        import('../notification/notification.model').then(({ NotificationType }) => {
+            createAdminNotification(
+                'Refund Requested',
+                `A refund has been requested for Order #${order._id.toString().slice(-6).toUpperCase()}. Reason: ${reason}.`,
+                NotificationType.REFUND_REQUESTED,
+                order._id.toString()
+            );
+        }).catch(err => console.error('[NOTIF_ERR] Admin refund notification failed:', err));
+    });
+
+    // Emit event
+    (eventBus as any).emit(Events.ORDER_STATUS_UPDATED, { orderId: order._id, newStatus: OrderStatus.REFUND_REQUESTED });
 
     return order;
 };

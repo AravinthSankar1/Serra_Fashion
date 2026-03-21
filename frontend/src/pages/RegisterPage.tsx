@@ -52,7 +52,7 @@ export default function RegisterPage() {
         },
         onSuccess: (data) => {
             login(data.data);
-            toast.success('Welcome to SÉRRA FASHION! Your account is ready.');
+            toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },
         onError: (error: any) => {

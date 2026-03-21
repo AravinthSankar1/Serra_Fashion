@@ -4,11 +4,13 @@ import api from '../api/client';
 import { type Order } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 import Navbar from '../components/layout/Navbar';
-import { Package, MapPin, Download, XCircle, CheckCircle2, Truck, Clock, ShoppingBag, CreditCard, ChevronLeft } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Package, MapPin, Download, XCircle, CheckCircle2, Truck, Clock, ShoppingBag, CreditCard, ChevronLeft, MessageSquare, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useRazorpay } from 'react-razorpay';
+import CancellationModal from '../components/order/CancellationModal';
+import RefundModal from '../components/order/RefundModal';
 
 // ─── STATUS CONFIG ─────────────────────────────────────────
 const ORDER_STEPS = [
@@ -32,6 +34,7 @@ const STATUS_BADGE: Record<string, { label: string; bg: string; text: string }> 
     SHIPPED: { label: 'On the Way!', bg: 'bg-indigo-50', text: 'text-indigo-700' },
     DELIVERED: { label: 'Delivered ✓', bg: 'bg-emerald-50', text: 'text-emerald-700' },
     CANCELLED: { label: 'Cancelled', bg: 'bg-gray-100', text: 'text-gray-500' },
+    REFUND_REQUESTED: { label: 'Refund Requested', bg: 'bg-indigo-50', text: 'text-indigo-700' },
 };
 
 // ─── DELIVERY ESTIMATE ─────────────────────────────────────
@@ -42,6 +45,7 @@ function getDeliveryEstimate(order: Order): string {
         return 'Delivered';
     }
     if (order.orderStatus === 'CANCELLED') return 'Order Cancelled';
+    if (order.orderStatus === 'REFUND_REQUESTED') return 'Return/Refund Processing';
     const placed = new Date(order.createdAt);
     const estimate = new Date(placed);
     estimate.setDate(estimate.getDate() + 5);
@@ -63,12 +67,15 @@ function getStepDate(order: Order, statusKey: string): string | null {
 function OrderTracker({ order }: { order: Order }) {
     const currentStep = STATUS_STEP_MAP[order.orderStatus] ?? 0;
     const isCancelled = order.orderStatus === 'CANCELLED';
+    const isRefundRequested = order.orderStatus === 'REFUND_REQUESTED';
 
-    if (isCancelled) {
+    if (isCancelled || isRefundRequested) {
         return (
             <div className="flex items-center space-x-3 py-2">
-                <XCircle className="h-5 w-5 text-gray-400" />
-                <span className="text-sm font-bold text-gray-400 uppercase tracking-widest text-[10px]">Order Cancelled</span>
+                {isCancelled ? <XCircle className="h-5 w-5 text-gray-400" /> : <Clock className="h-5 w-5 text-indigo-400" />}
+                <span className="text-sm font-bold text-gray-400 uppercase tracking-widest text-[10px]">
+                    {isCancelled ? 'Order Cancelled' : 'Refund Requested'}
+                </span>
             </div>
         );
     }
@@ -135,51 +142,65 @@ function OrderTracker({ order }: { order: Order }) {
 
 // ─── CANCEL MUTATION ───────────────────────────────────────
 function CancelButton({ orderId, onSuccess }: { orderId: string; onSuccess: () => void }) {
-    const [confirming, setConfirming] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { mutate: cancel, isPending } = useMutation({
-        mutationFn: () => api.patch(`/orders/${orderId}/cancel`),
+        mutationFn: (data: { reason: string, description: string }) => 
+            api.patch(`/orders/${orderId}/cancel`, data),
         onSuccess: () => {
             toast.success('Order cancelled successfully');
             onSuccess();
-            setConfirming(false);
+            setIsModalOpen(false);
         },
         onError: () => toast.error('Failed to cancel order. Please try again.')
     });
 
-    if (!confirming) {
-        return (
+    return (
+        <>
             <button
-                onClick={() => setConfirming(true)}
+                onClick={() => setIsModalOpen(true)}
                 className="text-xs font-bold text-red-500 border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition-colors"
             >
                 Cancel Order
             </button>
-        );
-    }
+            <CancellationModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={(reason, description) => cancel({ reason, description })}
+                isLoading={isPending}
+            />
+        </>
+    );
+}
+
+// ─── REFUND MUTATION ───────────────────────────────────────
+function RefundButton({ orderId, onSuccess }: { orderId: string; onSuccess: () => void }) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const { mutate: requestRefund, isPending } = useMutation({
+        mutationFn: (data: { reason: string, description: string }) => 
+            api.patch(`/orders/${orderId}/refund`, data),
+        onSuccess: () => {
+            toast.success('Refund request submitted');
+            onSuccess();
+            setIsModalOpen(false);
+        },
+        onError: () => toast.error('Failed to submit refund request.')
+    });
 
     return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2"
+        <>
+            <button
+                onClick={() => setIsModalOpen(true)}
+                className="text-xs font-bold text-black border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors"
             >
-                <span className="text-xs text-gray-500">Sure?</span>
-                <button
-                    onClick={() => cancel()}
-                    disabled={isPending}
-                    className="text-xs font-bold text-white bg-red-500 px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                >
-                    {isPending ? 'Cancelling…' : 'Yes, Cancel'}
-                </button>
-                <button
-                    onClick={() => setConfirming(false)}
-                    className="text-xs font-bold text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                    Keep
-                </button>
-            </motion.div>
-        </AnimatePresence>
+                Return / Refund
+            </button>
+            <RefundModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={(reason, description) => requestRefund({ reason, description })}
+                isLoading={isPending}
+            />
+        </>
     );
 }
 
@@ -325,7 +346,31 @@ export default function OrdersPage() {
                             const firstImage = order.items[0]?.product?.images?.[0];
                             const imageUrl = typeof firstImage === 'string' ? firstImage : firstImage?.imageUrl;
                             const firstTitle = order.items[0]?.product?.title || 'Order';
-                            const canCancel = order.orderStatus === 'PENDING' || order.orderStatus === 'PROCESSING';
+                            // ─── DYNAMIC ACTIONS LOGIC (Amazon/Flipkart Style) ───
+                            
+                            // 1. Cancellation: Available only before shipping
+                            const isShippedOrDelivered = ['SHIPPED', 'DELIVERED'].includes(order.orderStatus);
+                            const canCancel = !isShippedOrDelivered && order.orderStatus !== 'CANCELLED' && order.orderStatus !== 'REFUND_REQUESTED';
+                            
+                            // 2. Refund/Return: Available only after DELIVERY and PAYMENT
+                            const isPaid = order.paymentStatus === 'PAID';
+                            const isDelivered = order.orderStatus === 'DELIVERED';
+                            
+                            const lastStatusEntry = order.statusHistory?.find(h => h.status === 'DELIVERED');
+                            const deliveredDate = lastStatusEntry ? new Date(lastStatusEntry.timestamp) : null;
+                            const returnWindowDays = order.items[0]?.product?.returnWindow || 7;
+                            const isWithinReturnWindow = deliveredDate 
+                                ? (new Date().getTime() - deliveredDate.getTime()) <= returnWindowDays * 24 * 60 * 60 * 1000
+                                : true;
+
+                            const canRefund = isDelivered && isPaid && isWithinReturnWindow && 
+                                             order.items.some(item => (item.product as any).isReturnable !== false) &&
+                                             order.orderStatus !== 'REFUND_REQUESTED';
+
+                            // 3. Status Alert for Edge Cases (to be helpful like Amazon)
+                            const showRefundWarning = isDelivered && !isPaid; // Delivered but COD payment not yet updated by admin
+                            const showCancelWarning = order.orderStatus === 'SHIPPED'; // Too late to cancel via button
+                            
                             const addr = order.shippingAddress;
 
                             return (
@@ -449,17 +494,60 @@ export default function OrdersPage() {
                                     {/* ── ACTIONS ───────────────────────────── */}
                                     <div className="px-6 py-4 flex items-center justify-between gap-3 flex-wrap">
                                         <div className="flex items-center gap-3 flex-wrap">
-                                            {/* Cancellation row */}
+                                            {/* Dynamic Action Buttons */}
                                             {canCancel && (
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-[10px] text-gray-400">Cancellation available till shipping</span>
-                                                    <CancelButton
-                                                        orderId={order._id}
-                                                        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['orders', 'my-orders'] })}
-                                                    />
-                                                </div>
+                                                <CancelButton
+                                                    orderId={order._id}
+                                                    onSuccess={() => queryClient.invalidateQueries({ queryKey: ['orders', 'my-orders'] })}
+                                                />
+                                            )}
+                                            
+                                            {canRefund && (
+                                                <RefundButton
+                                                    orderId={order._id}
+                                                    onSuccess={() => queryClient.invalidateQueries({ queryKey: ['orders', 'my-orders'] })}
+                                                />
+                                            )}
+
+                                            {/* Helpful Amazon-style Status Labels */}
+                                            {showCancelWarning && (
+                                                <span className="text-[10px] text-gray-400 flex items-center gap-1 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                                                    <AlertCircle className="h-3 w-3" />
+                                                    Handed to courier · Cancellation unavailable
+                                                </span>
+                                            )}
+
+                                            {showRefundWarning && (
+                                                <span className="text-[10px] text-amber-600 flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 font-bold">
+                                                    <CreditCard className="h-3 w-3" />
+                                                    Awaiting payment confirmation to enable returns
+                                                </span>
+                                            )}
+
+                                            {!canCancel && !canRefund && !showCancelWarning && !showRefundWarning && order.orderStatus !== 'CANCELLED' && order.orderStatus !== 'REFUND_REQUESTED' && order.orderStatus !== 'DELIVERED' && (
+                                                <span className="text-[10px] text-gray-400">Processing your items meticulously</span>
                                             )}
                                         </div>
+
+                                        {/* Reasons Display */}
+                                        {(order.cancellationReason || order.refundReason) && (
+                                            <div className="w-full mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-start gap-3">
+                                                <MessageSquare className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">
+                                                        {order.orderStatus === 'CANCELLED' ? 'Cancellation Reason' : 'Refund Request Reason'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-600 mt-0.5 font-medium">
+                                                        {order.cancellationReason || order.refundReason}
+                                                    </p>
+                                                    {(order.cancellationDescription || order.refundDescription) && (
+                                                        <p className="text-[10px] text-gray-400 mt-1 italic">
+                                                            "{order.cancellationDescription || order.refundDescription}"
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Invoice download */}
                                         <button

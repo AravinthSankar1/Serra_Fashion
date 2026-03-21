@@ -44,7 +44,7 @@ export default function LoginPage() {
         },
         onSuccess: (data) => {
             login(data.data);
-            toast.success('Access Granted. Welcome back.');
+            toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },
         onError: (error: any) => {
@@ -80,7 +80,7 @@ export default function LoginPage() {
         },
         onSuccess: (data) => {
             login(data.data);
-            toast.success('OTP Verified. Welcome!');
+            toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },
         onError: (error: any) => {
@@ -95,9 +95,9 @@ export default function LoginPage() {
             const res = await api.post('/auth/social-login', data);
             return res.data;
         },
-        onSuccess: (data, variables) => {
+        onSuccess: (data) => {
             login(data.data);
-            toast.success(`Welcome back! Authenticated via ${variables.provider}.`);
+            toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },
         onError: (error: any) => {
