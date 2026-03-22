@@ -300,7 +300,7 @@ export default function OrdersPage() {
         <div className="min-h-screen bg-gray-50/50">
             <Navbar />
 
-            <main className="max-w-3xl mx-auto px-4 py-12 md:py-20">
+            <main className="max-w-3xl mx-auto px-4 pt-24 pb-12 md:pt-32 md:pb-20">
                 {/* Back Navigation */}
                 <button
                     onClick={() => navigate(-1)}

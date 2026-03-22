@@ -195,6 +195,7 @@ export default function AdminOrders() {
                                         <div>
                                             <p className="font-bold text-gray-900">{order.user?.name || 'Guest'}</p>
                                             <p className="text-xs text-gray-400 lowercase">{order.user?.email || 'N/A'}</p>
+                                            <p className="text-[10px] text-gray-500 font-medium mt-0.5">{order.shippingAddress?.phone || 'N/A'}</p>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">

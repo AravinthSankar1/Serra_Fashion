@@ -472,7 +472,7 @@ export default function CheckoutPage() {
                     }, 30000);
 
                     try {
-                        await api.post('/payment/verify-and-create', {
+                        const verifyRes = await api.post('/payment/verify-and-create', {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
@@ -492,7 +492,7 @@ export default function CheckoutPage() {
                             }
                         }, { signal: abortControllerRef.current?.signal });
 
-                        setOrderSuccess(response.razorpay_payment_id);
+                        setOrderSuccess(verifyRes.data.data._id);
                         clearCart();
                         toast.success('Payment successful!');
                     } catch (error: any) {

@@ -120,6 +120,10 @@ export default function OrderDetailDrawer({ order, isOpen, onClose }: OrderDetai
                                         <p className="text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1">Email Address</p>
                                         <p className="font-bold text-gray-900">{order.user?.email || 'N/A'}</p>
                                     </div>
+                                    <div className="col-span-2 md:col-span-1">
+                                        <p className="text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1">Phone Number</p>
+                                        <p className="font-bold text-gray-900">{order.shippingAddress?.phone || 'N/A'}</p>
+                                    </div>
                                     <div className="col-span-2">
                                         <div className="flex items-center space-x-2 mb-2 text-gray-900">
                                             <MapPin className="h-4 w-4 text-gray-400" />
