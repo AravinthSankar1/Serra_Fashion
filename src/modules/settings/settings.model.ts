@@ -1,16 +1,23 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface ICategoryDiscount {
+    categoryId: string;
+    categoryName: string;
+    discountPercentage: number;
+}
+
 export interface IStoreSettings extends Document {
-    freeShippingThreshold: number;  // e.g. 999 means free shipping over ₹999
-    deliveryCharge: number;          // e.g. 79
-    returnWindowDays: number;        // e.g. 7
-    returnPolicy: string;            // e.g. "7-day easy returns"
-    exchangePolicy: string;          // e.g. "14-day exchange"
+    freeShippingThreshold: number;
+    deliveryCharge: number;
+    returnWindowDays: number;
+    returnPolicy: string;
+    exchangePolicy: string;
     contactEmail: string;
     contactPhone: string;
     storeAddress: string;
     isCodEnabled: boolean;
     isRazorpayEnabled: boolean;
+    categoryDiscounts: ICategoryDiscount[];
     updatedAt: Date;
 }
 
@@ -26,6 +33,14 @@ const storeSettingsSchema = new Schema<IStoreSettings>(
         storeAddress: { type: String, default: 'Avadi, Chennai, Tamil Nadu 600065, India' },
         isCodEnabled: { type: Boolean, default: true },
         isRazorpayEnabled: { type: Boolean, default: true },
+        categoryDiscounts: {
+            type: [{
+                categoryId: { type: String, required: true },
+                categoryName: { type: String, required: true },
+                discountPercentage: { type: Number, required: true, min: 0, max: 100 },
+            }],
+            default: []
+        }
     },
     { timestamps: true }
 );

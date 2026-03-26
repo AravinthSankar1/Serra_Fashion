@@ -72,14 +72,16 @@ export const generateInvoicePDF = (order: IOrder, res: any) => {
     doc.font('Helvetica').fontSize(9);
 
     order.items.forEach((item: any) => {
-        const title = item.product?.title || 'Premium Apparel';
+        const title = item.name || item.product?.title || 'Product';
+        const variant = [item.size, item.color].filter(Boolean).join(' / ');
+        const description = variant ? `${title} (${variant})` : title;
         const price = item.price;
         const total = price * item.quantity;
 
         // Draw light separator
         doc.strokeColor('#f3f4f6').lineWidth(0.5).moveTo(50, y - 5).lineTo(550, y - 5).stroke();
 
-        doc.fillColor('#000').text(title.substring(0, 45), 60, y);
+        doc.fillColor('#000').text(description.substring(0, 50), 60, y);
         doc.text(item.quantity.toString(), 350, y);
         doc.text(`INR ${price.toLocaleString()}`, 420, y);
         doc.text(`INR ${total.toLocaleString()}`, 490, y);

@@ -17,6 +17,8 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import SEO from '../components/common/SEO';
 import { Helmet } from 'react-helmet-async';
+import { useEffect } from 'react';
+import { PixelEvents } from '../components/common/MetaPixelHelper';
 
 // Map common color names to CSS hex values
 const COLOR_MAP: Record<string, string> = {
@@ -81,6 +83,17 @@ export default function ProductDetailsPage() {
             return res.data.data as Product[];
         }
     });
+
+    // Fire Meta Pixel ViewContent event when product loads
+    useEffect(() => {
+        if (product) {
+            PixelEvents.viewContent(
+                product.title,
+                product._id,
+                product.finalPrice || product.basePrice
+            );
+        }
+    }, [product?._id]);
 
     if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
     if (error || !product) return <div className="min-h-screen flex items-center justify-center text-red-500">Error loading product</div>;
@@ -231,7 +244,7 @@ export default function ProductDetailsPage() {
             </Helmet>
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 py-12 md:py-20">
+            <main className="max-w-7xl mx-auto px-4 pt-24 pb-12 md:pt-32 md:pb-20">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black mb-12 transition-colors group"

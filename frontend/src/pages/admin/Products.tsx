@@ -28,6 +28,10 @@ export default function AdminProducts() {
     const { format, convert } = useCurrency();
     const [searchParams] = useSearchParams();
     const productIdToOpen = searchParams.get('id');
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const ITEMS_PER_PAGE = 20;
 
     const handleApprove = async (id: string) => {
         try {
@@ -78,12 +82,23 @@ export default function AdminProducts() {
     const fetchData = async () => {
         try {
             const [prodRes, catRes, brandRes, guideRes] = await Promise.all([
-                api.get('/products'),
+                api.get('/products', {
+                    params: {
+                        page: currentPage,
+                        limit: ITEMS_PER_PAGE,
+                        search: searchTerm,
+                        approvalStatus: approvalFilter !== 'ALL' ? approvalFilter : undefined,
+                        isAdmin: true // Ensure we get non-published items if admin
+                    }
+                }),
                 api.get('/categories'),
                 api.get('/brands'),
                 api.get('/size-guides')
             ]);
-            setProducts(prodRes.data.data.products || prodRes.data.data);
+            
+            setProducts(prodRes.data.data.products || []);
+            setTotalProducts(prodRes.data.data.total || (prodRes.data.data.products || []).length);
+            
             setCategories(catRes.data.data);
             setBrands(brandRes.data.data);
             setSizeGuides(guideRes.data.data.sizeGuides || []);
@@ -96,8 +111,16 @@ export default function AdminProducts() {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        const timer = setTimeout(() => {
+            fetchData();
+        }, 500); // Debounce search
+        return () => clearTimeout(timer);
+    }, [currentPage, searchTerm, approvalFilter]);
+
+    useEffect(() => {
+        // Reset to first page when filters change
+        setCurrentPage(1);
+    }, [searchTerm, approvalFilter]);
 
     useEffect(() => {
         if (productIdToOpen && products.length > 0) {
@@ -349,124 +372,173 @@ export default function AdminProducts() {
                                 </tr>
                             ) : products.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-8 py-20 text-center text-gray-400 font-medium">
+                                    <td colSpan={6} className="px-8 py-20 text-center text-gray-400 font-medium">
                                         No products found in the collection.
                                     </td>
                                 </tr>
-                            ) : (
-                                products
-                                    .filter((p: Product) => p.title.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .filter((p: Product) => approvalFilter === 'ALL' || p.approvalStatus === approvalFilter)
-                                    .map((prod: Product) => (
-                                        <tr key={prod._id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="h-16 w-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-100">
-                                                        {prod.images[0]?.imageUrl ? (
-                                                            <img src={prod.images[0].imageUrl} alt={prod.title} className="h-full w-full object-cover" />
-                                                        ) : (
-                                                            <ShoppingBag className="h-5 w-5 text-gray-300" />
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-gray-900 line-clamp-1">{prod.title}</p>
-                                                        <div className="flex items-center space-x-2">
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{prod.gender}</p>
-                                                            {prod.vendor && (
-                                                                <span className="text-[9px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded uppercase font-bold tracking-tight">Vendor</span>
+                            ) : (() => {
+                                const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE);
+
+                                return (
+                                    <>
+                                        {products.map((prod: Product) => (
+                                            <tr key={prod._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center space-x-4">
+                                                        <div className="h-16 w-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-100">
+                                                            {prod.images[0]?.imageUrl ? (
+                                                                <img src={prod.images[0].imageUrl} alt={prod.title} className="h-full w-full object-cover" />
+                                                            ) : (
+                                                                <ShoppingBag className="h-5 w-5 text-gray-300" />
                                                             )}
                                                         </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-gray-900 line-clamp-1">{prod.title}</p>
+                                                            <div className="flex items-center space-x-2">
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{prod.gender}</p>
+                                                                {prod.vendor && (
+                                                                    <span className="text-[9px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded uppercase font-bold tracking-tight">Vendor</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <div className="space-y-1">
-                                                    <p className="text-xs font-semibold text-gray-700">{typeof prod.category === 'object' ? prod.category.name : 'Unknown Category'}</p>
-                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{typeof prod.brand === 'object' ? prod.brand.name : 'Unknown Brand'}</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <div className="space-y-1">
-                                                    <p className="text-sm font-bold text-gray-900">{format(convert(prod.finalPrice || prod.basePrice))}</p>
-                                                    <p className={`text-[10px] font-bold uppercase tracking-widest ${prod.stock > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                        {prod.stock} in stock
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                {prod.approvalStatus === 'APPROVED' && (
-                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-emerald-600 uppercase tracking-widest">
-                                                        <CheckCircle className="h-3 w-3" />
-                                                        <span>Approved</span>
-                                                    </span>
-                                                )}
-                                                {prod.approvalStatus === 'PENDING' && (
-                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-amber-600 uppercase tracking-widest">
-                                                        <Clock className="h-3 w-3" />
-                                                        <span>Request</span>
-                                                    </span>
-                                                )}
-                                                {prod.approvalStatus === 'REJECTED' && (
-                                                    <span className="flex items-center space-x-1.5 text-[9px] font-black text-red-600 uppercase tracking-widest">
-                                                        <XCircle className="h-3 w-3" />
-                                                        <span>Rejected</span>
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center space-x-2">
-                                                    {prod.isPublished ? (
-                                                        <span className="flex items-center space-x-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase tracking-widest border border-emerald-100">
-                                                            <Eye className="h-3 w-3" />
-                                                            <span>Live</span>
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center space-x-1.5 text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full uppercase tracking-widest border border-gray-200">
-                                                            <EyeOff className="h-3 w-3" />
-                                                            <span>Draft</span>
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <div className="space-y-1">
+                                                        <p className="text-xs font-semibold text-gray-700">{typeof prod.category === 'object' ? prod.category.name : 'Unknown Category'}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{typeof prod.brand === 'object' ? prod.brand.name : 'Unknown Brand'}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <div className="space-y-1">
+                                                        <p className="text-sm font-bold text-gray-900">{format(convert(prod.finalPrice || prod.basePrice))}</p>
+                                                        <p className={`text-[10px] font-bold uppercase tracking-widest ${prod.stock > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                            {prod.stock} in stock
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    {prod.approvalStatus === 'APPROVED' && (
+                                                        <span className="flex items-center space-x-1.5 text-[9px] font-black text-emerald-600 uppercase tracking-widest">
+                                                            <CheckCircle className="h-3 w-3" />
+                                                            <span>Approved</span>
                                                         </span>
                                                     )}
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5 text-right space-x-2 whitespace-nowrap">
-                                                {isAdmin && prod.approvalStatus === 'PENDING' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleApprove(prod._id)}
-                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                                                            title="Approve"
-                                                        >
-                                                            <CheckCircle className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleReject(prod._id)}
-                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                            title="Reject"
-                                                        >
-                                                            <XCircle className="h-4 w-4" />
-                                                        </button>
-                                                    </>
-                                                )}
-                                                <button
-                                                    onClick={() => openModal(prod)}
-                                                    className="p-2 text-gray-400 hover:text-black hover:bg-white hover:shadow-sm rounded-lg transition-all"
-                                                >
-                                                    <Edit2 className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setProductToDelete(prod._id);
-                                                        setIsDeleteModalOpen(true);
-                                                    }}
-                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                            )}
-                        </tbody>
+                                                    {prod.approvalStatus === 'PENDING' && (
+                                                        <span className="flex items-center space-x-1.5 text-[9px] font-black text-amber-600 uppercase tracking-widest">
+                                                            <Clock className="h-3 w-3" />
+                                                            <span>Request</span>
+                                                        </span>
+                                                    )}
+                                                    {prod.approvalStatus === 'REJECTED' && (
+                                                        <span className="flex items-center space-x-1.5 text-[9px] font-black text-red-600 uppercase tracking-widest">
+                                                            <XCircle className="h-3 w-3" />
+                                                            <span>Rejected</span>
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center space-x-2">
+                                                        {prod.isPublished ? (
+                                                            <span className="flex items-center space-x-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase tracking-widest border border-emerald-100">
+                                                                <Eye className="h-3 w-3" />
+                                                                <span>Live</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="flex items-center space-x-1.5 text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full uppercase tracking-widest border border-gray-200">
+                                                                <EyeOff className="h-3 w-3" />
+                                                                <span>Draft</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5 text-right space-x-2 whitespace-nowrap">
+                                                    {isAdmin && prod.approvalStatus === 'PENDING' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApprove(prod._id)}
+                                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                                title="Approve"
+                                                            >
+                                                                <CheckCircle className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReject(prod._id)}
+                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                                title="Reject"
+                                                            >
+                                                                <XCircle className="h-4 w-4" />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    <button
+                                                        onClick={() => openModal(prod)}
+                                                        className="p-2 text-gray-400 hover:text-black hover:bg-white hover:shadow-sm rounded-lg transition-all"
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setProductToDelete(prod._id);
+                                                            setIsDeleteModalOpen(true);
+                                                        }}
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {/* Pagination Footer */}
+                                        {totalPages > 1 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-8 py-4 border-t border-gray-50">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalProducts)} of {totalProducts} products
+                                                        </p>
+                                                        <div className="flex items-center space-x-2">
+                                                            <button
+                                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                                disabled={currentPage === 1}
+                                                                className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-gray-200 rounded-xl hover:bg-black hover:text-white hover:border-black disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                                            >
+                                                                ← Prev
+                                                            </button>
+                                                            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                                                                let page = i + 1;
+                                                                if (totalPages > 7) {
+                                                                    if (currentPage <= 4) page = i + 1;
+                                                                    else if (currentPage >= totalPages - 3) page = totalPages - 6 + i;
+                                                                    else page = currentPage - 3 + i;
+                                                                }
+                                                                return (
+                                                                    <button
+                                                                        key={page}
+                                                                        onClick={() => setCurrentPage(page)}
+                                                                        className={`w-8 h-8 text-[10px] font-black rounded-xl transition-all ${currentPage === page ? 'bg-black text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                                                                    >
+                                                                        {page}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                            <button
+                                                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                                                disabled={currentPage === totalPages}
+                                                                className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-gray-200 rounded-xl hover:bg-black hover:text-white hover:border-black disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                                            >
+                                                                Next →
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
+                                );
+                            })()
+                        }
+                    </tbody>
                     </table>
                 </div>
             </div>

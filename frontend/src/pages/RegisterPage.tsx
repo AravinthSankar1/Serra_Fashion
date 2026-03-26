@@ -6,7 +6,7 @@ import api from '../api/client';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { motion } from 'framer-motion';
-import { UserPlus, ArrowRight, Check, Mail, Lock, User as UserIcon } from 'lucide-react';
+import { UserPlus, ArrowRight, Check, Mail, User as UserIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
@@ -151,7 +151,6 @@ export default function RegisterPage() {
                                 <Mail className="absolute right-4 top-14 h-4 w-4 text-gray-300" />
                             </div>
 
-                            <div className="relative">
                                 <Input
                                     label="Account Password"
                                     type="password"
@@ -159,9 +158,6 @@ export default function RegisterPage() {
                                     {...register('password')}
                                     error={errors.password?.message}
                                 />
-                                <Lock className="absolute right-4 top-14 h-4 w-4 text-gray-300" />
-                            </div>
-
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Primary Language</label>
                                 <select className="w-full bg-gray-50 border-none rounded-2xl py-3.5 px-4 text-sm font-medium focus:ring-2 focus:ring-black/5">

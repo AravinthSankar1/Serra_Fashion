@@ -24,6 +24,7 @@ interface IStatusHistory {
 
 interface IOrderItem {
     product: mongoose.Types.ObjectId;
+    name: string;
     quantity: number;
     price: number;
     size?: string;
@@ -71,6 +72,7 @@ export interface IOrder extends Document {
 
 const orderItemSchema = new Schema({
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+    name: { type: String, required: true },
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
     size: String,

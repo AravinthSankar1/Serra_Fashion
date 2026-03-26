@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { useAuth } from './AuthContext';
 import api from '../api/client';
 import type { Cart, CartItem, Product } from '../types';
+import { PixelEvents } from '../components/common/MetaPixelHelper';
 
 interface CartContextType {
     cart: Cart | null;
@@ -91,6 +92,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     const addToCart = async (product: Product, quantity: number, size?: string, color?: string) => {
+        // Find variant to get correct price if applicable
+        let price = product.basePrice;
+        if (size || color) {
+            const variant = product.variants?.find(v => 
+                (!size || v.size === size) && 
+                (!color || v.color === color)
+            );
+            if (variant) price = variant.price;
+        }
+        if (product.discountPercentage > 0) {
+            price = Math.round(price - (price * product.discountPercentage) / 100);
+        }
+
+        // Fire Meta Pixel Event
+        PixelEvents.addToCart(product.title, product._id, price * quantity);
+
         if (isAuthenticated) {
             try {
                 const res = await api.post('/cart/add', { product: product._id, quantity, size, color });

@@ -7,19 +7,27 @@ import { submitOrderToQikink } from '../../services/qikink.service';
 import { StoreSettings } from '../settings/settings.model';
 
 export const createOrder = async (userId: string, orderData: Partial<IOrder>) => {
-    // Validate COD if applicable
+    // Global COD check
     if (orderData.paymentMethod === 'COD') {
         const settings = await StoreSettings.findOne();
         if (settings && settings.isCodEnabled === false) {
             throw { statusCode: 400, message: 'Cash on Delivery is currently disabled by the store.' };
         }
-        // Check if any product in the order does NOT support COD
-        for (const item of orderData.items || []) {
+    }
+
+    // Fetch product titles and validate COD per item
+    if (orderData.items) {
+        for (const item of orderData.items) {
             const product = await Product.findById(item.product);
-            if (product && product.isCodAvailable === false) {
+            if (!product) continue;
+            
+            // Populate the name field for persistent invoices
+            (item as any).name = product.title;
+
+            if (orderData.paymentMethod === 'COD' && product.isCodAvailable === false) {
                 throw { 
                     statusCode: 400, 
-                    message: `Product "${product.title}" is not available for Cash on Delivery. Please use online payment or remove this item.` 
+                    message: `Product "${product.title}" is not available for Cash on Delivery.` 
                 };
             }
         }
@@ -148,21 +156,30 @@ export const getAllOrders = async (filters: any = {}, page: number = 1, limit: n
 
     const skip = (page - 1) * limit;
 
-    const [orders, total] = await Promise.all([
+    const [orders, total, statsResult, pendingCount] = await Promise.all([
         Order.find(query)
             .populate('user', 'name email')
             .populate('items.product')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit),
-        Order.countDocuments(query)
+        Order.countDocuments(query),
+        Order.aggregate([
+            { $match: { ...query, paymentStatus: 'PAID' } },
+            { $group: { _id: null, totalSales: { $sum: '$totalAmount' } } }
+        ]),
+        Order.countDocuments({ ...query, orderStatus: 'PENDING' })
     ]);
 
     return {
         orders,
         total,
         page,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
+        stats: {
+            totalRevenue: statsResult[0]?.totalSales || 0,
+            pendingCount
+        }
     };
 };
 

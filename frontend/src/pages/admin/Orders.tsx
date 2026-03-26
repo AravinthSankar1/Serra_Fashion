@@ -18,17 +18,34 @@ export default function AdminOrders() {
     const { format, convert } = useCurrency();
     const [searchParams] = useSearchParams();
     const orderIdToOpen = searchParams.get('id');
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 25;
 
-    const { data: orders, isLoading } = useQuery({
-        queryKey: ['admin-orders'],
+    const { data: orderResponse, isLoading } = useQuery({
+        queryKey: ['admin-orders', currentPage, statusFilter, searchTerm],
         queryFn: async () => {
-            const res = await api.get('/orders');
-            // If the response is paginated (object with orders array), use orders. Otherwise fallback.
-            const result = res.data.data;
-            return Array.isArray(result) ? result : (result.orders || []);
+            const res = await api.get('/orders', {
+                params: {
+                    page: currentPage,
+                    limit: ITEMS_PER_PAGE,
+                    status: statusFilter !== 'all' ? statusFilter : undefined,
+                    search: searchTerm || undefined
+                }
+            });
+            return res.data.data;
         },
-        refetchInterval: 10000, // Poll every 10 seconds for real-time updates
+        refetchInterval: 30000, 
     });
+
+    const orders = orderResponse?.orders || [];
+    const totalOrders = orderResponse?.total || 0;
+    const totalPages = orderResponse?.pages || 1;
+
+    // Reset to page 1 on filter/search
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, searchTerm]);
 
     useEffect(() => {
         if (orderIdToOpen && orders) {
@@ -62,15 +79,6 @@ export default function AdminOrders() {
         }
     });
 
-    const filteredOrders = orders?.filter((order: Order) => {
-        const matchesSearch =
-            order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-            (order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-        const matchesStatus = statusFilter === 'all' || order.orderStatus === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
-
     const getStatusStyle = (status: OrderStatus) => {
         switch (status) {
             case 'PENDING': return 'bg-amber-50 text-amber-600 border-amber-100';
@@ -81,17 +89,14 @@ export default function AdminOrders() {
         }
     };
 
-    // Summary Stats
-    const totalOrders = orders?.length || 0;
-    const pendingOrders = orders?.filter((o: Order) => o.orderStatus === 'PENDING').length || 0;
-    const totalRevenue = orders?.filter((o: Order) => o.paymentStatus === 'PAID').reduce((acc: number, curr: Order) => acc + curr.totalAmount, 0) || 0;
-
+    // Summary Stats from Backend
     const stats = [
         { label: 'Total Volume', value: totalOrders, icon: ShoppingBag, color: 'blue' },
-        { label: 'Pending Action', value: pendingOrders, icon: Clock, color: 'amber' },
-        { label: 'Net Revenue', value: format(convert(totalRevenue)), icon: TrendingUp, color: 'emerald' },
+        { label: 'Pending Action', value: orderResponse?.stats?.pendingCount || 0, icon: Clock, color: 'amber' },
+        { label: 'Net Revenue', value: format(convert(orderResponse?.stats?.totalRevenue || 0)), icon: TrendingUp, color: 'emerald' },
         { label: 'Fulfillment Rate', value: '98.4%', icon: CheckCircle2, color: 'purple' },
     ];
+
 
     return (
         <div className="p-8 space-y-8 max-w-[1600px] mx-auto">
@@ -158,7 +163,7 @@ export default function AdminOrders() {
                     ))}
                 </div>
                 <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    Showing {filteredOrders?.length || 0} Orders
+                    Showing {totalOrders} Orders
                 </div>
             </div>
 
@@ -172,7 +177,7 @@ export default function AdminOrders() {
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Items</th>
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Payment</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Payment Status</th>
                                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -183,75 +188,126 @@ export default function AdminOrders() {
                                         <td colSpan={6} className="px-8 py-10"><div className="h-8 bg-gray-50 rounded-2xl"></div></td>
                                     </tr>
                                 ))
-                            ) : filteredOrders?.map((order: Order) => (
-                                <tr key={order._id} className="hover:bg-gray-50/30 transition-colors group">
-                                    <td className="px-8 py-6">
-                                        <div className="flex flex-col">
-                                            <span className="font-mono font-bold text-gray-900">#{order._id.slice(-6).toUpperCase()}</span>
-                                            <span className="text-[9px] text-gray-400 font-medium mt-1">{new Date(order.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div>
-                                            <p className="font-bold text-gray-900">{order.user?.name || 'Guest'}</p>
-                                            <p className="text-xs text-gray-400 lowercase">{order.user?.email || 'N/A'}</p>
-                                            <p className="text-[10px] text-gray-500 font-medium mt-0.5">{order.shippingAddress?.phone || 'N/A'}</p>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <span className="inline-flex items-center px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold font-serif text-gray-900">
-                                            {order.items.length} {order.items.length === 1 ? 'Piece' : 'Pieces'}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <span className="font-bold text-gray-900">{format(convert(order.totalAmount))}</span>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex flex-col gap-2">
-                                            <select
-                                                value={order.orderStatus}
-                                                onClick={(e) => e.stopPropagation()}
-                                                onChange={(e) => updateStatusMutation.mutate({ orderId: order._id, status: e.target.value as OrderStatus })}
-                                                className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border outline-none cursor-pointer transition-all hover:shadow-sm ${getStatusStyle(order.orderStatus)}`}
-                                            >
-                                                <option value="PENDING">Pending</option>
-                                                <option value="PROCESSING">Processing</option>
-                                                <option value="SHIPPED">Shipped</option>
-                                                <option value="DELIVERED">Delivered</option>
-                                                <option value="CANCELLED">Cancelled</option>
-                                                <option value="REFUND_REQUESTED">Refund Req.</option>
-                                            </select>
-                                            
-                                            <select
-                                                value={order.paymentStatus}
-                                                onClick={(e) => e.stopPropagation()}
-                                                onChange={(e) => updatePaymentMutation.mutate({ orderId: order._id, status: e.target.value })}
-                                                className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border outline-none cursor-pointer transition-all ${
-                                                    order.paymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                                                    order.paymentStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                    'bg-red-50 text-red-600 border-red-100'
-                                                }`}
-                                            >
-                                                <option value="PENDING">Unpaid</option>
-                                                <option value="PAID">Paid</option>
-                                                <option value="FAILED">Failed</option>
-                                                <option value="REFUNDED">Refunded</option>
-                                            </select>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                        <button
-                                            onClick={() => {
-                                                setSelectedOrder(order);
-                                                setIsDrawerOpen(true);
-                                            }}
-                                            className="p-3 hover:bg-black hover:text-white rounded-2xl transition-all border border-gray-100 hover:border-black group/btn"
-                                        >
-                                            <ExternalLink className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                            ) : (() => {
+                                return (
+                                    <>
+                                        {orders?.map((order: Order) => (
+                                            <tr key={order._id} className="hover:bg-gray-50/30 transition-colors group">
+                                                <td className="px-8 py-6">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-mono font-bold text-gray-900">#{order._id.slice(-6).toUpperCase()}</span>
+                                                        <span className="text-[9px] text-gray-400 font-medium mt-1">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">{order.user?.name || 'Guest'}</p>
+                                                        <p className="text-xs text-gray-400 lowercase">{order.user?.email || 'N/A'}</p>
+                                                        <p className="text-[10px] text-gray-500 font-medium mt-0.5">{order.shippingAddress?.phone || 'N/A'}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <span className="inline-flex items-center px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold font-serif text-gray-900">
+                                                        {order.items.length} {order.items.length === 1 ? 'Piece' : 'Pieces'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <span className="font-bold text-gray-900">{format(convert(order.totalAmount))}</span>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex flex-col gap-2">
+                                                        <select
+                                                            value={order.orderStatus}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onChange={(e) => updateStatusMutation.mutate({ orderId: order._id, status: e.target.value as OrderStatus })}
+                                                            className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border outline-none cursor-pointer transition-all hover:shadow-sm ${getStatusStyle(order.orderStatus)}`}
+                                                        >
+                                                            <option value="PENDING">Pending</option>
+                                                            <option value="PROCESSING">Processing</option>
+                                                            <option value="SHIPPED">Shipped</option>
+                                                            <option value="DELIVERED">Delivered</option>
+                                                            <option value="CANCELLED">Cancelled</option>
+                                                            <option value="REFUND_REQUESTED">Refund Req.</option>
+                                                        </select>
+
+                                                        <select
+                                                            value={order.paymentStatus}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onChange={(e) => updatePaymentMutation.mutate({ orderId: order._id, status: e.target.value })}
+                                                            className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border outline-none cursor-pointer transition-all ${
+                                                                order.paymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                                order.paymentStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                                'bg-red-50 text-red-600 border-red-100'
+                                                            }`}
+                                                        >
+                                                            <option value="PENDING">Unpaid</option>
+                                                            <option value="PAID">Paid</option>
+                                                            <option value="FAILED">Failed</option>
+                                                            <option value="REFUNDED">Refunded</option>
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6 text-right">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedOrder(order);
+                                                            setIsDrawerOpen(true);
+                                                        }}
+                                                        className="p-3 hover:bg-black hover:text-white rounded-2xl transition-all border border-gray-100 hover:border-black group/btn"
+                                                    >
+                                                        <ExternalLink className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {/* Pagination footer */}
+                                        {totalPages > 1 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-8 py-5 border-t border-gray-50">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalOrders)} of {totalOrders} orders
+                                                        </p>
+                                                        <div className="flex items-center space-x-2">
+                                                            <button
+                                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                                disabled={currentPage === 1}
+                                                                className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-gray-200 rounded-xl hover:bg-black hover:text-white hover:border-black disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                                            >
+                                                                ← Prev
+                                                            </button>
+                                                            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                                                                let page = i + 1;
+                                                                if (totalPages > 7) {
+                                                                    if (currentPage <= 4) page = i + 1;
+                                                                    else if (currentPage >= totalPages - 3) page = totalPages - 6 + i;
+                                                                    else page = currentPage - 3 + i;
+                                                                }
+                                                                return (
+                                                                    <button
+                                                                        key={page}
+                                                                        onClick={() => setCurrentPage(page)}
+                                                                        className={`w-8 h-8 text-[10px] font-black rounded-xl transition-all ${currentPage === page ? 'bg-black text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                                                                    >
+                                                                        {page}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                            <button
+                                                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                                                disabled={currentPage === totalPages}
+                                                                className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-gray-200 rounded-xl hover:bg-black hover:text-white hover:border-black disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                                            >
+                                                                Next →
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </tbody>
                     </table>
                 </div>

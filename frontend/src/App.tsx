@@ -29,6 +29,7 @@ import AdminReviews from './pages/admin/Reviews';
 import AdminSettings from './pages/admin/Settings';
 import AdminSupport from './pages/admin/Support';
 import ChatWidget from './components/common/ChatWidget';
+import MetaPixelHelper from './components/common/MetaPixelHelper';
 
 
 
@@ -37,6 +38,7 @@ function App() {
         <>
             <ToastContainer position="top-right" autoClose={3000} />
             <Router>
+                <MetaPixelHelper />
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<HomePage />} />

@@ -100,7 +100,15 @@ export const verifyPaymentAndCreateOrder = asyncHandler(async (req: AuthRequest,
         }
     }
 
-    // 4. Create order in database
+    // 4. Fetch product titles for persistent invoices
+    if (orderData.items) {
+        for (const item of orderData.items) {
+            const product = await (await import('../product/product.model')).Product.findById(item.product);
+            if (product) (item as any).name = product.title;
+        }
+    }
+
+    // 5. Create order in database
     const order = await Order.create({
         user: req.user!.sub,
         items: orderData.items,

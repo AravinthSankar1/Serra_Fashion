@@ -9,6 +9,7 @@ import api from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useRazorpay } from 'react-razorpay';
+import { PixelEvents } from '../components/common/MetaPixelHelper';
 
 const checkoutSchema = z.object({
     firstName: z.string().min(2, 'First name is required'),
@@ -158,6 +159,8 @@ export function useCheckout() {
     const processOrder = async (orderPayload: any) => {
         try {
             const res = await api.post('/orders', orderPayload);
+            // Fire Meta Pixel Purchase event (COD)
+            PixelEvents.purchase(orderPayload.totalAmount, 'INR', res.data.data._id);
             setOrderSuccess(res.data.data._id);
             clearCart();
         } catch (error) {
@@ -253,6 +256,8 @@ export function useCheckout() {
                             }
                         }, { signal: abortControllerRef.current?.signal });
 
+                        // Fire Meta Pixel Purchase event (Razorpay)
+                        PixelEvents.purchase(finalAmount, 'INR', response.razorpay_order_id);
                         setOrderSuccess(response.razorpay_order_id);
                         clearCart();
                     } catch (error: any) {

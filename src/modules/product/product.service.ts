@@ -1,53 +1,54 @@
 import { Product } from './product.model';
 import { IProduct } from './product.interface';
 import { User } from '../user/user.model';
+import { StoreSettings } from '../settings/settings.model';
 
 export const createProduct = async (data: Partial<IProduct>) => {
     return await Product.create(data);
 };
 
+const applyDiscountsToProduct = (product: any, categoryDiscounts: any[]) => {
+    const plainProd = product.toObject ? product.toObject() : product;
+    const catDiscount = categoryDiscounts.find(d => d.categoryId === String(plainProd.category?._id || plainProd.category));
+    
+    if (catDiscount && catDiscount.discountPercentage > plainProd.discountPercentage) {
+        const effectiveDiscount = catDiscount.discountPercentage;
+        const newFinalPrice = Math.round(plainProd.basePrice - (plainProd.basePrice * effectiveDiscount) / 100);
+        return { 
+            ...plainProd, 
+            discountPercentage: effectiveDiscount, 
+            finalPrice: newFinalPrice,
+            isGlobalCategoryDiscount: true 
+        };
+    }
+    return plainProd;
+};
+
 export const getProducts = async (filters: any, page = 1, limit = 10) => {
     const query: any = {};
-
-    // 1. Visibility & Approval Logic
+    // ... (rest of query logic same)
     if (filters.approvalStatus) {
         query.approvalStatus = filters.approvalStatus;
     } else if (!filters.vendor && !filters.isAdmin) {
-        // Only apply 'APPROVED' filter for public view (not admin, not vendor isolation)
         query.approvalStatus = 'APPROVED';
         query.isPublished = true;
     }
-
     if (filters.vendor) query.vendor = filters.vendor;
     if (filters.isPublished !== undefined) query.isPublished = filters.isPublished === 'true';
-
-    // 2. Text Search
     if (filters.search) {
         query.$or = [
             { title: { $regex: filters.search, $options: 'i' } },
             { description: { $regex: filters.search, $options: 'i' } }
         ];
     }
-
-    // 3. Exact Matches & Multi-select
     if (filters.category) {
         const categories = filters.category.split(',');
-        if (categories.length > 1) {
-            query.category = { $in: categories };
-        } else {
-            query.category = filters.category;
-        }
+        query.category = categories.length > 1 ? { $in: categories } : filters.category;
     }
-
     if (filters.brand) {
         const brands = filters.brand.split(',');
-        if (brands.length > 1) {
-            query.brand = { $in: brands };
-        } else {
-            query.brand = filters.brand;
-        }
+        query.brand = brands.length > 1 ? { $in: brands } : filters.brand;
     }
-
     if (filters.gender) {
         if (filters.gender === 'MEN' || filters.gender === 'WOMEN') {
             query.gender = { $in: [filters.gender, 'UNISEX'] };
@@ -56,21 +57,12 @@ export const getProducts = async (filters: any, page = 1, limit = 10) => {
         }
     }
     if (filters.sale === 'true') query.discountPercentage = { $gt: 0 };
-
-    // 4. Size Filters
-    if (filters.sizes) {
-        const sizes = filters.sizes.split(',');
-        query['variants.size'] = { $in: sizes };
-    }
-
-    // 5. Price Range
+    if (filters.sizes) query['variants.size'] = { $in: filters.sizes.split(',') };
     if (filters.minPrice || filters.maxPrice) {
         query.finalPrice = {};
         if (filters.minPrice) query.finalPrice.$gte = Number(filters.minPrice);
         if (filters.maxPrice) query.finalPrice.$lte = Number(filters.maxPrice);
     }
-
-    // 6. Sorting
     let sort: any = { createdAt: -1 };
     if (filters.sort) {
         const [field, order] = filters.sort.split('-');
@@ -79,25 +71,45 @@ export const getProducts = async (filters: any, page = 1, limit = 10) => {
 
     const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
+    const [products, total, settings] = await Promise.all([
         Product.find(query)
             .populate('brand', 'name')
             .populate('category', 'name')
             .sort(sort)
             .skip(skip)
             .limit(limit),
-        Product.countDocuments(query)
+        Product.countDocuments(query),
+        StoreSettings.findOne().lean()
     ]);
 
-    return { products, total, page, limit, totalPages: Math.ceil(total / limit) };
+    const categoryDiscounts = settings?.categoryDiscounts || [];
+    const productsWithDiscounts = products.map(p => applyDiscountsToProduct(p, categoryDiscounts));
+
+    return { 
+        products: productsWithDiscounts, 
+        total, 
+        page, 
+        limit, 
+        totalPages: Math.ceil(total / limit) 
+    };
 };
 
 export const getProductById = async (id: string) => {
-    return await Product.findById(id).populate('brand category sizeGuide');
+    const [product, settings] = await Promise.all([
+        Product.findById(id).populate('brand category sizeGuide'),
+        StoreSettings.findOne().lean()
+    ]);
+    if (!product) return null;
+    return applyDiscountsToProduct(product, settings?.categoryDiscounts || []);
 };
 
 export const getProductBySlug = async (slug: string) => {
-    return await Product.findOne({ slug }).populate('brand category sizeGuide');
+    const [product, settings] = await Promise.all([
+        Product.findOne({ slug }).populate('brand category sizeGuide'),
+        StoreSettings.findOne().lean()
+    ]);
+    if (!product) return null;
+    return applyDiscountsToProduct(product, settings?.categoryDiscounts || []);
 };
 
 export const updateProduct = async (id: string, data: Partial<IProduct>) => {
@@ -123,13 +135,19 @@ export const deleteProduct = async (id: string) => {
 };
 
 export const getRelated = async (productId: string, categoryId: string, brandId: string) => {
-    return await Product.find({
-        $and: [
-            { _id: { $ne: productId } },
-            { isPublished: true },
-            { $or: [{ category: categoryId }, { brand: brandId }] }
-        ]
-    })
-        .limit(4)
-        .populate('brand category');
+    const [products, settings] = await Promise.all([
+        Product.find({
+            $and: [
+                { _id: { $ne: productId } },
+                { isPublished: true },
+                { $or: [{ category: categoryId }, { brand: brandId }] }
+            ]
+        })
+            .limit(4)
+            .populate('brand category'),
+        StoreSettings.findOne().lean()
+    ]);
+
+    const categoryDiscounts = settings?.categoryDiscounts || [];
+    return products.map(p => applyDiscountsToProduct(p, categoryDiscounts));
 };
