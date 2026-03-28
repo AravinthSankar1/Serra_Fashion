@@ -18,6 +18,7 @@ export interface IStoreSettings extends Document {
     isCodEnabled: boolean;
     isRazorpayEnabled: boolean;
     categoryDiscounts: ICategoryDiscount[];
+    quantityDiscounts: { minQuantity: number, discountPercentage: number }[];
     updatedAt: Date;
 }
 
@@ -37,6 +38,13 @@ const storeSettingsSchema = new Schema<IStoreSettings>(
             type: [{
                 categoryId: { type: String, required: true },
                 categoryName: { type: String, required: true },
+                discountPercentage: { type: Number, required: true, min: 0, max: 100 },
+            }],
+            default: []
+        },
+        quantityDiscounts: {
+            type: [{
+                minQuantity: { type: Number, required: true, min: 1 },
                 discountPercentage: { type: Number, required: true, min: 0, max: 100 },
             }],
             default: []

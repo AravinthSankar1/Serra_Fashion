@@ -3,7 +3,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCart, useAuth } from '../context';
 import { useCurrency } from '../hooks/useCurrency';
-import { useQuery } from '@tanstack/react-query';
 import type { CartItem } from '../types';
 import api from '../api/client';
 import Button from '../components/ui/Button';
@@ -49,18 +48,12 @@ interface StateData {
 
 // ─── MAIN COMPONENT ────────────────────────────────────────
 export default function CheckoutPage() {
-    const { cartItems, cartTotal, getItemPrice, clearCart, isCartLoading } = useCart();
+    const { cartItems, cartTotal, getItemPrice, clearCart, isCartLoading, quantityDiscount, quantityDiscountRule, settings } = useCart();
     const { user, updateUser, isLoading: isAuthLoading } = useAuth();
     const { format, convert } = useCurrency();
     const navigate = useNavigate();
 
-    const { data: settings, isLoading: isSettingsLoading } = useQuery({
-        queryKey: ['store-settings'],
-        queryFn: async () => {
-            const res = await api.get('/settings');
-            return res.data.data;
-        }
-    });
+    const isSettingsLoading = false; // settings are already loaded in CartContext
 
     const isRazorpayAvailable = settings?.isRazorpayEnabled !== false;
     const isCodAvailable = settings?.isCodEnabled !== false && cartItems.every(item => (item.product as any).isCodAvailable !== false);
@@ -422,7 +415,7 @@ export default function CheckoutPage() {
                 })),
                 shippingAddress: data,
                 subtotal: cartTotal,
-                discount,
+                discount: discount + quantityDiscount,
                 promoCode: appliedCoupon,
                 totalAmount: finalAmount,
                 paymentMethod: 'COD',
@@ -485,7 +478,7 @@ export default function CheckoutPage() {
                                     color: item.color
                                 })),
                                 subtotal: cartTotal,
-                                discount,
+                                discount: discount + quantityDiscount,
                                 promoCode: appliedCoupon,
                                 totalAmount: finalAmount,
                                 shippingAddress: capturedData
@@ -552,7 +545,7 @@ export default function CheckoutPage() {
 
 
     // ─── COMPUTED VALUES ───────────────────────────────────
-    const finalTotal = cartTotal - discount + shippingFee;
+    const finalTotal = cartTotal - discount - (quantityDiscount || 0) + shippingFee;
     const phoneCode = countries.find(c => c.code === selectedCountryCode)?.phoneCode || '91';
 
     // ═══════════════════════════════════════════════════════
@@ -1014,6 +1007,17 @@ export default function CheckoutPage() {
                                     <span>Subtotal</span>
                                     <span>{format(convert(cartTotal))}</span>
                                 </div>
+
+                                {quantityDiscountRule && (
+                                    <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                        <span className="flex items-center gap-1">
+                                            <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-50 rounded uppercase tracking-tight">
+                                                BUY {quantityDiscountRule.minQuantity}+ GET {quantityDiscountRule.discountPercentage}% OFF
+                                            </span>
+                                        </span>
+                                        <span>-{format(convert(quantityDiscount))}</span>
+                                    </div>
+                                )}
 
                                 {discount > 0 && (
                                     <div className="flex justify-between text-sm text-emerald-600 font-medium">

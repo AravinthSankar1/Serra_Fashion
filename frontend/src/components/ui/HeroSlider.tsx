@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -62,63 +62,26 @@ export default function HeroSlider() {
     return (
         <div className="w-full bg-white pt-[104px]">
             <section className="relative h-[80vh] w-full overflow-hidden bg-black">
-            <AnimatePresence mode="wait">
-                <motion.div
+            <div className="relative w-full h-full">
+                <div
                     key={current}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 1, ease: "easeInOut" }}
-                    className="absolute inset-0"
+                    className="absolute inset-0 cursor-pointer"
+                    onClick={() => {
+                        const link = activeSlides[current].link || '/collection';
+                        if (link.startsWith('http')) {
+                            window.open(link, '_blank');
+                        } else {
+                            navigate(link.startsWith('/') ? link : `/${link}`);
+                        }
+                    }}
                 >
-                    <motion.img
+                    <img
                         src={activeSlides[current].image}
-                        alt={activeSlides[current].title}
-                        initial={{ scale: 1 }}
-                        animate={{ scale: 1.08 }}
-                        transition={{ duration: 10, ease: "linear" }}
+                        alt={activeSlides[current].title || "Banner"}
                         className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/40" />
-
-                    <div className="absolute inset-0 flex items-center justify-center text-center">
-                        <div className="max-w-3xl px-6">
-                            <motion.h1
-                                initial={{ y: 30, opacity: 0, filter: "blur(10px)" }}
-                                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                                transition={{ delay: 0.3, duration: 1, ease: "easeOut" }}
-                                className="text-5xl md:text-7xl font-serif font-bold text-white mb-6"
-                            >
-                                {activeSlides[current].title}
-                            </motion.h1>
-                            <motion.p
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.6, duration: 0.8 }}
-                                className="text-xl text-white/90 mb-10 font-light tracking-wide"
-                            >
-                                {activeSlides[current].description}
-                            </motion.p>
-                            <motion.button
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.8, duration: 0.8 }}
-                                onClick={() => {
-                                    const link = activeSlides[current].link || '/collection';
-                                    if (link.startsWith('http')) {
-                                        window.open(link, '_blank');
-                                    } else {
-                                        navigate(link.startsWith('/') ? link : `/${link}`);
-                                    }
-                                }}
-                                className="bg-white text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-black hover:text-white transition-all shadow-2xl active:scale-95 border border-transparent hover:border-white/20"
-                            >
-                                {activeSlides[current].cta || 'Shop Now'}
-                            </motion.button>
-                        </div>
-                    </div>
-                </motion.div>
-            </AnimatePresence>
+                </div>
+            </div>
 
             {/* Navigation Arrows */}
             <button

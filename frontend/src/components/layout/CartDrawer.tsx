@@ -2,8 +2,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../hooks/useCurrency';
-import { useQuery } from '@tanstack/react-query';
-import api from '../../api/client';
 import Button from '../ui/Button';
 import { Link } from 'react-router-dom';
 
@@ -13,17 +11,8 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-    const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, getItemPrice } = useCart() as any;
+    const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, getItemPrice, quantityDiscount, quantityDiscountRule, settings } = useCart();
     const { format, convert } = useCurrency();
-
-    const { data: settings } = useQuery({
-        queryKey: ['store-settings'],
-        queryFn: async () => {
-            const res = await api.get('/settings');
-            return res.data.data;
-        }
-    });
-    // Note: useCart returns cartItems which is mapped from cart or guestItems in my implementation
 
     // Adjusted to match the specific logic in CartContext
     const items = cartItems;
@@ -63,17 +52,43 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             </button>
                         </div>
 
-                        {/* Free Shipping Progress */}
-                        {settings && cartTotal < settings.freeShippingThreshold && cartTotal > 0 && (
-                            <div className="bg-gradient-to-r from-gray-900 to-zinc-800 text-white text-center py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-inner">
-                                Spend {format(convert(settings.freeShippingThreshold - cartTotal))} more for <span className="text-emerald-400">free shipping</span>
-                            </div>
-                        )}
-                        {settings && cartTotal >= settings.freeShippingThreshold && cartTotal > 0 && (
-                            <div className="bg-emerald-500 text-white text-center py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-inner">
-                                You've unlocked <span className="font-black">Free Shipping!</span> 🎉
-                            </div>
-                        )}
+                        {/* Free Shipping & Quantity Progress */}
+                        <div className="flex flex-col">
+                            {settings && cartTotal < settings.freeShippingThreshold && cartTotal > 0 && (
+                                <div className="bg-gray-900 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] border-b border-white/5">
+                                    Spend {format(convert(settings.freeShippingThreshold - cartTotal))} more for <span className="text-emerald-400">free shipping</span>
+                                </div>
+                            )}
+                            {settings && cartTotal >= settings.freeShippingThreshold && cartTotal > 0 && (
+                                <div className="bg-emerald-500 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] border-b border-white/5">
+                                    You've unlocked <span className="font-black">Free Shipping!</span> 🎉
+                                </div>
+                            )}
+                            
+                            {/* Quantity discount nudge */}
+                            {(() => {
+                                const nextRule = settings?.quantityDiscounts
+                                    ?.sort((a: any, b: any) => a.minQuantity - b.minQuantity)
+                                    ?.find((r: any) => cartCount < r.minQuantity);
+                                
+                                if (nextRule && cartCount > 0) {
+                                    const diff = nextRule.minQuantity - cartCount;
+                                    return (
+                                        <div className="bg-blue-600 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em]">
+                                            Add {diff} {diff === 1 ? 'more item' : 'more items'} to unlock <span className="text-blue-200">{nextRule.discountPercentage}% bulk discount!</span>
+                                        </div>
+                                    );
+                                }
+                                if (quantityDiscountRule && cartCount > 0) {
+                                    return (
+                                        <div className="bg-blue-500 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em]">
+                                            Bulk Discount <span className="font-black">({quantityDiscountRule.discountPercentage}%) Applied!</span> 🏷️
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
+                        </div>
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             {items.length === 0 ? (
@@ -193,9 +208,19 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                         <span>Subtotal</span>
                                         <span>{format(convert(cartTotal))}</span>
                                     </div>
+                                    {quantityDiscountRule && (
+                                        <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                            <span className="flex items-center gap-1">
+                                                <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-50 rounded uppercase tracking-tight">
+                                                    BUY {quantityDiscountRule.minQuantity}+ GET {quantityDiscountRule.discountPercentage}% OFF
+                                                </span>
+                                            </span>
+                                            <span>-{format(convert(quantityDiscount))}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-base font-bold text-gray-900 pt-3 border-t border-gray-50">
                                         <span className="font-serif">Total</span>
-                                        <span className="text-xl">{format(convert(cartTotal))}</span>
+                                        <span className="text-xl">{format(convert(cartTotal - quantityDiscount))}</span>
                                     </div>
                                 </div>
 

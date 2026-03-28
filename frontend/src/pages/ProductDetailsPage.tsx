@@ -11,7 +11,7 @@ import ProductCard from '../components/ui/ProductCard';
 import Reviews from '../components/product/Reviews';
 import ImageGalleryLightbox from '../components/product/ImageGalleryLightbox';
 import SizeGuideModal from '../components/product/SizeGuideModal';
-import { ShoppingBag, ChevronLeft, Star, Truck, RefreshCcw, Loader2, Heart, Share2 } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, Star, Truck, RefreshCcw, Loader2, Heart, Share2, Tag, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
@@ -400,6 +400,63 @@ export default function ProductDetailsPage() {
                                     </div>
                                 )}
 
+                                {/* Quantity Offers Callout */}
+                                {storeSettings?.quantityDiscounts?.length > 0 && (
+                                    <div className="space-y-4 pt-6 border-t border-gray-50">
+                                        <div className="flex items-center space-x-2 text-xs font-black uppercase tracking-[0.2em] text-blue-600">
+                                            <Tag className="h-3.5 w-3.5" />
+                                            <span>Bulk Purchase Offers</span>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {storeSettings.quantityDiscounts
+                                                .sort((a: any, b: any) => a.minQuantity - b.minQuantity)
+                                                .map((rule: any, idx: number) => {
+                                                    const isMet = quantity >= rule.minQuantity;
+                                                    return (
+                                                        <div 
+                                                            key={idx}
+                                                            className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
+                                                                isMet 
+                                                                ? 'bg-blue-50/50 border-blue-100 shadow-sm' 
+                                                                : 'bg-gray-50/30 border-gray-100 opacity-60'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                                                    isMet ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                                                                }`}>
+                                                                    {isMet ? <Check className="h-4 w-4" /> : rule.minQuantity}
+                                                                </div>
+                                                                <div>
+                                                                    <p className={`text-sm font-bold ${isMet ? 'text-blue-900' : 'text-gray-500'}`}>
+                                                                        Buy {rule.minQuantity}+ Items
+                                                                    </p>
+                                                                    <p className="text-[10px] uppercase font-black tracking-widest text-blue-600/70">
+                                                                        Get {rule.discountPercentage}% Instant Discount
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {isMet && (
+                                                                <div className="text-right">
+                                                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">Applied</p>
+                                                                    <p className="text-xs font-bold text-blue-900">
+                                                                        Save {format(convert(Math.round((currentPrice * quantity * rule.discountPercentage) / 100)))}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })
+                                            }
+                                        </div>
+                                        {!storeSettings.quantityDiscounts.some((r: any) => quantity >= r.minQuantity) && (
+                                            <p className="text-[10px] font-bold text-blue-500/80 uppercase tracking-widest text-center mt-2 italic">
+                                                Add {Math.min(...storeSettings.quantityDiscounts.map((r: any) => r.minQuantity)) - quantity} more to unlock bulk savings
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Actions */}
                                 <div className="flex items-center space-x-4 pt-4">
                                     <div className="flex items-center space-x-4 bg-gray-50 rounded-[28px] px-6 h-16">
@@ -431,7 +488,14 @@ export default function ProductDetailsPage() {
                                         ) : (
                                             <>
                                                 <ShoppingBag className="h-5 w-5 mr-3 group-hover:rotate-12 transition-transform" />
-                                                <span className="text-base">Add to Bag</span>
+                                                <div className="flex flex-col items-start">
+                                                    <span className="text-base">Add to Bag</span>
+                                                    {storeSettings?.quantityDiscounts?.some((r: any) => quantity >= r.minQuantity) && (
+                                                        <span className="text-[8px] font-black uppercase tracking-widest text-white/60 -mt-1">
+                                                            Bulk Discount Included
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </>
                                         )}
                                     </Button>

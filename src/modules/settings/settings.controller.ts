@@ -26,7 +26,8 @@ export const updateSettings = asyncHandler(async (req: Request, res: Response) =
         storeAddress,
         isCodEnabled,
         isRazorpayEnabled,
-        categoryDiscounts
+        categoryDiscounts,
+        quantityDiscounts
     } = req.body;
 
     let settings = await StoreSettings.findOne();
@@ -42,7 +43,8 @@ export const updateSettings = asyncHandler(async (req: Request, res: Response) =
             storeAddress,
             isCodEnabled,
             isRazorpayEnabled,
-            categoryDiscounts: categoryDiscounts || []
+            categoryDiscounts: categoryDiscounts || [],
+            quantityDiscounts: quantityDiscounts || []
         });
     } else {
         if (freeShippingThreshold !== undefined) settings.freeShippingThreshold = Number(freeShippingThreshold);
@@ -56,6 +58,7 @@ export const updateSettings = asyncHandler(async (req: Request, res: Response) =
         if (isCodEnabled !== undefined) settings.isCodEnabled = isCodEnabled;
         if (isRazorpayEnabled !== undefined) settings.isRazorpayEnabled = isRazorpayEnabled;
         if (categoryDiscounts !== undefined) settings.categoryDiscounts = categoryDiscounts;
+        if (quantityDiscounts !== undefined) settings.quantityDiscounts = quantityDiscounts;
         await settings.save();
     }
 

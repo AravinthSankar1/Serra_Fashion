@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import api from '../api/client';
 import type { Cart, CartItem, Product } from '../types';
@@ -15,6 +16,9 @@ interface CartContextType {
     cartTotal: number;
     getItemPrice: (item: CartItem) => number;
     clearCart: () => void;
+    quantityDiscount: number;
+    quantityDiscountRule: { minQuantity: number; discountPercentage: number } | null;
+    settings: any;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
     isCartLoading: boolean;
@@ -205,6 +209,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const cartTotal = cartItems.reduce((acc: number, item: CartItem) => acc + getItemPrice(item) * item.quantity, 0);
 
+    const { data: settings } = useQuery({
+        queryKey: ['store-settings'],
+        queryFn: async () => {
+            const res = await api.get('/settings');
+            return res.data.data;
+        }
+    });
+
+    const quantityDiscountRule = (() => {
+        const rules: { minQuantity: number; discountPercentage: number }[] = settings?.quantityDiscounts || [];
+        const eligible = rules
+            .filter(r => cartCount >= r.minQuantity && r.discountPercentage > 0)
+            .sort((a, b) => b.minQuantity - a.minQuantity);
+        return eligible[0] || null;
+    })();
+
+    const quantityDiscount = quantityDiscountRule
+        ? Math.round((cartTotal * quantityDiscountRule.discountPercentage) / 100)
+        : 0;
+
     return (
         <CartContext.Provider value={{
             cart,
@@ -217,6 +241,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
             cartTotal,
             getItemPrice,
             clearCart,
+            quantityDiscount,
+            quantityDiscountRule,
+            settings,
             isCartOpen,
             setIsCartOpen,
             isCartLoading
@@ -241,6 +268,9 @@ export function useCart() {
             cartTotal: 0,
             getItemPrice: () => 0,
             clearCart: () => { },
+            quantityDiscount: 0,
+            quantityDiscountRule: null,
+            settings: null,
             isCartOpen: false,
             setIsCartOpen: () => { },
             isCartLoading: false

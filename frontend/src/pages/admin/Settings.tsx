@@ -18,6 +18,11 @@ interface Category {
     name: string;
 }
 
+interface QuantityDiscount {
+    minQuantity: number;
+    discountPercentage: number;
+}
+
 export default function AdminSettings() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -35,6 +40,7 @@ export default function AdminSettings() {
         isCodEnabled: true,
         isRazorpayEnabled: true,
         categoryDiscounts: [] as CategoryDiscount[],
+        quantityDiscounts: [] as QuantityDiscount[],
     });
 
     useEffect(() => {
@@ -49,6 +55,7 @@ export default function AdminSettings() {
                     ...prev,
                     ...res.data.data,
                     categoryDiscounts: res.data.data.categoryDiscounts || [],
+                    quantityDiscounts: res.data.data.quantityDiscounts || [],
                 }));
             }
         } catch (error) {
@@ -109,6 +116,30 @@ export default function AdminSettings() {
         setSettings(prev => ({
             ...prev,
             categoryDiscounts: prev.categoryDiscounts.filter((_, i) => i !== index),
+        }));
+    };
+
+    // ── Quantity Discount helpers ──────────────────────────────────────
+    const addQuantityDiscount = () => {
+        setSettings(prev => ({
+            ...prev,
+            quantityDiscounts: [
+                ...prev.quantityDiscounts,
+                { minQuantity: 1, discountPercentage: 0 },
+            ],
+        }));
+    };
+
+    const updateQuantityDiscount = (index: number, field: keyof QuantityDiscount, value: number) => {
+        const updated = [...settings.quantityDiscounts];
+        (updated[index] as any)[field] = value;
+        setSettings(prev => ({ ...prev, quantityDiscounts: updated }));
+    };
+
+    const removeQuantityDiscount = (index: number) => {
+        setSettings(prev => ({
+            ...prev,
+            quantityDiscounts: prev.quantityDiscounts.filter((_, i) => i !== index),
         }));
     };
 
@@ -385,8 +416,94 @@ export default function AdminSettings() {
                     )}
                 </section>
 
+                {/* ── Quantity Discounts ──────────────────────────── */}
+                <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                                <Plus className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-gray-900">Quantity Discounts</h2>
+                                <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                                    Apply automatic discounts when users add multiple products to their cart (e.g. Buy 2 get 10% off)
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={addQuantityDiscount}
+                            className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-black border-2 border-black px-4 py-2 rounded-xl hover:bg-black hover:text-white transition-all"
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>Add Quantity Rule</span>
+                        </button>
+                    </div>
+
+                    {settings.quantityDiscounts.length === 0 ? (
+                        <div className="py-12 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
+                            <Plus className="h-8 w-8 text-gray-200 mx-auto mb-3" />
+                            <p className="text-sm font-medium text-gray-400">No quantity discounts configured.</p>
+                            <p className="text-[10px] text-gray-300 mt-1 uppercase tracking-widest">Click "Add Quantity Rule" to create one</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-12 gap-4 px-4 text-[9px] font-black uppercase tracking-widest text-gray-400">
+                                <div className="col-span-5">Minimum Quantity</div>
+                                <div className="col-span-5">Discount %</div>
+                                <div className="col-span-2 text-right">Action</div>
+                            </div>
+                            {settings.quantityDiscounts.map((rule, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-4 items-center bg-gray-50/70 p-4 rounded-2xl border border-gray-100">
+                                    <div className="col-span-5">
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                className="w-full bg-white border border-gray-100 rounded-xl py-2.5 px-3 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
+                                                value={rule.minQuantity}
+                                                onChange={(e) => updateQuantityDiscount(index, 'minQuantity', Number(e.target.value))}
+                                                placeholder="2"
+                                            />
+                                            <span className="text-sm font-black text-gray-400 shrink-0">Items</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-span-5">
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                className="w-full bg-white border border-gray-100 rounded-xl py-2.5 px-3 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
+                                                value={rule.discountPercentage}
+                                                onChange={(e) => updateQuantityDiscount(index, 'discountPercentage', Number(e.target.value))}
+                                                placeholder="0"
+                                            />
+                                            <span className="text-sm font-black text-gray-400 shrink-0">%</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2 flex justify-end">
+                                        {rule.discountPercentage > 0 && rule.minQuantity >= 1 && (
+                                            <span className="text-[9px] font-black px-2 py-1 bg-blue-50 text-blue-600 rounded-lg uppercase tracking-tight mr-2 whitespace-nowrap">
+                                                BUY {rule.minQuantity}+ GET {rule.discountPercentage}% OFF
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => removeQuantityDiscount(index)}
+                                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
                 {/* Pro Tip */}
-                <div className="bg-black rounded-[40px] p-8 text-white relative overflow-hidden group">
+                <div className="bg-black rounded-[40px] p-8 text-white relative overflow-hidden group mb-8">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
                     <div className="flex items-center space-x-4 mb-4">
                         <Info className="h-6 w-6 text-white/50" />
@@ -395,6 +512,17 @@ export default function AdminSettings() {
                     <p className="text-white/60 text-sm leading-relaxed mb-6">
                         Updates to shipping thresholds and delivery charges take effect immediately across all active sessions and the checkout page. Category discounts are stored globally and can be referenced in promotions.
                     </p>
+                </div>
+
+                <div className="flex justify-end pb-12">
+                    <Button
+                        onClick={handleSave}
+                        isLoading={isSaving}
+                        className="h-14 px-12 rounded-[28px] shadow-2xl shadow-black/20 text-base"
+                    >
+                        <Save className="w-5 h-5 mr-3" />
+                        Save All System Preferences
+                    </Button>
                 </div>
             </form>
         </div>
