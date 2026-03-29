@@ -1,4 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { useAuth, useCart } from '../../context';
 import { ShoppingBag, User as UserIcon, Search, Heart, Menu, X, LogOut, Settings, Package, ArrowRight, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -62,7 +63,7 @@ export default function Navbar() {
     const handleResultClick = (slug: string) => { navigate(`/product/${slug}`); closeSearch(); };
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-3' : 'bg-white/80 backdrop-blur-md py-5'}`}>
+        <header className={`fixed top-0 left-0 right-0 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-3' : 'bg-white/80 backdrop-blur-md py-5'} ${isMobileMenuOpen || isSearchOpen ? 'z-[100]' : 'z-50'}`}>
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center lg:hidden">
@@ -156,7 +157,12 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                {/* Search Overlay */}
+            </nav>
+
+            <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+            {/* Search Overlay Portal */}
+            {typeof document !== 'undefined' && createPortal(
                 <AnimatePresence>
                     {isSearchOpen && (
                         <>
@@ -166,7 +172,7 @@ export default function Navbar() {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={closeSearch}
-                                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                                className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998]"
                             />
 
                             {/* Search Panel */}
@@ -175,7 +181,7 @@ export default function Navbar() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                                className="fixed top-0 left-0 right-0 z-50 bg-white shadow-2xl"
+                                className="fixed top-0 left-0 right-0 z-[9999] bg-white shadow-2xl"
                             >
                                 <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
                                     {/* Header row */}
@@ -336,89 +342,88 @@ export default function Navbar() {
                             </motion.div>
                         </>
                     )}
-                </AnimatePresence>
-            </nav>
+                </AnimatePresence>, document.body)}
 
-            <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-
-            {/* Mobile Menu */}
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60]"
-                        />
-                        <motion.div
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            className="fixed inset-y-0 left-0 w-4/5 max-w-sm bg-white z-[70] p-8 shadow-2xl flex flex-col"
-                        >
-                            <div className="flex items-center justify-between mb-12">
-                                <Link to="/" className="flex flex-col items-center leading-none group">
-                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-3xl text-black">SÉRRA</span>
-                                    <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[10px] uppercase text-black">FASHION</span>
-                                </Link>
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2">
-                                    <X className="h-6 w-6" />
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col space-y-6">
-                                <Link to="/collection" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Collection</Link>
-                                <Link to="/men" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Men</Link>
-                                <Link to="/women" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Women</Link>
-                                <Link to="/sale" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium text-red-600 tracking-tight">Sale</Link>
-
-                                <div className="pt-8 border-t border-gray-100 flex flex-col space-y-6">
-                                {user ? (
-                                    <>
-                                        <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Profile</Link>
-                                        <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Orders</Link>
-                                    </>
-                                ) : (
-                                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-black flex items-center gap-2">
-                                        <UserIcon className="h-5 w-5" />
-                                        Login / Create Account
+            {/* Mobile Menu Portal */}
+            {typeof document !== 'undefined' && createPortal(
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9998]"
+                            />
+                            <motion.div
+                                initial={{ x: '-100%' }}
+                                animate={{ x: 0 }}
+                                exit={{ x: '-100%' }}
+                                className="fixed inset-y-0 left-0 w-4/5 max-w-sm bg-white z-[9999] p-8 shadow-2xl flex flex-col !opacity-100"
+                                style={{ backgroundColor: 'white' }}
+                            >
+                                <div className="flex items-center justify-between mb-12">
+                                    <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex flex-col items-center leading-none group">
+                                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-3xl text-black">SÉRRA</span>
+                                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 300, letterSpacing: '0.35em', lineHeight: 1, marginTop: '0.3em' }} className="text-[10px] uppercase text-black">FASHION</span>
                                     </Link>
-                                )}
-                                    <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium sm:hidden">My Wishlist</Link>
-
-                                    {(user?.role === 'admin' || user?.role === 'super_admin') && (
-                                        <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-bold text-amber-600 flex items-center gap-2">
-                                            <Settings className="h-4 w-4" />
-                                            Admin Dashboard
-                                        </Link>
-                                    )}
-                                    {user?.role === 'vendor' && (
-                                        <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-bold text-blue-600 flex items-center gap-2">
-                                            <Settings className="h-4 w-4" />
-                                            Vendor Dashboard
-                                        </Link>
-                                    )}
-
-                                    {user && (
-                                        <button
-                                            onClick={() => {
-                                                logout();
-                                                setIsMobileMenuOpen(false);
-                                            }}
-                                            className="text-left text-base font-bold text-red-600 flex items-center gap-2 pt-4"
-                                        >
-                                            <LogOut className="h-4 w-4" />
-                                            Logout
-                                        </button>
-                                    )}
+                                    <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2">
+                                        <X className="h-6 w-6" />
+                                    </button>
                                 </div>
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+
+                                <div className="flex flex-col space-y-6">
+                                    <Link to="/collection" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Collection</Link>
+                                    <Link to="/men" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Men</Link>
+                                    <Link to="/women" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Women</Link>
+                                    <Link to="/sale" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium text-red-600 tracking-tight">Sale</Link>
+
+                                    <div className="pt-8 border-t border-gray-100 flex flex-col space-y-6">
+                                    {user ? (
+                                        <>
+                                            <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Profile</Link>
+                                            <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium">My Orders</Link>
+                                        </>
+                                    ) : (
+                                        <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-black flex items-center gap-2">
+                                            <UserIcon className="h-5 w-5" />
+                                            Login / Create Account
+                                        </Link>
+                                    )}
+                                        <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-base text-gray-500 font-medium sm:hidden">My Wishlist</Link>
+
+                                        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                                            <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-bold text-amber-600 flex items-center gap-2">
+                                                <Settings className="h-4 w-4" />
+                                                Admin Dashboard
+                                            </Link>
+                                        )}
+                                        {user?.role === 'vendor' && (
+                                            <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-bold text-blue-600 flex items-center gap-2">
+                                                <Settings className="h-4 w-4" />
+                                                Vendor Dashboard
+                                            </Link>
+                                        )}
+
+                                        {user && (
+                                            <button
+                                                onClick={() => {
+                                                    logout();
+                                                    setIsMobileMenuOpen(false);
+                                                }}
+                                                className="text-left text-base font-bold text-red-600 flex items-center gap-2 pt-4"
+                                            >
+                                                <LogOut className="h-4 w-4" />
+                                                Logout
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>, document.body)}
         </header>
     );
 }

@@ -57,11 +57,11 @@ export default function HeroSlider() {
     const nextSlide = () => setCurrent((prev) => (prev + 1) % activeSlides.length);
     const prevSlide = () => setCurrent((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
 
-    if (isLoading) return <div className="h-[80vh] w-full bg-white pt-[104px]"><div className="w-full h-full bg-gray-100 animate-pulse" /></div>;
+    if (isLoading) return <div className="w-full bg-white pt-[80px] md:pt-[104px]"><div className="w-full h-auto aspect-video sm:h-[60vh] md:h-[80vh] bg-gray-100 animate-pulse" /></div>;
 
     return (
-        <div className="w-full bg-white pt-[104px]">
-            <section className="relative h-[80vh] w-full overflow-hidden bg-black">
+        <div className="w-full bg-white pt-[80px] md:pt-[104px]">
+            <section className="relative w-full aspect-video sm:aspect-auto sm:h-[60vh] md:h-[80vh] overflow-hidden bg-black">
             <div className="relative w-full h-full">
                 <div
                     key={current}
