@@ -278,7 +278,7 @@ export default function CollectionPage({ title, gender, isSale }: { title: strin
                                                     </div>
 
                                                     {/* Flipkart Style Horizontal Scroll */}
-                                                    <div className="relative group">
+                                                    <div className="relative">
                                                         <div className="flex overflow-x-auto pb-4 gap-6 no-scrollbar snap-x scroll-smooth">
                                                             {catProducts.map((product: Product) => (
                                                                 <div 
