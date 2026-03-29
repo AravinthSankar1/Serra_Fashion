@@ -1010,11 +1010,16 @@ export default function CheckoutPage() {
 
                                 {quantityDiscountRule && (
                                     <div className="flex justify-between text-sm text-blue-600 font-medium">
-                                        <span className="flex items-center gap-1">
-                                            <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-50 rounded uppercase tracking-tight">
-                                                BUY {quantityDiscountRule.minQuantity}+ GET {quantityDiscountRule.discountPercentage}% OFF
+                                        <div className="flex flex-col">
+                                            <span className="flex items-center gap-1">
+                                                <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-50 rounded uppercase tracking-tight">
+                                                    BUY {quantityDiscountRule.minQuantity}+ GET {quantityDiscountRule.discountPercentage}% OFF
+                                                </span>
                                             </span>
-                                        </span>
+                                            {quantityDiscountRule.categoryId && (
+                                                <span className="text-[7px] font-black uppercase text-gray-400 mt-0.5 tracking-[0.2em]">{quantityDiscountRule.categoryName || 'Selected Cat'} ONLY</span>
+                                            )}
+                                        </div>
                                         <span>-{format(convert(quantityDiscount))}</span>
                                     </div>
                                 )}

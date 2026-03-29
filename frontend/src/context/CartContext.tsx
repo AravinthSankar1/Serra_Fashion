@@ -17,7 +17,7 @@ interface CartContextType {
     getItemPrice: (item: CartItem) => number;
     clearCart: () => void;
     quantityDiscount: number;
-    quantityDiscountRule: { minQuantity: number; discountPercentage: number } | null;
+    quantityDiscountRule: { minQuantity: number; discountPercentage: number; categoryId?: string; categoryName?: string } | null;
     settings: any;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
@@ -218,16 +218,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
 
     const quantityDiscountRule = (() => {
-        const rules: { minQuantity: number; discountPercentage: number }[] = settings?.quantityDiscounts || [];
-        const eligible = rules
-            .filter(r => cartCount >= r.minQuantity && r.discountPercentage > 0)
-            .sort((a, b) => b.minQuantity - a.minQuantity);
-        return eligible[0] || null;
+        const rules: { minQuantity: number; discountPercentage: number; categoryId?: string; categoryName?: string }[] = settings?.quantityDiscounts || [];
+        
+        // Find all rules that are met based on their target scope
+        const eligibleRules = rules.filter(r => {
+            if (!r.discountPercentage || r.discountPercentage <= 0) return false;
+            
+            // If rule has a categoryId, only items in that category count
+            const targetItems = r.categoryId 
+                ? cartItems.filter(item => {
+                    const itemCatId = (typeof item.product.category === 'object' ? item.product.category._id : item.product.category);
+                    return itemCatId === r.categoryId;
+                })
+                : cartItems;
+            
+            const count = targetItems.reduce((acc, item) => acc + item.quantity, 0);
+            return count >= r.minQuantity;
+        });
+
+        // Pick the rule with the highest discount %
+        return eligibleRules.sort((a, b) => b.discountPercentage - a.discountPercentage)[0] || null;
     })();
 
-    const quantityDiscount = quantityDiscountRule
-        ? Math.round((cartTotal * quantityDiscountRule.discountPercentage) / 100)
-        : 0;
+    const quantityDiscount = (() => {
+        if (!quantityDiscountRule) return 0;
+        
+        // Apply the discount % ONLY to the items eligible for the rule
+        const targetItems = quantityDiscountRule.categoryId
+            ? cartItems.filter(item => {
+                const itemCatId = (typeof item.product.category === 'object' ? item.product.category._id : item.product.category);
+                return itemCatId === quantityDiscountRule.categoryId;
+            })
+            : cartItems;
+            
+        const eligibleSubtotal = targetItems.reduce((acc, item) => acc + getItemPrice(item) * item.quantity, 0);
+        return Math.round((eligibleSubtotal * quantityDiscountRule.discountPercentage) / 100);
+    })();
 
     return (
         <CartContext.Provider value={{

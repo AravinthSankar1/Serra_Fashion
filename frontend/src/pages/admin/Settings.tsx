@@ -21,6 +21,8 @@ interface Category {
 interface QuantityDiscount {
     minQuantity: number;
     discountPercentage: number;
+    categoryId?: string;
+    categoryName?: string;
 }
 
 export default function AdminSettings() {
@@ -125,14 +127,23 @@ export default function AdminSettings() {
             ...prev,
             quantityDiscounts: [
                 ...prev.quantityDiscounts,
-                { minQuantity: 1, discountPercentage: 0 },
+                { minQuantity: 1, discountPercentage: 0, categoryId: '', categoryName: '' },
             ],
         }));
     };
 
-    const updateQuantityDiscount = (index: number, field: keyof QuantityDiscount, value: number) => {
+    const updateQuantityDiscount = (index: number, field: keyof QuantityDiscount, value: any) => {
         const updated = [...settings.quantityDiscounts];
-        (updated[index] as any)[field] = value;
+        if (field === 'categoryId') {
+            const cat = categories.find(c => c._id === value);
+            updated[index] = {
+                ...updated[index],
+                categoryId: value as string,
+                categoryName: cat?.name || '',
+            };
+        } else {
+            (updated[index] as any)[field] = value;
+        }
         setSettings(prev => ({ ...prev, quantityDiscounts: updated }));
     };
 
@@ -449,13 +460,26 @@ export default function AdminSettings() {
                     ) : (
                         <div className="space-y-3">
                             <div className="grid grid-cols-12 gap-4 px-4 text-[9px] font-black uppercase tracking-widest text-gray-400">
-                                <div className="col-span-5">Minimum Quantity</div>
-                                <div className="col-span-5">Discount %</div>
+                                <div className="col-span-4">Target Category</div>
+                                <div className="col-span-3">Min. Quantity</div>
+                                <div className="col-span-3">Discount %</div>
                                 <div className="col-span-2 text-right">Action</div>
                             </div>
                             {settings.quantityDiscounts.map((rule, index) => (
                                 <div key={index} className="grid grid-cols-12 gap-4 items-center bg-gray-50/70 p-4 rounded-2xl border border-gray-100">
-                                    <div className="col-span-5">
+                                    <div className="col-span-4">
+                                        <select
+                                            className="w-full bg-white border border-gray-100 rounded-xl py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-black/5 outline-none"
+                                            value={rule.categoryId || ""}
+                                            onChange={(e) => updateQuantityDiscount(index, 'categoryId', e.target.value)}
+                                        >
+                                            <option value="">All Categories</option>
+                                            {categories.map(cat => (
+                                                <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-span-3">
                                         <div className="flex items-center space-x-2">
                                             <input
                                                 type="number"
@@ -468,7 +492,7 @@ export default function AdminSettings() {
                                             <span className="text-sm font-black text-gray-400 shrink-0">Items</span>
                                         </div>
                                     </div>
-                                    <div className="col-span-5">
+                                    <div className="col-span-3">
                                         <div className="flex items-center space-x-2">
                                             <input
                                                 type="number"
@@ -484,9 +508,14 @@ export default function AdminSettings() {
                                     </div>
                                     <div className="col-span-2 flex justify-end">
                                         {rule.discountPercentage > 0 && rule.minQuantity >= 1 && (
-                                            <span className="text-[9px] font-black px-2 py-1 bg-blue-50 text-blue-600 rounded-lg uppercase tracking-tight mr-2 whitespace-nowrap">
-                                                BUY {rule.minQuantity}+ GET {rule.discountPercentage}% OFF
-                                            </span>
+                                            <div className="flex flex-col items-end mr-2">
+                                                <span className="text-[9px] font-black px-2 py-1 bg-blue-50 text-blue-600 rounded-lg uppercase tracking-tight whitespace-nowrap">
+                                                    BUY {rule.minQuantity}+ GET {rule.discountPercentage}% OFF
+                                                </span>
+                                                {rule.categoryId && (
+                                                    <span className="text-[7px] font-black uppercase text-gray-400 mt-0.5 tracking-[0.2em]">{rule.categoryName || 'Selected Cat'} ONLY</span>
+                                                )}
+                                            </div>
                                         )}
                                         <button
                                             type="button"
