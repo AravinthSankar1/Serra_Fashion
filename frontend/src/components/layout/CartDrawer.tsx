@@ -67,19 +67,36 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             
                             {/* Quantity discount nudge */}
                             {(() => {
-                                const nextRule = settings?.quantityDiscounts
-                                    ?.sort((a: any, b: any) => a.minQuantity - b.minQuantity)
-                                    ?.find((r: any) => cartCount < r.minQuantity);
+                                if (!settings?.quantityDiscounts || cartCount === 0) return null;
+
+                                const rulesWithCounts = settings.quantityDiscounts.map((r: any) => {
+                                    const targetItems = r.categoryId 
+                                        ? cartItems.filter((item: any) => {
+                                            const itemCatId = (typeof item.product.category === 'object' ? item.product.category._id : item.product.category);
+                                            return itemCatId === r.categoryId;
+                                        })
+                                        : cartItems;
+                                    const count = targetItems.reduce((acc: number, item: any) => acc + item.quantity, 0);
+                                    return { ...r, count };
+                                });
+
+                                // Find a rule they are closest to meeting, but haven't met yet.
+                                // We prefer showing nudges containing items they've already started adding (count > 0).
+                                const nextRuleCandidates = rulesWithCounts
+                                    .filter((r: any) => r.count > 0 && r.count < r.minQuantity)
+                                    .sort((a: any, b: any) => (a.minQuantity - a.count) - (b.minQuantity - b.count));
                                 
-                                if (nextRule && cartCount > 0) {
-                                    const diff = nextRule.minQuantity - cartCount;
+                                const nextRule = nextRuleCandidates[0];
+                                
+                                if (nextRule) {
+                                    const diff = nextRule.minQuantity - nextRule.count;
                                     return (
                                         <div className="bg-blue-600 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em]">
-                                            Add {diff} {diff === 1 ? 'more item' : 'more items'} to unlock <span className="text-blue-200">{nextRule.discountPercentage}% bulk discount!</span>
+                                            Add {diff} {diff === 1 ? 'more item' : 'more items'} {nextRule.categoryName ? `from ${nextRule.categoryName} ` : ''}to unlock <span className="text-blue-200">{nextRule.discountPercentage}% bulk discount!</span>
                                         </div>
                                     );
                                 }
-                                if (quantityDiscountRule && cartCount > 0) {
+                                if (quantityDiscountRule) {
                                     return (
                                         <div className="bg-blue-500 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em]">
                                             Bulk Discount <span className="font-black">({quantityDiscountRule.discountPercentage}%) Applied!</span> 🏷️

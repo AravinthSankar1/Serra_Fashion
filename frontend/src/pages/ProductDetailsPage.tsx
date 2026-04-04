@@ -229,6 +229,10 @@ export default function ProductDetailsPage() {
 
     const isLiked = user?.wishlist?.includes(product._id || '');
 
+    const applicableQuantityDiscounts = storeSettings?.quantityDiscounts?.filter(
+        (rule: any) => !rule.categoryId || rule.categoryId === (typeof product.category === 'object' ? (product.category as any)._id : product.category)
+    ) || [];
+
     return (
         <div className="min-h-screen bg-white">
             <SEO
@@ -401,14 +405,14 @@ export default function ProductDetailsPage() {
                                 )}
 
                                 {/* Quantity Offers Callout */}
-                                {storeSettings?.quantityDiscounts?.length > 0 && (
+                                {applicableQuantityDiscounts.length > 0 && (
                                     <div className="space-y-4 pt-6 border-t border-gray-50">
                                         <div className="flex items-center space-x-2 text-xs font-black uppercase tracking-[0.2em] text-blue-600">
                                             <Tag className="h-3.5 w-3.5" />
                                             <span>Bulk Purchase Offers</span>
                                         </div>
                                         <div className="grid grid-cols-1 gap-2">
-                                            {storeSettings.quantityDiscounts
+                                            {applicableQuantityDiscounts
                                                 .sort((a: any, b: any) => a.minQuantity - b.minQuantity)
                                                 .map((rule: any, idx: number) => {
                                                     const isMet = quantity >= rule.minQuantity;
@@ -449,9 +453,9 @@ export default function ProductDetailsPage() {
                                                 })
                                             }
                                         </div>
-                                        {!storeSettings.quantityDiscounts.some((r: any) => quantity >= r.minQuantity) && (
+                                        {!applicableQuantityDiscounts.some((r: any) => quantity >= r.minQuantity) && (
                                             <p className="text-[10px] font-bold text-blue-500/80 uppercase tracking-widest text-center mt-2 italic">
-                                                Add {Math.min(...storeSettings.quantityDiscounts.map((r: any) => r.minQuantity)) - quantity} more to unlock bulk savings
+                                                Add {Math.min(...applicableQuantityDiscounts.map((r: any) => r.minQuantity)) - quantity} more to unlock bulk savings
                                             </p>
                                         )}
                                     </div>
@@ -490,7 +494,7 @@ export default function ProductDetailsPage() {
                                                 <ShoppingBag className="h-5 w-5 mr-3 group-hover:rotate-12 transition-transform" />
                                                 <div className="flex flex-col items-start">
                                                     <span className="text-base">Add to Bag</span>
-                                                    {storeSettings?.quantityDiscounts?.some((r: any) => quantity >= r.minQuantity) && (
+                                                    {applicableQuantityDiscounts.some((r: any) => quantity >= r.minQuantity) && (
                                                         <span className="text-[8px] font-black uppercase tracking-widest text-white/60 -mt-1">
                                                             Bulk Discount Included
                                                         </span>
