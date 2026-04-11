@@ -60,8 +60,9 @@ export default function HeroSlider() {
     if (isLoading) return <div className="w-full bg-white pt-[80px] md:pt-[104px]"><div className="w-full aspect-[21/9] sm:aspect-video bg-gray-100 animate-pulse" /></div>;
 
     return (
-        <div className="w-full bg-white pt-[80px] md:pt-[104px]">
-            <section className="relative w-full cursor-pointer group"
+        <div className="w-full bg-white group pt-[80px] md:pt-[104px]">
+            <section 
+                className="relative w-full h-[65vh] md:h-auto md:aspect-[21/9] bg-gray-50 overflow-hidden cursor-pointer"
                 onClick={() => {
                     const link = activeSlides[current].link || '/collection';
                     if (link.startsWith('http')) {
@@ -71,37 +72,40 @@ export default function HeroSlider() {
                     }
                 }}
             >
-                {/* Background Image - Absolute scaling to match laptop 1:1 ratio */}
+                {/* Background Image - Immersive scaling with top-aligned content */}
                 <img
                     key={current}
                     src={activeSlides[current].image}
                     alt={activeSlides[current].title || "Banner"}
-                    className="w-full h-auto block transition-opacity duration-300"
+                   className="w-full h-full object-cover md:object-contain transition-opacity duration-300"
+                   style={{ objectPosition: 'center center' }}
                 />
 
-                {/* Navigation Arrows - Smaller on mobile to avoid overlap */}
-                <button
-                    onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-                    className="absolute left-2 sm:left-8 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-16 sm:w-16 rounded-full bg-black/10 hover:bg-black/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all group z-20"
-                >
-                    <ChevronLeft className="w-3 h-3 sm:w-6 sm:h-6 group-hover:-translate-x-1 transition-transform" />
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-                    className="absolute right-2 sm:right-8 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-16 sm:w-16 rounded-full bg-black/10 hover:bg-black/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all group z-20"
-                >
-                    <ChevronRight className="w-3 h-3 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform" />
-                </button>
+                {/* Highly subtle navigation - Out of the way */}
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between px-2 sm:px-8 z-20 pointer-events-none">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+                        className="pointer-events-auto h-10 w-10 sm:h-16 sm:w-16 rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100"
+                    >
+                        <ChevronLeft className="w-4 h-4 sm:w-8 sm:h-8" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+                        className="pointer-events-auto h-10 w-10 sm:h-16 sm:w-16 rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100"
+                    >
+                        <ChevronRight className="w-4 h-4 sm:w-8 sm:h-8" />
+                    </button>
+                </div>
 
-                {/* Simple Pagination Indicators - Adjusted for new scaling */}
-                <div className="absolute bottom-4 sm:bottom-12 left-1/2 -translate-x-1/2 flex gap-2 sm:gap-4 z-20">
+                {/* Minimal Pagination - Absolute bottom */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                     {activeSlides.map((_: any, i: number) => (
                         <button
                             key={i}
                             onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
-                            className="group py-2 px-1 relative"
+                            className="group p-1"
                         >
-                            <div className={`h-1 rounded-full transition-all duration-500 ${i === current ? 'w-6 sm:w-12 bg-white' : 'w-2 bg-white/30'
+                            <div className={`h-[1px] rounded-full transition-all duration-500 ${i === current ? 'w-8 bg-white' : 'w-2 bg-white/50 group-hover:bg-white'
                                 }`} />
                         </button>
                     ))}
