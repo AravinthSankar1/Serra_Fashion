@@ -246,3 +246,13 @@ export const updateCurrencyPreference = asyncHandler(async (req: AuthRequest, re
 
     res.status(200).json(ApiResponse.success({ preferredCurrency: user.preferredCurrency, country: user.country }));
 });
+
+export const handleAddToRecentlyViewed = asyncHandler(async (req: AuthRequest, res: Response) => {
+    await userService.addToRecentlyViewed(req.user!.sub, req.params.productId);
+    res.status(200).json(ApiResponse.success(null, 'Recently viewed updated'));
+});
+
+export const getUserRecentlyViewed = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const recentlyViewed = await userService.getRecentlyViewed(req.user!.sub);
+    res.status(200).json(ApiResponse.success(recentlyViewed));
+});

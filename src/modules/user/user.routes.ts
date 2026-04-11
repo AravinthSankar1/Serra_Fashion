@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, updateProfile, getAllUsers, updateAnyUser, deleteUser, handleToggleWishlist, getUserWishlist, addAddress, removeAddress, setDefaultAddress, updateShippingAddress, updateCurrencyPreference } from './user.controller';
+import { getProfile, updateProfile, getAllUsers, updateAnyUser, deleteUser, handleToggleWishlist, getUserWishlist, addAddress, removeAddress, setDefaultAddress, updateShippingAddress, updateCurrencyPreference, handleAddToRecentlyViewed, getUserRecentlyViewed } from './user.controller';
 import { authenticate, authorize } from '../../middlewares/auth.middleware';
 import { UserRole } from './user.interface';
 import { upload } from '../../utils/upload.middleware';
@@ -15,6 +15,8 @@ router.put('/currency-preference', authenticate, updateCurrencyPreference);
 router.patch('/currency-preference', authenticate, updateCurrencyPreference);
 router.post('/wishlist/:productId', authenticate, handleToggleWishlist);
 router.get('/wishlist', authenticate, getUserWishlist);
+router.post('/recently-viewed/:productId', authenticate, handleAddToRecentlyViewed);
+router.get('/recently-viewed', authenticate, getUserRecentlyViewed);
 router.post('/address', authenticate, addAddress);
 router.delete('/address/:addressId', authenticate, removeAddress);
 router.put('/address/:addressId/default', authenticate, setDefaultAddress);

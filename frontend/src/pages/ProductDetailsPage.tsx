@@ -84,16 +84,21 @@ export default function ProductDetailsPage() {
         }
     });
 
-    // Fire Meta Pixel ViewContent event when product loads
+    // Fire Meta Pixel ViewContent event and add to Recently Viewed when product loads
     useEffect(() => {
-        if (product) {
+        if (product && user) {
             PixelEvents.viewContent(
                 product.title,
                 product._id,
                 product.finalPrice || product.basePrice
             );
+            
+            // Add to recently viewed on backend
+            api.post(`/user/recently-viewed/${product._id}`).catch(err => {
+                console.error('Failed to add to recently viewed:', err);
+            });
         }
-    }, [product?._id]);
+    }, [product?._id, user?._id]);
 
     if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
     if (error || !product) return <div className="min-h-screen flex items-center justify-center text-red-500">Error loading product</div>;

@@ -44,3 +44,27 @@ export const getWishlist = async (userId: string) => {
 export const updateUserProfile = async (userId: string, updateData: any) => {
     return await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true }).select('-password');
 };
+
+export const addToRecentlyViewed = async (userId: string, productId: string) => {
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    // Keep only the last 10 items
+    let recentlyViewed = user.recentlyViewed ?? [];
+    recentlyViewed = recentlyViewed.filter(id => id.toString() !== productId);
+    recentlyViewed.unshift(new mongoose.Types.ObjectId(productId) as any);
+    recentlyViewed = recentlyViewed.slice(0, 10);
+
+    return await User.findByIdAndUpdate(userId, { $set: { recentlyViewed } });
+};
+
+export const getRecentlyViewed = async (userId: string) => {
+    const user = await User.findById(userId).populate('recentlyViewed');
+    if (!user) throw new Error('User not found');
+
+    const validProducts = user.recentlyViewed.filter((item: any) => item !== null);
+    
+    // In order of newest to oldest
+    const settings = await StoreSettings.findOne().lean();
+    return applyDiscountsToProducts(validProducts, settings?.categoryDiscounts || []);
+};
