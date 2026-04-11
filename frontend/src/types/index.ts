@@ -151,6 +151,7 @@ export interface Order {
     paymentId?: string;
     subtotal: number;
     discount: number;
+    shippingFee: number;
     promoCode?: string;
     cancellationReason?: string;
     cancellationDescription?: string;

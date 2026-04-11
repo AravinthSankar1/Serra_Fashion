@@ -36,8 +36,9 @@ export interface IOrder extends Document {
     items: IOrderItem[];
     subtotal: number; // Before discount
     discount: number; // Promo discount amount
+    shippingFee: number; // Shipping cost
     promoCode?: string; // Applied promo code
-    totalAmount: number; // After discount
+    totalAmount: number; // After discount and shipping
     shippingAddress: {
         firstName: string;
         lastName: string;
@@ -91,6 +92,7 @@ const orderSchema = new Schema<IOrder>(
         items: [orderItemSchema],
         subtotal: { type: Number, required: true },
         discount: { type: Number, default: 0 },
+        shippingFee: { type: Number, default: 0 },
         promoCode: { type: String, uppercase: true },
         totalAmount: { type: Number, required: true },
         shippingAddress: {

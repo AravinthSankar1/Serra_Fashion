@@ -1,5 +1,7 @@
 import { User } from './user.model';
 import mongoose from 'mongoose';
+import { StoreSettings } from '../settings/settings.model';
+import { applyDiscountsToProducts } from '../../utils/productUtils';
 
 export const toggleWishlist = async (userId: string, productId: string) => {
     const user = await User.findById(userId);
@@ -35,7 +37,8 @@ export const getWishlist = async (userId: string) => {
         });
     }
 
-    return validProducts;
+    const settings = await StoreSettings.findOne().lean();
+    return applyDiscountsToProducts(validProducts, settings?.categoryDiscounts || []);
 };
 
 export const updateUserProfile = async (userId: string, updateData: any) => {

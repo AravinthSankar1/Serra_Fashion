@@ -218,7 +218,11 @@ export default function OrderDetailDrawer({ order, isOpen, onClose }: OrderDetai
                                 )}
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-400">Shipping</span>
-                                    <span className="text-emerald-400 font-bold uppercase tracking-widest text-[10px]">Free</span>
+                                    {order.shippingFee > 0 ? (
+                                        <span className="font-bold">{format(convert(order.shippingFee))}</span>
+                                    ) : (
+                                        <span className="text-emerald-400 font-bold uppercase tracking-widest text-[10px]">Free</span>
+                                    )}
                                 </div>
                                 <div className="pt-4 border-t border-white/10 flex justify-between items-center">
                                     <span className="font-serif text-xl">Total Amount</span>

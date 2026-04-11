@@ -26,7 +26,7 @@ const checkoutSchema = z.object({
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export function useCheckout() {
-    const { cartItems, cartTotal, clearCart, isCartLoading } = useCart();
+    const { cartItems, cartTotal, quantityDiscount, settings, clearCart, isCartLoading } = useCart();
     const { user, updateUser, isLoading: isAuthLoading } = useAuth();
     const { format } = useCurrency();
     const navigate = useNavigate();
@@ -172,7 +172,11 @@ export function useCheckout() {
 
     const onSubmit = async (data: CheckoutFormData) => {
         setIsSubmitting(true);
-        const finalAmount = cartTotal - discount;
+        const subtotalAfterDiscounts = cartTotal - quantityDiscount;
+        const shippingFee = settings
+            ? (subtotalAfterDiscounts >= settings.freeShippingThreshold ? 0 : settings.deliveryCharge)
+            : 0;
+        const finalAmount = subtotalAfterDiscounts - discount + shippingFee;
 
         if (isAddingAddress) {
             if (!tempAddress.street || !tempAddress.city || !tempAddress.state || !tempAddress.zip) {
@@ -199,7 +203,8 @@ export function useCheckout() {
                 })),
                 shippingAddress: data,
                 subtotal: cartTotal,
-                discount,
+                discount: discount + quantityDiscount,
+                shippingFee,
                 promoCode: appliedCoupon,
                 totalAmount: finalAmount,
                 paymentMethod: 'COD',
@@ -249,7 +254,8 @@ export function useCheckout() {
                                     color: item.color
                                 })),
                                 subtotal: cartTotal,
-                                discount,
+                                discount: discount + quantityDiscount,
+                                shippingFee,
                                 promoCode: appliedCoupon,
                                 totalAmount: finalAmount,
                                 shippingAddress: data

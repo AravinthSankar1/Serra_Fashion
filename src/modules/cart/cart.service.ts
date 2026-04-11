@@ -1,11 +1,30 @@
 import { Cart } from './cart.model';
+import { StoreSettings } from '../settings/settings.model';
+import { applyDiscountsToProduct } from '../../utils/productUtils';
+
+const populateCartWithDiscounts = async (cart: any) => {
+    if (!cart) return null;
+    
+    const populatedCart = await cart.populate('items.product');
+    const settings = await StoreSettings.findOne().lean();
+    const categoryDiscounts = settings?.categoryDiscounts || [];
+    
+    const cartObj = populatedCart.toObject();
+    if (cartObj.items && cartObj.items.length > 0) {
+        cartObj.items = cartObj.items.map((item: any) => ({
+            ...item,
+            product: applyDiscountsToProduct(item.product, categoryDiscounts)
+        }));
+    }
+    return cartObj;
+};
 
 export const getCart = async (userId: string) => {
-    let cart = await Cart.findOne({ user: userId }).populate('items.product');
+    let cart = await Cart.findOne({ user: userId });
     if (!cart) {
         cart = await Cart.create({ user: userId, items: [] });
     }
-    return cart;
+    return await populateCartWithDiscounts(cart);
 };
 
 export const addItemToCart = async (userId: string, item: any) => {
@@ -27,7 +46,7 @@ export const addItemToCart = async (userId: string, item: any) => {
         }
         await cart.save();
     }
-    return await cart.populate('items.product');
+    return await populateCartWithDiscounts(cart);
 };
 
 export const updateCartItem = async (userId: string, productId: string, quantity: number, size?: string, color?: string) => {
@@ -49,10 +68,10 @@ export const updateCartItem = async (userId: string, productId: string, quantity
         }
         await cart.save();
     }
-    return await cart.populate('items.product');
+    return await populateCartWithDiscounts(cart);
 };
 
 export const clearCart = async (userId: string) => {
     const cart = await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [] } }, { new: true });
-    return cart?.populate('items.product');
+    return await populateCartWithDiscounts(cart);
 };

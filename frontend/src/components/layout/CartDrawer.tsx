@@ -54,16 +54,25 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                         {/* Free Shipping & Quantity Progress */}
                         <div className="flex flex-col">
-                            {settings && cartTotal < settings.freeShippingThreshold && cartTotal > 0 && (
-                                <div className="bg-gray-900 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] border-b border-white/5">
-                                    Spend {format(convert(settings.freeShippingThreshold - cartTotal))} more for <span className="text-emerald-400">free shipping</span>
-                                </div>
-                            )}
-                            {settings && cartTotal >= settings.freeShippingThreshold && cartTotal > 0 && (
-                                <div className="bg-emerald-500 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] border-b border-white/5">
-                                    You've unlocked <span className="font-black">Free Shipping!</span> 🎉
-                                </div>
-                            )}
+                            {(() => {
+                                if (!settings || cartCount === 0) return null;
+                                const subtotalAfterAuto = cartTotal - quantityDiscount;
+                                const isFree = subtotalAfterAuto >= settings.freeShippingThreshold;
+                                
+                                if (isFree) {
+                                    return (
+                                        <div className="bg-emerald-500 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] border-b border-white/5">
+                                            You've unlocked <span className="font-black">Free Shipping!</span> 🎉
+                                        </div>
+                                    );
+                                }
+                                
+                                return (
+                                    <div className="bg-gray-900 text-white text-center py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] border-b border-white/5">
+                                        Spend {format(convert(settings.freeShippingThreshold - subtotalAfterAuto))} more for <span className="text-emerald-400">free shipping</span>
+                                    </div>
+                                );
+                            })()}
                             
                             {/* Quantity discount nudge */}
                             {(() => {

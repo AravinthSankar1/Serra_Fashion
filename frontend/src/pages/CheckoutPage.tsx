@@ -56,9 +56,10 @@ export default function CheckoutPage() {
     const isSettingsLoading = false; // settings are already loaded in CartContext
 
     const isRazorpayAvailable = settings?.isRazorpayEnabled !== false;
+    const subtotalAfterAutomaticDiscounts = cartTotal - (quantityDiscount || 0);
     const isCodAvailable = settings?.isCodEnabled !== false && cartItems.every(item => (item.product as any).isCodAvailable !== false);
     const shippingFee = settings
-        ? (cartTotal >= settings.freeShippingThreshold ? 0 : settings.deliveryCharge)
+        ? (subtotalAfterAutomaticDiscounts >= settings.freeShippingThreshold ? 0 : settings.deliveryCharge)
         : 0;
 
     // ─── PAYMENT STATE ─────────────────────────────────────
@@ -416,6 +417,7 @@ export default function CheckoutPage() {
                 shippingAddress: data,
                 subtotal: cartTotal,
                 discount: discount + quantityDiscount,
+                shippingFee,
                 promoCode: appliedCoupon,
                 totalAmount: finalAmount,
                 paymentMethod: 'COD',
@@ -479,6 +481,7 @@ export default function CheckoutPage() {
                                 })),
                                 subtotal: cartTotal,
                                 discount: discount + quantityDiscount,
+                                shippingFee,
                                 promoCode: appliedCoupon,
                                 totalAmount: finalAmount,
                                 shippingAddress: capturedData

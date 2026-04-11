@@ -2,27 +2,12 @@ import { Product } from './product.model';
 import { IProduct } from './product.interface';
 import { User } from '../user/user.model';
 import { StoreSettings } from '../settings/settings.model';
+import { applyDiscountsToProduct } from '../../utils/productUtils';
 
 export const createProduct = async (data: Partial<IProduct>) => {
     return await Product.create(data);
 };
 
-const applyDiscountsToProduct = (product: any, categoryDiscounts: any[]) => {
-    const plainProd = product.toObject ? product.toObject() : product;
-    const catDiscount = categoryDiscounts.find(d => d.categoryId === String(plainProd.category?._id || plainProd.category));
-    
-    if (catDiscount && catDiscount.discountPercentage > plainProd.discountPercentage) {
-        const effectiveDiscount = catDiscount.discountPercentage;
-        const newFinalPrice = Math.round(plainProd.basePrice - (plainProd.basePrice * effectiveDiscount) / 100);
-        return { 
-            ...plainProd, 
-            discountPercentage: effectiveDiscount, 
-            finalPrice: newFinalPrice,
-            isGlobalCategoryDiscount: true 
-        };
-    }
-    return plainProd;
-};
 
 export const getProducts = async (filters: any, page = 1, limit = 10) => {
     const query: any = {};
