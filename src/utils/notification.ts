@@ -280,6 +280,7 @@ export const sendEmailOtp = async (to: string, otp: string) => {
     }
 };
 
+/*
 export const sendWhatsAppOtp = async (to: string, otp: string) => {
     if (!config.whatsapp.accessToken) {
         console.warn('[WHATSAPP] Not configured. OTP:', otp);
@@ -309,6 +310,7 @@ export const sendWhatsAppOtp = async (to: string, otp: string) => {
         return false;
     }
 };
+*/
 
 // Order Confirmation
 export const sendOrderConfirmation = async (to: string, order: any, type: 'email' | 'whatsapp' = 'email') => {
@@ -351,7 +353,9 @@ export const sendOrderConfirmation = async (to: string, order: any, type: 'email
             console.error('[EMAIL] Order confirmation failed:', error);
             return false;
         }
-    } else {
+    } 
+    /*
+    else {
         try {
             await axios.post(
                 `${config.whatsapp.apiUrl}/${config.whatsapp.phoneNumberId}/messages`,
@@ -375,6 +379,8 @@ export const sendOrderConfirmation = async (to: string, order: any, type: 'email
             return false;
         }
     }
+    */
+    return false;
 };
 
 // Order Status Update
@@ -450,7 +456,9 @@ export const sendOrderStatusUpdate = async (to: string, order: any, newStatus: s
             console.error('[EMAIL] Status update failed:', error);
             return false;
         }
-    } else {
+    } 
+    /*
+    else {
         try {
             await axios.post(
                 `${config.whatsapp.apiUrl}/${config.whatsapp.phoneNumberId}/messages`,
@@ -474,6 +482,8 @@ export const sendOrderStatusUpdate = async (to: string, order: any, newStatus: s
             return false;
         }
     }
+    */
+    return false;
 };
 
 // Admin Alerts
@@ -530,7 +540,9 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
             console.error('[EMAIL] Admin alert failed:', error);
             return false;
         }
-    } else if (type === 'whatsapp' && config.admin.phone) {
+    } 
+    /*
+    else if (type === 'whatsapp' && config.admin.phone) {
         try {
             await axios.post(
                 `${config.whatsapp.apiUrl}/${config.whatsapp.phoneNumberId}/messages`,
@@ -553,6 +565,7 @@ export const sendAdminOrderAlert = async (type: 'email' | 'whatsapp', order: any
             return false;
         }
     }
+    */
 
     return false;
 };
@@ -588,7 +601,9 @@ export const sendVendorSubmissionAlert = async (type: 'email' | 'whatsapp', item
             console.error('[EMAIL] Admin submission alert failed:', error);
             return false;
         }
-    } else if (type === 'whatsapp' && config.admin.phone) {
+    } 
+    /*
+    else if (type === 'whatsapp' && config.admin.phone) {
         try {
             await axios.post(
                 `${config.whatsapp.apiUrl}/${config.whatsapp.phoneNumberId}/messages`,
@@ -611,6 +626,7 @@ export const sendVendorSubmissionAlert = async (type: 'email' | 'whatsapp', item
             return false;
         }
     }
+    */
 
     return false;
 };
@@ -714,9 +730,11 @@ export const sendAdminRefundAlert = async (type: 'email' | 'whatsapp', order: an
 export const sendOrderNotification = async (order: any) => {
     // Backward compatibility - calls new functions
     await sendOrderConfirmation(order.shippingAddress.email, order, 'email');
+    /*
     if (order.shippingAddress.phone) {
         await sendOrderConfirmation(order.shippingAddress.phone, order, 'whatsapp');
     }
+    */
     await sendAdminOrderAlert('email', order);
-    await sendAdminOrderAlert('whatsapp', order);
+    // await sendAdminOrderAlert('whatsapp', order);
 };

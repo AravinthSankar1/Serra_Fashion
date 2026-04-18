@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '../../utils';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface Stats {
     overview: {
@@ -16,6 +17,8 @@ interface Stats {
         pendingProducts: number;
         pendingBrands: number;
         pendingCategories: number;
+        activeVisitors: number;
+        activeUsers: number;
     };
     lists: {
         recentOrders: any[];
@@ -30,6 +33,7 @@ interface Stats {
 
 export default function AdminDashboard() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
     const { data: stats, isLoading } = useQuery({
@@ -50,8 +54,8 @@ export default function AdminDashboard() {
     const cards = [
         { title: 'Total Revenue', value: formatCurrency(overview?.totalRevenue || 0), icon: TrendingUp, color: 'emerald' },
         { title: 'Total Orders', value: overview?.totalOrders || 0, icon: ShoppingBag, color: 'blue' },
-        { title: 'Total Users', value: overview?.totalUsers || 0, icon: Users, color: 'purple', hidden: !isAdmin },
-        { title: 'Total Products', value: overview?.totalProducts || 0, icon: Layers, color: 'amber' },
+        { title: 'Live Visitors', value: overview?.activeVisitors || 0, icon: Users, color: 'purple', hidden: !isAdmin, live: true, link: '/admin/active-sessions' },
+        { title: 'Active Users', value: overview?.activeUsers || 0, icon: CheckCircle2, color: 'amber', hidden: !isAdmin, live: true, link: '/admin/active-sessions' },
     ].filter(card => !card.hidden);
 
     const pendingStats = [
@@ -130,8 +134,18 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className="bg-white dark:bg-gray-900 p-8 rounded-[24px] border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 dark:hover:shadow-black/30 transition-all duration-300 group cursor-default"
+                        className={cn(
+                            "bg-white dark:bg-gray-900 p-8 rounded-[24px] border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 dark:hover:shadow-black/30 transition-all duration-300 group cursor-default relative overflow-hidden",
+                            card.live && "cursor-pointer"
+                        )}
+                        onClick={() => card.live && card.link && navigate(card.link)}
                     >
+                        {card.live && (
+                            <div className="absolute top-4 right-4 flex items-center space-x-2">
+                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[10px] font-black uppercase tracking-tighter text-emerald-500">Live</span>
+                            </div>
+                        )}
                         <div className="flex justify-between items-start mb-6">
                             <div className={cn(
                                 "p-3 rounded-2xl transition-colors duration-300",
@@ -142,10 +156,12 @@ export default function AdminDashboard() {
                             )}>
                                 <card.icon className="h-6 w-6" />
                             </div>
-                            <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg text-[10px] font-bold">
-                                <TrendingUp className="h-3 w-3" />
-                                <span>+12%</span>
-                            </div>
+                            {!card.live && (
+                                <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg text-[10px] font-bold">
+                                    <TrendingUp className="h-3 w-3" />
+                                    <span>+12%</span>
+                                </div>
+                            )}
                         </div>
                         <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">{card.title}</h3>
                         <p className="text-4xl font-serif text-gray-900 dark:text-gray-100 group-hover:scale-110 transition-transform origin-left duration-300">{card.value}</p>

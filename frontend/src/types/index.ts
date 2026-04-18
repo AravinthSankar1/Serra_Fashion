@@ -164,3 +164,16 @@ export interface Order {
     }[];
     createdAt: string;
 }
+
+export interface NavigationItem {
+    _id: string;
+    label: string;
+    type: 'CATEGORY' | 'GENDER' | 'CUSTOM';
+    path?: string;
+    categoryId?: string;
+    gender?: 'MEN' | 'WOMEN' | 'UNISEX';
+    order: number;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}

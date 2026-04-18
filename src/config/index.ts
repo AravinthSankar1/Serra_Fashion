@@ -33,9 +33,10 @@ const envSchema = z.object({
     GMAIL_CLIENT_SECRET: z.string().optional(),
     GMAIL_REFRESH_TOKEN: z.string().optional(),
     // WhatsApp
-    WHATSAPP_API_URL: z.string().optional().default('https://graph.facebook.com/v18.0'),
-    WHATSAPP_ACCESS_TOKEN: z.string().optional(),
-    WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+    // WhatsApp
+    // WHATSAPP_API_URL: z.string().optional().default('https://graph.facebook.com/v18.0'),
+    // WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+    // WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
     // Admin Notifications
     ADMIN_EMAIL: z.string().optional(),
     ADMIN_PHONE: z.string().optional(),
@@ -93,11 +94,13 @@ export const config = {
             refreshToken: envVars.GMAIL_REFRESH_TOKEN?.replace(/[\s\n\r]/g, ''),
         }
     },
+    /*
     whatsapp: {
         apiUrl: envVars.WHATSAPP_API_URL,
         accessToken: envVars.WHATSAPP_ACCESS_TOKEN,
         phoneNumberId: envVars.WHATSAPP_PHONE_NUMBER_ID,
     },
+    */
     admin: {
         email: envVars.ADMIN_EMAIL,
         phone: envVars.ADMIN_PHONE?.split('#')[0].trim(),

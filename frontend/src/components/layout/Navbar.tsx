@@ -20,7 +20,20 @@ export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [navLinks, setNavLinks] = useState<any[]>([]);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        const fetchNav = async () => {
+            try {
+                const res = await api.get('/navigation');
+                setNavLinks(res.data.data);
+            } catch (error) {
+                console.error('Navbar: Failed to fetch navigation', error);
+            }
+        };
+        fetchNav();
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => { setIsScrolled(window.scrollY > 50); };
@@ -73,9 +86,18 @@ export default function Navbar() {
                     </div>
 
                     <div className="hidden lg:flex lg:items-center lg:space-x-8">
-                        <Link to="/collection" className={cn("text-sm font-medium transition-colors", location.pathname === '/collection' ? 'text-black font-bold border-b-2 border-black pb-1' : 'text-gray-700 hover:text-black')}>Collection</Link>
-                        <Link to="/men" className={cn("text-sm font-medium transition-colors", location.pathname === '/men' ? 'text-black font-bold border-b-2 border-black pb-1' : 'text-gray-700 hover:text-black')}>Men</Link>
-                        <Link to="/women" className={cn("text-sm font-medium transition-colors", location.pathname === '/women' ? 'text-black font-bold border-b-2 border-black pb-1' : 'text-gray-700 hover:text-black')}>Women</Link>
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link._id}
+                                to={link.path}
+                                className={cn(
+                                    "text-sm font-medium transition-colors",
+                                    location.pathname === link.path ? 'text-black font-bold border-b-2 border-black pb-1' : 'text-gray-700 hover:text-black'
+                                )}
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
                         {(user?.role === 'admin' || user?.role === 'super_admin') && (
                             <Link to="/admin" className="text-sm font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
                                 <Settings className="h-3.5 w-3.5" />
@@ -374,10 +396,21 @@ export default function Navbar() {
                                 </div>
 
                                 <div className="flex flex-col space-y-6">
-                                    <Link to="/collection" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Collection</Link>
-                                    <Link to="/men" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Men</Link>
-                                    <Link to="/women" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium tracking-tight">Women</Link>
-                                    <Link to="/sale" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-medium text-red-600 tracking-tight">Sale</Link>
+                                    {navLinks.map((link) => (
+                                        <Link
+                                            key={link._id}
+                                            to={link.path}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className={cn(
+                                                "text-xl font-medium tracking-tight",
+                                                location.pathname === link.path ? 'text-black font-bold' : 'text-gray-900'
+                                            )}
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    ))}
+                                    {/* Sale/Special items can be dynamic too, but keeping one static red for flair if desired, 
+                                        or admin can just add 'Sale' through manager */}
 
                                     <div className="pt-8 border-t border-gray-100 flex flex-col space-y-6">
                                     {user ? (

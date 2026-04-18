@@ -7,7 +7,8 @@ import { config } from '../../config';
 import axios from 'axios';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { sendEmailOtp, sendWhatsAppOtp } from '../../utils/notification';
+import { sendEmailOtp } from '../../utils/notification';
+// import { sendWhatsAppOtp } from '../../utils/notification';
 import { OAuth2Client } from 'google-auth-library';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 
@@ -203,7 +204,9 @@ export const sendOtp = async (contact: string, type: 'email' | 'whatsapp') => {
                 isEmailVerified: false,
                 password: crypto.randomBytes(16).toString('hex') + 'S1@'
             });
-        } else {
+        }
+        /* 
+        else {
             user = await User.create({
                 email: `${contact}@placeholder.com`,
                 phoneNumber: contact,
@@ -213,6 +216,7 @@ export const sendOtp = async (contact: string, type: 'email' | 'whatsapp') => {
                 password: crypto.randomBytes(16).toString('hex') + 'S1@'
             });
         }
+        */
         // Emit Event
         (eventBus as any).emit(Events.USER_CREATED, user);
     }
@@ -239,9 +243,12 @@ export const sendOtp = async (contact: string, type: 'email' | 'whatsapp') => {
     let sent = false;
     if (type === 'email') {
         sent = await sendEmailOtp(contact, otp);
-    } else {
+    } 
+    /*
+    else {
         sent = await sendWhatsAppOtp(contact, otp);
     }
+    */
 
     if (!sent) {
         throw { statusCode: 500, message: 'Failed to send OTP' };

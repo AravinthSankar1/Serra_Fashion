@@ -265,6 +265,7 @@ export default function LoginPage() {
                                         <Mail className={`w-6 h-6 ${otpChannel === 'email' ? 'text-black' : 'text-gray-400'}`} />
                                         <span className={`text-sm font-medium ${otpChannel === 'email' ? 'text-black' : 'text-gray-500'}`}>Email</span>
                                     </button>
+                                    {/* WhatsApp Login - Coming Soon
                                     <button
                                         onClick={() => { setOtpChannel('whatsapp'); setOtpStep('request'); }}
                                         className={`p-4 border rounded-xl flex flex-col items-center justify-center gap-2 transition-all ${otpChannel === 'whatsapp' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-300'
@@ -273,6 +274,7 @@ export default function LoginPage() {
                                         <MessageCircle className={`w-6 h-6 ${otpChannel === 'whatsapp' ? 'text-green-600' : 'text-gray-400'}`} />
                                         <span className={`text-sm font-medium ${otpChannel === 'whatsapp' ? 'text-green-700' : 'text-gray-500'}`}>WhatsApp</span>
                                     </button>
+                                    */}
                                 </div>
 
                                 {otpStep === 'request' ? (

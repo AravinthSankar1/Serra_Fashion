@@ -11,6 +11,8 @@ import {
     Image as ImageIcon,
     RefreshCw,
     MessageCircle,
+    Activity,
+    Menu as MenuIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils';
@@ -18,12 +20,14 @@ import { cn } from '../../utils';
 const navItems = [
     { title: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     { title: 'Categories', icon: Layers, path: '/admin/categories' },
+    { title: 'Navigation', icon: MenuIcon, path: '/admin/navigation' },
     { title: 'Brands', icon: Tag, path: '/admin/brands' },
     { title: 'Products', icon: ShoppingBag, path: '/admin/products' },
     { title: 'Orders', icon: Package, path: '/admin/orders' },
     { title: 'Promos', icon: Tag, path: '/admin/promos' },
     { title: 'Size Guides', icon: Layers, path: '/admin/size-guides' },
     { title: 'Users', icon: Users, path: '/admin/users' },
+    { title: 'Live Traffic', icon: Activity, path: '/admin/active-sessions' },
     { title: 'Banners', icon: ImageIcon, path: '/admin/banners' },
     { title: 'Reviews', icon: MessageCircle, path: '/admin/reviews' },
     { title: 'Support Desk', icon: MessageCircle, path: '/admin/support' },

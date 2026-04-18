@@ -5,6 +5,8 @@ import { Brand } from '../brand/brand.model';
 import { User } from '../user/user.model';
 import { Order } from '../order/order.model';
 
+import { ActiveSession } from '../session/session.model';
+
 export const getDashboardStats = async (vendorId?: string | any) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -29,7 +31,9 @@ export const getDashboardStats = async (vendorId?: string | any) => {
         recentUsers,
         pendingProducts,
         pendingBrands,
-        pendingCategories
+        pendingCategories,
+        activeVisitors,
+        activeUsers
     ] = await Promise.all([
         Product.countDocuments(vendorMatch),
         Category.countDocuments(vendorId ? { createdBy: vendorId } : {}),
@@ -114,7 +118,9 @@ export const getDashboardStats = async (vendorId?: string | any) => {
             User.find().sort({ createdAt: -1 }).limit(5).select('name email profilePicture createdAt role'),
         Product.countDocuments({ ...vendorMatch, approvalStatus: 'PENDING' }),
         Brand.countDocuments({ ...(vendorId ? { createdBy: vendorId } : {}), approvalStatus: 'PENDING' }),
-        Category.countDocuments({ ...(vendorId ? { createdBy: vendorId } : {}), approvalStatus: 'PENDING' })
+        Category.countDocuments({ ...(vendorId ? { createdBy: vendorId } : {}), approvalStatus: 'PENDING' }),
+        ActiveSession.countDocuments({ userId: { $exists: false } }),
+        ActiveSession.countDocuments({ userId: { $exists: true } }),
     ]);
 
     const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
@@ -129,7 +135,9 @@ export const getDashboardStats = async (vendorId?: string | any) => {
             totalRevenue,
             pendingProducts,
             pendingBrands,
-            pendingCategories
+            pendingCategories,
+            activeVisitors,
+            activeUsers
         },
         charts: {
             salesAnalytics,
@@ -201,4 +209,12 @@ export const globalSearch = async (query: string, vendorId?: string) => {
     ]);
 
     return { products, orders, users };
+};
+
+export const getActiveSessions = async () => {
+    const sessions = await ActiveSession.find()
+        .populate('userId', 'name email profilePicture role phoneNumber')
+        .sort({ lastActive: -1 });
+
+    return sessions;
 };

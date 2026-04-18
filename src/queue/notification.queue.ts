@@ -55,13 +55,13 @@ async function handleOrderCreated(data: { orderId: string }) {
     // Send to customer (Email + WhatsApp)
     await Promise.all([
         sendOrderConfirmation(user.email, order),
-        user.phoneNumber ? sendOrderConfirmation(user.phoneNumber, order, 'whatsapp') : null
+        // user.phoneNumber ? sendOrderConfirmation(user.phoneNumber, order, 'whatsapp') : null
     ]);
 
     // Send to admin
     await Promise.all([
         sendAdminOrderAlert('email', order),
-        sendAdminOrderAlert('whatsapp', order)
+        // sendAdminOrderAlert('whatsapp', order)
     ]);
 
     console.log(`[QUEUE] Order confirmation sent for order: ${order._id}`);
@@ -79,7 +79,7 @@ async function handleOrderStatusUpdated(data: { orderId: string, newStatus: stri
     // Send to customer
     await Promise.all([
         sendOrderStatusUpdate(user.email, order, data.newStatus),
-        user.phoneNumber ? sendOrderStatusUpdate(user.phoneNumber, order, data.newStatus, 'whatsapp') : null
+        // user.phoneNumber ? sendOrderStatusUpdate(user.phoneNumber, order, data.newStatus, 'whatsapp') : null
     ]);
 
     console.log(`[QUEUE] Status update sent for order: ${order._id}`);

@@ -21,7 +21,7 @@ const startServer = async () => {
       🚀 Server listening on port: ${config.port}
       🔊 Environment: ${config.env}
       📧 Email Service: ${config.email.auth.user ? 'Configured ✅' : 'Missing Credentials ❌'}
-      📱 WhatsApp Service: ${config.whatsapp.accessToken ? 'Configured ✅' : 'Missing Credentials ❌'}
+      // 📱 WhatsApp Service: Disabled
       ################################################
     `);
     });

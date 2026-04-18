@@ -75,8 +75,8 @@ export const socialLogin = asyncHandler(async (req: Request, res: Response) => {
 
 export const sendOtp = asyncHandler(async (req: Request, res: Response) => {
     const { contact, type } = req.body; // type: 'email' | 'whatsapp'
-    if (!contact || !['email', 'whatsapp'].includes(type)) {
-        throw { statusCode: 400, message: 'Invalid contact or type. Type must be email or whatsapp.' };
+    if (!contact || !['email'].includes(type)) {
+        throw { statusCode: 400, message: 'Invalid contact or type. Type must be email.' };
     }
     const result = await authService.sendOtp(contact, type);
     res.status(200).json(ApiResponse.success(result, 'OTP sent successfully'));
@@ -86,7 +86,7 @@ export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
     const { contact, otp, type } = req.body;
     const ipAddress = req.ip || req.socket.remoteAddress || '';
 
-    if (!contact || !otp || !['email', 'whatsapp'].includes(type)) {
+    if (!contact || !otp || !['email'].includes(type)) {
         throw { statusCode: 400, message: 'Invalid request. Provide contact, otp and type.' };
     }
     const result = await authService.verifyOtp(contact, otp, type, ipAddress);

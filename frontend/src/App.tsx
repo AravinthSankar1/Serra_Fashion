@@ -28,6 +28,8 @@ import AdminBanners from './pages/admin/Banners';
 import AdminReviews from './pages/admin/Reviews';
 import AdminSettings from './pages/admin/Settings';
 import AdminSupport from './pages/admin/Support';
+import AdminActiveSessions from './pages/admin/ActiveSessions';
+import AdminNavigation from './pages/admin/Navigation';
 import ChatWidget from './components/common/ChatWidget';
 import MetaPixelHelper from './components/common/MetaPixelHelper';
 
@@ -72,6 +74,8 @@ function App() {
                             <Route path="reviews" element={<AdminReviews />} />
                             <Route path="settings" element={<AdminSettings />} />
                             <Route path="support" element={<AdminSupport />} />
+                            <Route path="active-sessions" element={<AdminActiveSessions />} />
+                            <Route path="navigation" element={<AdminNavigation />} />
                         </Route>
                     </Route>
 

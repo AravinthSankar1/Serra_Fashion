@@ -15,6 +15,9 @@ import { logger } from './utils/logger';
 // Import models to ensure they are registered with Mongoose
 import './modules/brand/brand.model';
 import './modules/category/category.model';
+import './modules/session/session.model';
+import { authenticateOptional } from './middlewares/auth.middleware';
+import { trackSession } from './middlewares/session.middleware';
 
 const app = express();
 
@@ -49,6 +52,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Auth & session tracking
+app.use(authenticateOptional);
+app.use(trackSession);
 
 // Routes
 app.use('/api/v1', routes);

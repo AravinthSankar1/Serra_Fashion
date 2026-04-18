@@ -42,3 +42,12 @@ export const uploadFile = async (req: AuthRequest, res: Response) => {
         return res.status(500).json(ApiResponse.error(error.message || 'File upload failed'));
     }
 };
+
+export const getActiveSessions = async (req: AuthRequest, res: Response) => {
+    try {
+        const sessions = await adminService.getActiveSessions();
+        return res.status(200).json(ApiResponse.success(sessions));
+    } catch (error: any) {
+        return res.status(500).json(ApiResponse.error(error.message));
+    }
+};
