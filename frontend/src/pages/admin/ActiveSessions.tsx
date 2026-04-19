@@ -41,13 +41,6 @@ export default function ActiveSessions() {
         return ip;
     };
 
-    const getBrowserInfo = (ua: string) => {
-        if (ua.includes('Firefox')) return 'Firefox';
-        if (ua.includes('Chrome')) return 'Chrome';
-        if (ua.includes('Safari')) return 'Safari';
-        if (ua.includes('Edge')) return 'Edge';
-        return 'Browser';
-    };
 
     const formatTimeAgo = (dateStr: string) => {
         const seconds = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 1000);
