@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import * as z from 'zod';
 import { useState, useEffect } from 'react';
 import SocialLoginSelector from '../components/auth/SocialLoginSelector';
+import { PixelEvents } from '../components/common/MetaPixelHelper';
 
 const loginSchema = z.object({
     email: z.string().email('Please enter a valid email address'),
@@ -35,6 +36,11 @@ export default function LoginPage() {
 
     const [serverError, setServerError] = useState<string | null>(null);
 
+    // Fire Lead event when user visits the login page
+    useEffect(() => {
+        PixelEvents.lead('Login Page');
+    }, []);
+
     // Password Login Mutation
     const passwordMutation = useMutation({
         mutationFn: async (data: LoginForm) => {
@@ -44,6 +50,7 @@ export default function LoginPage() {
         },
         onSuccess: (data) => {
             login(data.data);
+            PixelEvents.login('password');
             toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },
@@ -80,6 +87,7 @@ export default function LoginPage() {
         },
         onSuccess: (data) => {
             login(data.data);
+            PixelEvents.login('otp');
             toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },
@@ -97,6 +105,7 @@ export default function LoginPage() {
         },
         onSuccess: (data) => {
             login(data.data);
+            PixelEvents.login('google');
             toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },

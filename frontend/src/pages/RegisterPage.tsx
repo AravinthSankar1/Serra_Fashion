@@ -11,6 +11,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import * as z from 'zod';
+import { PixelEvents } from '../components/common/MetaPixelHelper';
 
 const registerSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -52,6 +53,7 @@ export default function RegisterPage() {
         },
         onSuccess: (data) => {
             login(data.data);
+            PixelEvents.completeRegistration('email');
             toast.success(`Welcome back, ${data.data.user.name}`);
             navigate('/');
         },

@@ -10,6 +10,7 @@ import type { Product } from "../types";
 import { SlidersHorizontal, Grid3x3, LayoutGrid, ArrowRight, ChevronRight, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
+import { PixelEvents } from "../components/common/MetaPixelHelper";
 
 export default function CollectionPage({ title, gender, isSale }: { title: string; gender?: string; isSale?: boolean }) {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -74,6 +75,15 @@ export default function CollectionPage({ title, gender, isSale }: { title: strin
 
         return () => observer.disconnect();
     }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+    // Fire Search pixel event when the user searches
+    useEffect(() => {
+        if (!q) return;
+        const timer = setTimeout(() => {
+            PixelEvents.search(q);
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [q]);
 
     const { data: categoriesData } = useQuery({
         queryKey: ["admin", "categories"],

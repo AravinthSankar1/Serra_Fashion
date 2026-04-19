@@ -337,7 +337,11 @@ export default function ProductDetailsPage() {
                                             {availableColors.map(color => (
                                                 <button
                                                     key={color.name}
-                                                    onClick={() => { setSelectedColor(color.name); setSelectedSize(''); }}
+                                                    onClick={() => {
+                                                        setSelectedColor(color.name);
+                                                        setSelectedSize('');
+                                                        PixelEvents.customizeProduct(product.title, product._id, { color: color.name });
+                                                    }}
                                                     className={`group relative flex flex-col items-center gap-2 transition-all duration-300`}
                                                     title={color.name}
                                                 >
@@ -385,7 +389,10 @@ export default function ProductDetailsPage() {
                                                 return (
                                                     <button
                                                         key={size}
-                                                        onClick={() => setSelectedSize(size)}
+                                                        onClick={() => {
+                                                            setSelectedSize(size);
+                                                            PixelEvents.customizeProduct(product.title, product._id, { size });
+                                                        }}
                                                         disabled={disabled}
                                                         className={`h-12 w-16 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-300 relative ${selectedSize === size
                                                             ? 'bg-black text-white shadow-xl shadow-black/20'

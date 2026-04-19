@@ -201,6 +201,8 @@ export function useCheckout() {
         }
 
         if (paymentMethod === 'COD') {
+            // Fire AddPaymentInfo for COD
+            PixelEvents.addPaymentInfo(finalAmount, 'INR', 'COD');
             await processOrder({
                 items: cartItems.map(item => ({
                     product: item.product._id,
@@ -231,6 +233,9 @@ export function useCheckout() {
             });
 
             const { id: order_id, amount, currency } = orderRes.data.data;
+
+            // Fire AddPaymentInfo when Razorpay modal is about to open
+            PixelEvents.addPaymentInfo(finalAmount, 'INR', 'RAZORPAY');
 
             const options = {
                 key: razorpayKey,
