@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import type { AuthResponse, User } from '../types';
 import api from '../api/client';
 import { toast } from 'react-toastify';
+import { PixelEvents } from '../components/common/MetaPixelHelper';
 
 interface AuthContextType {
     user: User | null;
@@ -51,6 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const res = await api.post(`/users/wishlist/${productId}`);
             const newWishlist = res.data.data;
             updateUser({ ...user, wishlist: newWishlist });
+            // Fire AddToWishlist pixel event only when adding (not removing)
+            if (newWishlist.includes(productId)) {
+                PixelEvents.addToWishlist(undefined, productId);
+            }
             toast.success(newWishlist.includes(productId) ? 'Saved to favorites' : 'Removed from favorites', {
                 position: "bottom-right",
                 autoClose: 1500,

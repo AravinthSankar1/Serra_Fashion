@@ -160,7 +160,9 @@ export function useCheckout() {
         try {
             const res = await api.post('/orders', orderPayload);
             // Fire Meta Pixel Purchase event (COD)
-            PixelEvents.purchase(orderPayload.totalAmount, 'INR', res.data.data._id);
+            const productIds = cartItems.map(i => i.product._id);
+            const numItems = cartItems.reduce((acc, i) => acc + i.quantity, 0);
+            PixelEvents.purchase(orderPayload.totalAmount, 'INR', res.data.data._id, numItems, productIds);
             setOrderSuccess(res.data.data._id);
             clearCart();
         } catch (error) {
@@ -177,6 +179,12 @@ export function useCheckout() {
             ? (subtotalAfterDiscounts >= settings.freeShippingThreshold ? 0 : settings.deliveryCharge)
             : 0;
         const finalAmount = subtotalAfterDiscounts - discount + shippingFee;
+
+        // Fire InitiateCheckout pixel event
+        PixelEvents.initiateCheckout(
+            finalAmount,
+            cartItems.reduce((acc, i) => acc + i.quantity, 0)
+        );
 
         if (isAddingAddress) {
             if (!tempAddress.street || !tempAddress.city || !tempAddress.state || !tempAddress.zip) {
@@ -263,7 +271,9 @@ export function useCheckout() {
                         }, { signal: abortControllerRef.current?.signal });
 
                         // Fire Meta Pixel Purchase event (Razorpay)
-                        PixelEvents.purchase(finalAmount, 'INR', response.razorpay_order_id);
+                        const productIds = cartItems.map(i => i.product._id);
+                        const numItems = cartItems.reduce((acc, i) => acc + i.quantity, 0);
+                        PixelEvents.purchase(finalAmount, 'INR', response.razorpay_order_id, numItems, productIds);
                         setOrderSuccess(response.razorpay_order_id);
                         clearCart();
                     } catch (error: any) {
