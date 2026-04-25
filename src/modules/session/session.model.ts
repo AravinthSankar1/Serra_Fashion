@@ -8,7 +8,7 @@ const activeSessionSchema = new Schema<IActiveSession>(
         ip: { type: String, required: true },
         userAgent: { type: String, required: true },
         currentPath: { type: String, required: true },
-        lastActive: { type: Date, default: Date.now, index: true },
+        lastActive: { type: Date, default: Date.now },
     },
     { timestamps: true }
 );

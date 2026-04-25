@@ -26,6 +26,13 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Safe storage helper for restricted environments (like Instagram WebView)
+const safeStorage = {
+    getItem: (key: string) => { try { return localStorage.getItem(key); } catch (e) { return null; } },
+    setItem: (key: string, value: string) => { try { localStorage.setItem(key, value); } catch (e) { } },
+    removeItem: (key: string) => { try { localStorage.removeItem(key); } catch (e) { } }
+};
+
 export function CartProvider({ children }: { children: ReactNode }) {
     const { isAuthenticated } = useAuth();
     const [cart, setCart] = useState<Cart | null>(null);
@@ -35,7 +42,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // 1. Load guest cart from localStorage on mount
     useEffect(() => {
-        const stored = localStorage.getItem('guest_cart');
+        const stored = safeStorage.getItem('guest_cart');
         if (stored) {
             try {
                 setGuestItems(JSON.parse(stored));
@@ -86,7 +93,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 });
             }
             setGuestItems([]);
-            localStorage.removeItem('guest_cart');
+            safeStorage.removeItem('guest_cart');
             await fetchCart();
         } catch (error) {
             console.error('Failed to sync guest cart', error);
@@ -133,7 +140,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 newItems.push({ product, quantity, size, color });
             }
             setGuestItems(newItems);
-            localStorage.setItem('guest_cart', JSON.stringify(newItems));
+            safeStorage.setItem('guest_cart', JSON.stringify(newItems));
         }
     };
 
@@ -160,7 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     newItems[existingIndex].quantity = quantity;
                 }
                 setGuestItems(newItems);
-                localStorage.setItem('guest_cart', JSON.stringify(newItems));
+                safeStorage.setItem('guest_cart', JSON.stringify(newItems));
             }
         }
     };
@@ -179,7 +186,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             }
         } else {
             setGuestItems([]);
-            localStorage.removeItem('guest_cart');
+            safeStorage.removeItem('guest_cart');
         }
     };
 

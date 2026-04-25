@@ -18,13 +18,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Safe storage helper for restricted environments (like Instagram WebView)
+const safeStorage = {
+    getItem: (key: string) => { try { return localStorage.getItem(key); } catch (e) { return null; } },
+    setItem: (key: string, value: string) => { try { localStorage.setItem(key, value); } catch (e) { } },
+    removeItem: (key: string) => { try { localStorage.removeItem(key); } catch (e) { } }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        const storedUser = localStorage.getItem('user');
+        const token = safeStorage.getItem('accessToken');
+        const storedUser = safeStorage.getItem('user');
         if (token && storedUser) {
             setUser(JSON.parse(storedUser));
         }
@@ -32,14 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = (data: AuthResponse) => {
-        localStorage.setItem('accessToken', data.tokens.access);
-        localStorage.setItem('refreshToken', data.tokens.refresh);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        safeStorage.setItem('accessToken', data.tokens.access);
+        safeStorage.setItem('refreshToken', data.tokens.refresh);
+        safeStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
     };
 
     const updateUser = (updatedUser: User) => {
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        safeStorage.setItem('user', JSON.stringify(updatedUser));
         setUser(updatedUser);
     };
 
@@ -68,9 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+        safeStorage.removeItem('accessToken');
+        safeStorage.removeItem('refreshToken');
+        safeStorage.removeItem('user');
         setUser(null);
         toast.info('Securely signed out. We hope to see you back soon.');
     };
