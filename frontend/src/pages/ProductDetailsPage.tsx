@@ -94,7 +94,7 @@ export default function ProductDetailsPage() {
             );
             
             // Add to recently viewed on backend
-            api.post(`/user/recently-viewed/${product._id}`).catch(err => {
+            api.post(`/users/recently-viewed/${product._id}`).catch(err => {
                 console.error('Failed to add to recently viewed:', err);
             });
         }

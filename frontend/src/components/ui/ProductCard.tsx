@@ -14,7 +14,6 @@ export default function ProductCard({ product }: { product: Product }) {
 
     return (
         <motion.div
-            layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="group relative"

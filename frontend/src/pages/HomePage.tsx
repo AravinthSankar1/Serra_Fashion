@@ -89,13 +89,21 @@ export default function HomePage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                        {infiniteData?.pages.map((page) => (
-                            page.products.map((product: Product) => (
+                    <>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-8">
+                            {infiniteData?.pages.flatMap(page => page.products).map((product: Product) => (
                                 <ProductCard key={product._id} product={product} />
-                            ))
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                        
+                        {(!infiniteData || infiniteData.pages[0].products.length === 0) && (
+                            <div className="text-center py-24 bg-gray-50 rounded-[32px]">
+                                <p className="text-gray-400 font-serif italic uppercase tracking-widest text-sm">
+                                    Our latest pieces are arriving soon.
+                                </p>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* Observer Target */}
