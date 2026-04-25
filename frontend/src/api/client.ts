@@ -9,7 +9,7 @@ export const API_URL = (import.meta.env.VITE_API_BASE_URL && !import.meta.env.VI
     ? import.meta.env.VITE_API_BASE_URL
     : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? '/api/v1' 
-        : 'https://api.serrafashion.in/api/v1');
+        : 'https://serrafashion-production.up.railway.app/api/v1'); // Bypassing custom domain for stability
 
 
 
